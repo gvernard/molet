@@ -1,33 +1,16 @@
-######## lenses:
-A list holding all the different lenses.
-There could be more than one lenses at the same or different redshift.
-Each lens properties are divided into three groups: main_mass_model, substructure, and light_profile.
-
-######## main_mass_model:
-The type of the main (or smooth) mass model for the lens.
-It could be analytical (SIE, SPEMD, etc), or from numerical simulations (e.g. EAGLE).
-Each of these choices will result in an additional set of its own unique parameters.
-
-######## substructure:
-Superimposed substructure for each lens (at its defined redshift).
-While the effects of individual perturbing analytical haloes can be considered as additional main lenses, this is not the case for extended perturbations.
-These could include Gaussian Random Fields, or higher order moments in the lens mass distribution, such as a disc, spiral arms, etc.
-
-######## light_profile:
-The spatial distribution of source brightness, analytical or numerical.
-One distribution per wavelength range.
+This is a collection of software creating simulated galaxy-galaxy lenses as a function of time.
+This relates to existing point-like and variable objects within the source galaxy, such as an Active Galactic Nucleus or Supernova.
+The files are as follows:
 
 
+input_example.json:
+is an example of the input file that will be run by the code. It includes many options, such as the mass model for the lens, the source, profile, its variability etc.
 
-######## source:
-There can be only one source, which is basically just a 'light_profile'.
-In case of multiple lens planes, the light profile of the first lens is sufficient to act as a source (together with the lensed features of the source due to this same lens).
+input_example_instructions.txt:
+describes the various input parameters appearing in the previous file.
 
-######## point_source:
-Specific quasar or SN properties for the source.
+input_different_options:
+lists all the possible groups of paramaters (.json objects) that can go in the input file, along with a description.
 
-
-
-
-######## microlensing:
-Single-plane microlensing for the moment.
+workflow.odg:
+is a schematic diagram of the workflow and interaction of the different codes/data.
