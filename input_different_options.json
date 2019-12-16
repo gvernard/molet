@@ -1,0 +1,143 @@
+{
+    "main_mass_model": {
+	"types": [
+	    {
+		"name": "sie",
+		"description": "Singular Isothermal Ellipsoid + external shear"
+	    },
+	    {
+		"name": "spemd",
+		"description": "Softened elliptical power law mass distribution"
+	    },
+	    {
+		"name": "eagle",
+		"description": "Numerical mass profile from EAGLE"
+	    }
+	],
+	
+	
+	"sie": [
+	    {
+		"name": "b",
+		"description": "Einstein radius",
+		"units": "arcsec"
+	    },
+	    {
+		"name": "q",
+		"description": "Axis ratio (minor/major)",
+		"units": "-"
+	    },
+	    {
+		"name": "pa",
+		"description": "Position angle, measured east of north",
+		"units": "deg"
+	    },
+	    {
+		"name": "x0",
+		"description": "Lens center abscissa",
+		"units": "arcsec"
+	    },
+	    {
+		"name": "y0",
+		"description": "Lens center ordinate",
+		"units": "arcsec"
+	    },
+	    {
+		"name": "g",
+		"description": "Magnitude of the external shear",
+		"units": "-"
+	    },
+	    {
+		"name": "phi",
+		"description": "Direction of the external shear",
+		"units": "deg"
+	    }
+	],
+	
+	"spemd": [
+	    {
+		"name": "b",
+		"description": "Einstein radius",
+		"units": "arcsec"
+	    },
+	    {
+		"name": "q",
+		"description": "Axis ratio (minor/major)",
+		"units": "-"
+	    },
+	    {
+		"name": "pa",
+		"description": "Position angle, measured east of north",
+		"units": "deg"
+	    },
+	    {
+		"name": "x0",
+		"description": "Lens center abscissa",
+		"units": "arcsec"
+	    },
+	    {
+		"name": "y0",
+		"description": "Lens center ordinate",
+		"units": "arcsec"
+	    },
+	    {
+		"name": "e",
+		"description": "Power law index",
+		"units": "-"
+	    },
+	    {
+		"name": "s",
+		"description": "Core radius",
+		"units": "arcsec"
+	    },
+	    {
+		"name": "g",
+		"description": "Magnitude of the external shear",
+		"units": "-"
+	    },
+	    {
+		"name": "phi",
+		"description": "Direction of the external shear",
+		"units": "deg"
+	    }
+	],
+	
+	"eagle": [
+	    
+	]
+	
+    },
+    
+
+
+
+
+    "light_profile": {
+	"types": [
+	    {
+		"name": "sersic",
+		"description": "A 2D Sersic profile."
+	    },
+	    {
+		"name": "gaussian",
+		"description": "A 2D Gaussian profile"
+	    },
+	    {
+		"name": "custom",
+		"description": "Custom profile in a '.fits.' file"
+	    }
+	],
+	
+	"sersic": [
+	],
+
+	"gaussian": [
+	],
+
+	"custom": [
+
+	]
+    }
+
+    
+}

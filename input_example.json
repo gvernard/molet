@@ -1,0 +1,70 @@
+{
+
+    "lenses": [
+
+	// Lens 1.
+	{
+	    "redshift": ,
+
+	    "main_mass_model": {
+		"type": ,
+	    },
+
+	    "substructure": {
+		"type": ,
+	    },
+
+	    "light_profile": [
+		{
+		    "lambda_min": ,
+		    "lambda_max": ,
+		},
+		{
+		    "lambda_min": ,
+		    "lambda_max": ,
+		}
+	    ]
+
+	},
+
+	
+	// Lens 2.
+	{
+	}
+    ],
+
+
+    
+    "source": {
+	"redshift": ,
+	"light_profile": [
+
+	]
+    },
+
+
+
+    "point_source": {
+	"type":,
+
+	"variability": {
+
+	}
+    },
+
+
+    "microlensing": {
+	"velocities": {
+	},
+
+	"image_locations": {
+	    
+	}
+
+    }
+    
+    
+    "instrument": {
+    }
+
+}
