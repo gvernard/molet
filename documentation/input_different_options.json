@@ -1,0 +1,196 @@
+{
+    "mass_model": {
+	"types": [
+	    {
+		"name": "sie",
+		"description": "Singular Isothermal Ellipsoid"
+	    },
+	    {
+		"name": "spemd",
+		"description": "Softened elliptical power law mass distribution"
+	    },
+	    {
+		"name": "eagle",
+		"description": "Numerical mass profile from EAGLE"
+	    },
+	    {
+		"name": "custom",
+		"description": "A user-defined $\delta\psi$ perturbations field (.fits file). It must be in the same field of view as the instrument."
+	    }
+	],
+	
+	
+	"sie": [
+	    {
+		"name": "sigma",
+		"description": "Velocity dispersion",
+		"units": "km/s"
+	    },
+	    {
+		"name": "q",
+		"description": "Axis ratio (minor/major)",
+		"units": "-"
+	    },
+	    {
+		"name": "pa",
+		"description": "Position angle, measured east of north",
+		"units": "deg"
+	    },
+	    {
+		"name": "x0",
+		"description": "Lens center abscissa",
+		"units": "arcsec"
+	    },
+	    {
+		"name": "y0",
+		"description": "Lens center ordinate",
+		"units": "arcsec"
+	    }
+	],
+	
+	"spemd": [
+	    {
+		"name": "b",
+		"description": "Einstein radius",
+		"units": "arcsec"
+	    },
+	    {
+		"name": "q",
+		"description": "Axis ratio (minor/major)",
+		"units": "-"
+	    },
+	    {
+		"name": "pa",
+		"description": "Position angle, measured east of north",
+		"units": "deg"
+	    },
+	    {
+		"name": "x0",
+		"description": "Lens center abscissa",
+		"units": "arcsec"
+	    },
+	    {
+		"name": "y0",
+		"description": "Lens center ordinate",
+		"units": "arcsec"
+	    },
+	    {
+		"name": "e",
+		"description": "Power law index",
+		"units": "-"
+	    },
+	    {
+		"name": "s",
+		"description": "Core radius",
+		"units": "arcsec"
+	    }
+	],
+	
+	"eagle": [
+	    
+	],
+	
+	"custom": [
+	    
+	]	
+    },
+
+
+    "external_shear": [
+	{
+	    "name": "g",
+	    "description": "Magnitude of the external shear",
+	    "units": "-"
+	},
+	{
+	    "name": "phi",
+	    "description": "Direction of the external shear",
+	    "units": "deg"
+	}
+    ],
+    
+    
+
+
+    
+    "light_profile": {
+	"types": [
+	    {
+		"name": "sersic",
+		"description": "A 2D Sersic profile."
+	    },
+	    {
+		"name": "gaussian",
+		"description": "A 2D Gaussian profile"
+	    },
+	    {
+		"name": "custom",
+		"description": "Custom profile in a '.fits.' file"
+	    }
+	],
+	
+	"sersic": [
+	],
+
+	"gaussian": [
+	    {
+		"name": "x0",
+		"description": "Lens light center abscissa",
+		"units": "arcsec"
+	    },
+	    {
+		"name": "y0",
+		"description": "Lens light center ordinate",
+		"units": "arcsec"
+	    },
+	    {
+		"name": "q",
+		"description": "Axis ratio (minor/major)",
+		"units": "-"
+	    },
+	    {
+		"name": "pa",
+		"description": "Position angle, measured east of north",
+		"units": "deg"
+	    },
+	    {
+		"name": "i_eff",
+		"description": "Maximum brightness value",
+		"units": "-"
+	    },
+	    {
+		"name": "r_eff",
+		"description": "Effective radius",
+		"units": "arcsec"
+	    }
+	],
+
+	"custom": [
+
+	]
+    },
+
+
+    "point_source": {
+	"types": [
+	    {
+		"name": "AGN",
+		"description": "An AGN profile"
+	    },
+	    {
+		"name": "supernova",
+		"description": "A Supernova profile"
+	    }
+	],
+
+	"AGN": [
+
+	],
+
+	"supernova": [
+
+	]
+    }
+
+    
+}
