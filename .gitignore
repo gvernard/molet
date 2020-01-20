@@ -1,3 +1,6 @@
 lensed_extended_source/fproject/bin/
 lensed_extended_source/fproject/obj/
 *.pdf
+test_create_mock/image_super.fits
+test_create_mock/source_super.fits
+test_create_mock/angular_diameter_distances.json
