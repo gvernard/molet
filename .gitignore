@@ -1,5 +1,8 @@
-lensed_extended_source/fproject/bin/
-lensed_extended_source/fproject/obj/
+lensed_extended_source/vkl_fproject/bin/
+lensed_extended_source/vkl_fproject/obj/
+lens_light/vkl_lens_light/bin/
+lens_light/vkl_lens_light/obj/
+lensed_extended_source/vkl_fproject/obj/
 *.pdf
 test_create_mock/*.fits
 test_create_mock/angular_diameter_distances.json
