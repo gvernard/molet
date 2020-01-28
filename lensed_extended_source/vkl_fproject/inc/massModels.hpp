@@ -31,6 +31,8 @@ public:
   void setMassPars(std::vector<Nlpar*> nlpars);
   void printMassPars();
   virtual void defl(double xin,double yin,double& xout,double& yout) = 0;
+  virtual double kappa(double xin,double yin)   = 0;
+  virtual void gamma(double xin,double yin,double& gamma_out_x,double& gamma_out_y) = 0;
 };
 
 
@@ -38,12 +40,16 @@ class Sie: public BaseMassModel{
 public:
   Sie(std::vector<Nlpar*> nlpars);
   void defl(double xin,double yin,double& xout,double& yout);
+  double kappa(double xin,double yin);
+  void gamma(double xin,double yin,double& gamma_out_x,double& gamma_out_y);
 };
 
 class Spemd: public BaseMassModel{
 public:
   Spemd(std::vector<Nlpar*> nlpars);
   void defl(double xin,double yin,double& xout,double& yout);
+  double kappa(double xin,double yin){};
+  void gamma(double xin,double yin,double& gamma_out_x,double& gamma_out_y){};
 };
 
 class Pert: public BaseMassModel{
@@ -64,6 +70,8 @@ public:
     free(dpsi_dy);
   }
   void defl(double xin,double yin,double& xout,double& yout);
+  double kappa(double xin,double yin){};
+  void gamma(double xin,double yin,double& gamma_out_x,double& gamma_out_y){};
   void replaceDpsi(double* new_dpsi);
   void addDpsi(double* corrections);
   void updatePert();
@@ -93,9 +101,12 @@ public:
   BaseMassModel* createMassModel(const std::string &modelname,std::vector<Nlpar*> nlpars,double Dls,double Dos){
     if( modelname == "sie" ){
       for(int i=0;i<nlpars.size();i++){
-	if( nlpars[i]->nam == "sigma"){
+	if( nlpars[i]->nam == "sigma" ){
 	  nlpars[i]->nam = "b";
 	  nlpars[i]->val = 2.592*pow(nlpars[i]->val/299.792458,2)*Dls/Dos;
+	}
+	if( nlpars[i]->nam == "pa" ){
+	  nlpars[i]->val += 90.0;	  
 	}
       }
       return new Sie(nlpars);
@@ -129,9 +140,16 @@ public:
   CollectionMassModels();
   CollectionMassModels(std::vector<Nlpar*> nlpars);
   ~CollectionMassModels();
+  void printPhysPars();
   void setPhysicalPars(std::vector<Nlpar*> nlpars);
   void all_defl(double xin,double yin,double& xout,double& yout);
   void all_defl(ImagePlane* image);
+  double all_kappa(double xin,double yin);
+  void all_kappa(ImagePlane* image,ImagePlane* kappa_tot);
+  void all_gamma(double xin,double yin,double& gamma_x,double& gamma_y);
+  void all_gamma(ImagePlane* image,ImagePlane* gamma_x,ImagePlane* gamma_y);
+  double detJacobian(double xin,double yin);
+  void detJacobian(ImagePlane* image,ImagePlane* det);
 };
 
 #endif /* MASS_MODELS_HPP */

@@ -58,13 +58,12 @@ void Sie::defl(double xin,double yin,double& xout,double& yout){
       y_t =  0.0001;
     }
   }
+  
+  double fac   = sqrt(1.0-q*q);
+  double omega = sqrt(q*q*x_t*x_t + y_t*y_t); // this does not depend on using omega, omega', or zeta, as long as I change correctly to these elliptical radii.
 
-  double fac   = 1.0-q*q;
-  double omega = q*q*x_t*x_t + y_t*y_t; // this does not depend on using omega, omega', or zeta, as long as I change correctly to these elliptical radii.
-  double fac2  = sqrt(fac/omega);
-
-  double ax_t = (b/sqrt(fac))*atan(x_t*fac2);
-  double ay_t = (b/sqrt(fac))*atanh(y_t*fac2);
+  double ax_t = (b/fac)*atan(x_t*fac/omega);
+  double ay_t = (b/fac)*atanh(y_t*fac/omega);
   
   //rotate back according to position angle, no need to translate (this is equivalent to rotating by -pa using the same equations as above)
   double ax =  ax_t*cos(pa) - ay_t*sin(pa);
@@ -73,6 +72,74 @@ void Sie::defl(double xin,double yin,double& xout,double& yout){
   xout = ax;
   yout = ay;
 }
+
+double Sie::kappa(double xin,double yin){
+  double b  = this->mpars["b"];
+  double q  = this->mpars["q"];
+  double pa = this->mpars["pa"] * 0.01745329251;//in rad
+  double x0 = this->mpars["x0"];
+  double y0 = this->mpars["y0"];
+
+  //rotate the coordinate system according to position angle and translate to the lens center
+  double x_t =  (xin-x0)*cos(pa) + (yin-y0)*sin(pa);
+  double y_t = -(xin-x0)*sin(pa) + (yin-y0)*cos(pa);
+
+  if( fabs(x_t) < 0.0001 && fabs(y_t) < 0.0001 ){
+    if( std::signbit(x_t) ){
+      x_t = -0.0001;
+    } else {
+      x_t =  0.0001;
+    }
+    if( std::signbit(y_t) ){
+      y_t = -0.0001;
+    } else {
+      y_t =  0.0001;
+    }
+  }
+
+  double omega = q*q*x_t*x_t + y_t*y_t; // this does not depend on using omega, omega', or zeta, as long as I change correctly to these elliptical radii.
+  double k = 0.5*b/sqrt(omega);
+  return k;
+}
+
+
+void Sie::gamma(double xin,double yin,double& gamma_out_x,double& gamma_out_y){
+  double b  = this->mpars["b"];
+  double q  = this->mpars["q"];
+  double pa = this->mpars["pa"] * 0.01745329251;//in rad
+  double x0 = this->mpars["x0"];
+  double y0 = this->mpars["y0"];
+
+  //rotate the coordinate system according to position angle and translate to the lens center
+  double x_t =  (xin-x0)*cos(pa) + (yin-y0)*sin(pa);
+  double y_t = -(xin-x0)*sin(pa) + (yin-y0)*cos(pa);
+
+  if( fabs(x_t) < 0.0001 && fabs(y_t) < 0.0001 ){
+    if( std::signbit(x_t) ){
+      x_t = -0.0001;
+    } else {
+      x_t =  0.0001;
+    }
+    if( std::signbit(y_t) ){
+      y_t = -0.0001;
+    } else {
+      y_t =  0.0001;
+    }
+  }
+
+  double omega     = q*q*x_t*x_t + y_t*y_t; // this does not depend on using omega, omega', or zeta, as long as I change correctly to these elliptical radii.
+  double z         = atan2(y_t,x_t);        // this is because cos2z = (y^2-x^2)/(x^2+y^2), and sin2z = 2xy
+  double gamma_x_t = -0.5*b*cos(2*z)/sqrt(omega);
+  double gamma_y_t = -0.5*b*sin(2*z)/sqrt(omega);
+  
+  //rotate back according to position angle, no need to translate (this is equivalent to rotating by -pa using the same equations as above)
+  double gamma_x =  gamma_x_t*cos(pa) - gamma_y_t*sin(pa);
+  double gamma_y =  gamma_x_t*sin(pa) + gamma_y_t*cos(pa);
+  gamma_out_x = gamma_x;
+  gamma_out_y = gamma_y;
+}
+
+
 
 //Derived class from BaseMassModel: Spemd (Softened Power-law Elliptical Mass Density)
 //===============================================================================================================
@@ -408,59 +475,6 @@ void Pert::createCrosses(ImagePlane* image){
 
 }
 
-
-/*
-void Pert::createInterpolationWeights(ImagePlane* image){
-  // This function is almost identical to the one that creates the interpolation weights for a source class.
-  // The are two differences: the non-deflected x,y of the image plane are used, and the weights go in the dpsi_cells structure of the image class.
-  double xp,yp;
-  double dx     = this->x[1] - this->x[0];
-  double dy     = this->y[this->Sj] - this->y[0];
-  double norm   = 1.0/(dx*dy);
-  int ic        = 0;
-  int jc        = 0;
-  double g1=0,g2=0,g3=0,g4=0;
-
-  for(int i=0;i<image->Nm;i++){
-    xp = image->x[i] - this->dpsi->xmin;
-    yp = image->y[i] - this->dpsi->ymin;
-    
-    if( this->dpsi->pointInPolygon(xp,yp) ){
-      //Indices corresponding to the bottom left pixel
-      jc = (int) floor(xp/dx);
-      ic = (int) floor(yp/dy);
-      
-      //Now interpolate between neighbouring pixels and add entries to L matrix.
-      //The interpolation function could return an array of column indices in the row of the L matrix, and the corresponding weights.
-      //The following is for bi-linear interpolation:
-      g1 = (ic+1)*dy - yp;
-      g2 = (jc+1)*dx - xp;
-      g3 = yp - ic*dy;
-      g4 = xp - jc*dx;
-      
-      delete(image->dpsi_cells[i]);
-      InterpolationCell* cell = new InterpolationCell(4);
-      cell->ind[0] = (this->Si-2-ic)*this->Sj + jc;
-      cell->ind[1] = (this->Si-2-ic)*this->Sj + jc+1;
-      cell->ind[2] = (this->Si-2-ic+1)*this->Sj + jc;
-      cell->ind[3] = (this->Si-2-ic+1)*this->Sj + jc+1;
-      cell->wei[0] = g1*g2*norm;
-      cell->wei[1] = g1*g4*norm;
-      cell->wei[2] = g3*g2*norm;
-      cell->wei[3] = g3*g4*norm;
-      image->dpsi_cells[i] = cell;
-    } else {
-      delete(image->dpsi_cells[i]);
-      InterpolationCell* cell = new InterpolationCell(1);
-      cell->ind[0] = 0;
-      cell->wei[0] = 0.0;
-      image->dpsi_cells[i] = cell;
-    }
-
-  }
-}
-*/
-
 //private
 void Pert::derivativeDirection(int q,int qmax,double den,int* rel_ind,double* coeff){
   if( q == 0 ){
@@ -528,32 +542,6 @@ void Pert::defl(double xin,double yin,double& xout,double& yout){
   xout = ax;
   yout = ay;
 }
-
-/*
-void Pert::tableDefl(int Nm,double* xdefl,double* ydefl){
-  Eigen::SparseMatrix<double> A(2*Nm,2*this->dpsi->Sm);
-  A.reserve(Eigen::VectorXi::Constant(2*Nm,2));//overestimating the mask matrix number of entries per row
-  for(int i=0;i<this->Aint.tri.size();i++){  A.insert(this->Aint.tri[i].i,this->Aint.tri[i].j) = this->Aint.tri[i].v;  }
-
-  Eigen::SparseMatrix<double> B(2*this->dpsi->Sm,this->dpsi->Sm);
-  B.reserve(Eigen::VectorXi::Constant(2*Nm,2));//overestimating the mask matrix number of entries per row
-  for(int i=0;i<this->Bdev.tri.size();i++){  B.insert(this->Bdev.tri[i].i,this->Bdev.tri[i].j) = this->Bdev.tri[i].v;  }
-
-  Eigen::Map<Eigen::VectorXd> dpsi(this->dpsi->src,this->dpsi->Sm);
-
-  Eigen::VectorXd defl(2*Nm);
-
-  defl = A*B*dpsi;
-
-  for(int i=0;i<Nm;i++){
-    xdefl[i] = defl[2*i];
-    ydefl[i] = defl[2*i+1];
-  }
-
-  A.resize(0,0);
-  B.resize(0,0);
-}
-*/
 
 void Pert::getConvergence(ImagePlane* kappa){
   double ddx,ddy;
@@ -639,8 +627,8 @@ void Pert::getConvergence(ImagePlane* kappa){
 //Class: CollectionMassModels
 //===============================================================================================================
 CollectionMassModels::CollectionMassModels(){
-  this->mpars["g1"] = 0.0;
-  this->mpars["g2"] = 0.0;
+  this->mpars["gx"] = 0.0;
+  this->mpars["gy"] = 0.0;
 }
 CollectionMassModels::CollectionMassModels(std::vector<Nlpar*> nlpars){
   this->setPhysicalPars(nlpars);
@@ -652,13 +640,20 @@ CollectionMassModels::~CollectionMassModels(){
   mpars.clear();
 };
 
+void CollectionMassModels::printPhysPars(){
+  typedef std::map<std::string,double>::iterator some_type;
+  for(some_type iterator=this->mpars.begin();iterator!=this->mpars.end();iterator++){
+    std::cout << iterator->first << " " << iterator->second << std::endl;
+    //    printf("%8s: %7.3f\n",iterator->second->nam,iterator->second->val);
+  }
+}
+
 void CollectionMassModels::setPhysicalPars(std::vector<Nlpar*> nlpars){
   for(int i=0;i<nlpars.size();i++){
     this->mpars[nlpars[i]->nam] = nlpars[i]->val;
   }
-  this->mpars["phi"] *= 0.01745329251;
-  this->mpars["g1"]  = this->mpars["g"]*cos(2*this->mpars["phi"]);
-  this->mpars["g2"]  = this->mpars["g"]*sin(2*this->mpars["phi"]);
+  this->mpars["gx"]  = this->mpars["g"]*cos(2*this->mpars["phi"]*0.01745329251);
+  this->mpars["gy"]  = this->mpars["g"]*sin(2*this->mpars["phi"]*0.01745329251);
 }
 
 void CollectionMassModels::all_defl(double xin,double yin,double& xout,double& yout){
@@ -671,8 +666,8 @@ void CollectionMassModels::all_defl(double xin,double yin,double& xout,double& y
     ax += dumx;
     ay += dumy;
   }
-  xout = (1.0-this->mpars["g1"])*xin - this->mpars["g2"]*yin - ax;
-  yout = (1.0+this->mpars["g1"])*yin - this->mpars["g2"]*xin - ay;
+  xout = (1.0-this->mpars["gx"])*xin - this->mpars["gy"]*yin - ax;
+  yout = (1.0+this->mpars["gx"])*yin - this->mpars["gy"]*xin - ay;
 }
 
 void CollectionMassModels::all_defl(ImagePlane* image){
@@ -690,7 +685,78 @@ void CollectionMassModels::all_defl(ImagePlane* image){
       ax += dumx;
       ay += dumy;
     }
-    image->defl_x[j] = (1.0-this->mpars["g1"])*xin - this->mpars["g2"]*yin - ax;
-    image->defl_y[j] = (1.0+this->mpars["g1"])*yin - this->mpars["g2"]*xin - ay;
+    image->defl_x[j] = (1.0-this->mpars["gx"])*xin - this->mpars["gy"]*yin - ax;
+    image->defl_y[j] = (1.0+this->mpars["gx"])*yin - this->mpars["gy"]*xin - ay;
+  }
+}
+
+double CollectionMassModels::all_kappa(double xin,double yin){
+  double k = 0.0;
+  for(int i=0;i<this->models.size();i++){
+    k += this->models[i]->kappa(xin,yin);
+  }
+  return k;
+}
+
+void CollectionMassModels::all_kappa(ImagePlane* image,ImagePlane* kappa_tot){
+  double xin,yin;
+  for(int j=0;j<image->Nm;j++){
+    xin = image->x[j];
+    yin = image->y[j];
+    double k = 0.0;
+    for(int i=0;i<this->models.size();i++){
+      k += this->models[i]->kappa(xin,yin);
+    }
+    kappa_tot->img[j] = k;
+  }
+}
+
+void CollectionMassModels::all_gamma(double xin,double yin,double& gamma_x,double& gamma_y){
+  gamma_x = 0.0;
+  gamma_y = 0.0;
+  double dumx = 0.0;
+  double dumy = 0.0;
+  for(int i=0;i<this->models.size();i++){
+    this->models[i]->gamma(xin,yin,dumx,dumy);
+    gamma_x += dumx;
+    gamma_y += dumy;
+  }
+  gamma_x += this->mpars["gx"];
+  gamma_y += this->mpars["gy"];
+}
+
+void CollectionMassModels::all_gamma(ImagePlane* image,ImagePlane* gamma_x,ImagePlane* gamma_y){
+  double xin,yin;
+  double dumx = 0.0;
+  double dumy = 0.0;
+  for(int j=0;j<image->Nm;j++){
+    xin = image->x[j];
+    yin = image->y[j];
+    double gamma_x_t = 0.0;
+    double gamma_y_t = 0.0;
+    for(int i=0;i<this->models.size();i++){
+      this->models[i]->gamma(xin,yin,dumx,dumy);
+      gamma_x_t += dumx;
+      gamma_y_t += dumy;
+    }
+    gamma_x->img[j] = gamma_x_t + this->mpars["gx"];
+    gamma_y->img[j] = gamma_y_t + this->mpars["gy"];
+  }
+}
+
+double CollectionMassModels::detJacobian(double xin,double yin){
+  double gamma_x,gamma_y;
+  this->all_gamma(xin,yin,gamma_x,gamma_y);
+  return pow(1.0 - this->all_kappa(xin,yin),2) - pow(gamma_x,2) - pow(gamma_y,2);
+}
+
+void CollectionMassModels::detJacobian(ImagePlane* image,ImagePlane* detA){
+  double xin,yin;
+  double gamma_x,gamma_y,ktot;
+
+  for(int j=0;j<image->Nm;j++){
+    xin = image->x[j];
+    yin = image->y[j];
+    detA->img[j] = this->detJacobian(xin,yin);
   }
 }

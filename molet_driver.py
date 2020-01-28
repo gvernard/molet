@@ -93,5 +93,5 @@ myprocess("Getting light profile of the lens...",cmd_list)
 
 
 
-print("Completed successfully!")
-print("   Output in: ",path)
+print("\nCompleted successfully!\n")
+print("Output in: ",path)

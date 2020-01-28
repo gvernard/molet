@@ -10,6 +10,7 @@
 #include "polyclip.hpp"
 #include "initFuncs.hpp"
 #include "sourceProfile.hpp"
+#include "contour-tracing.hpp"
 
 #include "nonLinearPars.hpp"
 #include "massModels.hpp"
@@ -69,7 +70,13 @@ int main(int argc,char* argv[]){
   
   std::vector<Nlpar*> ext_pars;
   for(int i=0;i<jmembers.size();i++){
-    ext_pars.push_back( new Nlpar(jmembers[i],0,0,jlens["external_shear"][jmembers[i]].asDouble(),0,0,0) );
+    double value = 0.0;
+    if( jmembers[i] == "phi" ){
+      value = jlens["external_shear"][jmembers[i]].asDouble() + 90.0;
+    } else {
+      value = jlens["external_shear"][jmembers[i]].asDouble();
+    }
+    ext_pars.push_back( new Nlpar(jmembers[i],0,0,value,0,0,0) );
   }
   CollectionMassModels* mycollection = new CollectionMassModels(ext_pars);
   for(int i=0;i<ext_pars.size();i++){ delete(ext_pars[i]); }
@@ -99,10 +106,13 @@ int main(int argc,char* argv[]){
 	pars.push_back( new Nlpar(jmembers[i],0,0,jlens["mass_model"][k]["pars"][jmembers[i]].asDouble(),0,0,0) ); // only nam and val have meaning in this call
       }
       mycollection->models[k] = FactoryMassModel::getInstance()->createMassModel(mmodel,pars,cosmo[0]["Dls"].asDouble(),cosmo[0]["Ds"].asDouble());
-      //mycollection->models[k]->printMassPars();
-
     }
   }
+
+  //  for(int i=0;i<mycollection->models.size();i++){
+  //    mycollection->models[i]->printMassPars();
+  //  }
+  //  mycollection->printPhysPars();
   //================= END:CREATE THE LENSES ====================
 
 
@@ -160,6 +170,8 @@ int main(int argc,char* argv[]){
 
 
 
+
+  
   //=============== BEGIN:PRODUCE IMAGE USING RAY-SHOOTING =======================
   double xdefl,ydefl;
   for(int i=0;i<mysim.Nm;i++){
@@ -170,11 +182,70 @@ int main(int argc,char* argv[]){
 
 
 
+  
+  //=============== BEGIN:GET CRITICAL LINES AND CAUSTICS =======================
+  ImagePlane detA = mysim;
+  mycollection->detJacobian(&mysim,&detA);
+  for(int i=0;i<detA.Nm;i++){
+    if( detA.img[i] > 0 ){
+      detA.img[i] = 0;
+    } else {
+      detA.img[i] = 1;
+    }
+  }
+  detA.writeImage(output + "detA.fits");
+  std::vector<Contour*> contours;
+  mooreNeighborTracing(&detA,contours);
 
+  
+  // create the main object
+  Json::Value json_caustics;
+  Json::Value json_criticals;
+  for(int i=0;i<contours.size();i++){
+    Json::Value crit_x;
+    Json::Value crit_y;
+    Json::Value cau_x;
+    Json::Value cau_y;
+    for(int j=0;j<contours[i]->x.size();j++){
+      crit_x.append(contours[i]->x[j]);
+      crit_y.append(contours[i]->y[j]);
+      mycollection->all_defl(contours[i]->x[j],contours[i]->y[j],xdefl,ydefl);
+      cau_x.append(xdefl);
+      cau_y.append(ydefl);
+    }
+    cau_x.append(cau_x[0]);
+    cau_y.append(cau_y[0]);
+    crit_x.append(crit_x[0]);
+    crit_y.append(crit_y[0]);
 
+    Json::Value caustic;
+    caustic["x"] = cau_x;
+    caustic["y"] = cau_y;
+    json_caustics.append(caustic);
+    Json::Value critical;
+    critical["x"] = crit_x;
+    critical["y"] = crit_y;
+    json_criticals.append(critical);
+  }
+  
+  std::ofstream file_caustics(output+"caustics.json");
+  file_caustics << json_caustics;
+  file_caustics.close();
+  std::ofstream file_criticals(output+"criticals.json");
+  file_criticals << json_criticals;
+  file_criticals.close();
+  
+  for(int i=0;i<contours.size();i++){
+    delete(contours[i]);
+  }
+  //================= END:GET CRITICAL LINES AND CAUSTICS =======================
+  
+  
+  
+  
   //=============== BEGIN:OUTPUT =======================
   // Super-resolved lensed image
-  mysim.writeImage(output+"lensed_image_super.fits");
+  mysim.writeImage(output + "lensed_image_super.fits");
   // Super-resolved source image
   mysource->outputProfile(output + "source_super.fits");
   //================= END:OUTPUT =======================

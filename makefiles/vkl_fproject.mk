@@ -17,8 +17,8 @@ $(shell mkdir -p $(OBJ_DIR))
 $(shell mkdir -p $(BIN_DIR))
 
 
-FP_DEPS = initFuncs.hpp polyclip.hpp polygons.hpp sourceProfile.hpp massModels.hpp sourcePlane.hpp imagePlane.hpp nonLinearPars.hpp tableDefinition.hpp covKernels.hpp
-FP_OBJ  = initFuncs.o   polyclip.o   polygons.o   sourceProfile.o   massModels.o   sourcePlane.o   imagePlane.o   nonLinearPars.o   fastell.o                  fproject.o
+FP_DEPS = initFuncs.hpp polyclip.hpp polygons.hpp sourceProfile.hpp massModels.hpp sourcePlane.hpp imagePlane.hpp nonLinearPars.hpp contour-tracing.hpp tableDefinition.hpp covKernels.hpp
+FP_OBJ  = initFuncs.o   polyclip.o   polygons.o   sourceProfile.o   massModels.o   sourcePlane.o   imagePlane.o   nonLinearPars.o   contour-tracing.o   fastell.o           fproject.o
 FPROJECT_DEPS = $(patsubst %,$(INC_DIR)/%,$(FP_DEPS)) #Pad names with dir
 FPROJECT_OBJ  = $(patsubst %,$(OBJ_DIR)/%,$(FP_OBJ))  #Pad names with dir
 #$(info $$OBJ is [${FPROJECT_DEPS}])
