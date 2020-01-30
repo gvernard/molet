@@ -1,3 +1,5 @@
+common/vkl_lib/lib/
+common/vkl_lib/obj/
 lensed_extended_source/vkl_fproject/bin/
 lensed_extended_source/vkl_fproject/obj/
 lens_light/vkl_lens_light/bin/
