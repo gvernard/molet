@@ -1,31 +1,29 @@
 GPP = g++
 
 
-############## START: vkl_lens_light
-LL_FLAGS = -std=c++11 -fPIC -g -frounding-math
-LL_LIBS  = -lCCfits -lcfitsio -ljsoncpp
+############## START: VKL_LENS_LIGHT
+CPP_FLAGS = -std=c++11 -fPIC -g -frounding-math
+CPP_LIBS  = -ljsoncpp -lvkl -lgfortran -lCCfits -lcfitsio -lgmp -lCGAL
+EXT_LIB_DIR = common/vkl_lib/lib
 
-LL_DIR  = lens_light/vkl_lens_light
-SRC_DIR = $(LL_DIR)/src
-INC_DIR = $(LL_DIR)/inc
-BIN_DIR = $(LL_DIR)/bin
-OBJ_DIR = $(LL_DIR)/obj
+ROOT_DIR  = lens_light/vkl_lens_light
+EXT_INC_DIR = common/vkl_lib/inc
+SRC_DIR = $(ROOT_DIR)/src
+BIN_DIR = $(ROOT_DIR)/bin
+OBJ_DIR = $(ROOT_DIR)/obj
 $(shell mkdir -p $(OBJ_DIR))
 $(shell mkdir -p $(BIN_DIR))
 
-DEPS = imagePlane.hpp sourceProfile.hpp tableDefinition.hpp
-OBJ  = imagePlane.o   sourceProfile.o   lens_light.o
-LL_DEPS = $(patsubst %,$(INC_DIR)/%,$(DEPS)) #Pad names with dir
-LL_OBJ  = $(patsubst %,$(OBJ_DIR)/%,$(OBJ))  #Pad names with dir
+OBJ  = lens_light.o
+FULL_OBJ  = $(patsubst %,$(OBJ_DIR)/%,$(OBJ))  #Pad names with dir
 #$(info $$OBJ is [${LL_OBJ}])
 
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(LL_DEPS)
-	$(GPP) $(LL_FLAGS) -I $(INC_DIR) -c -o $@ $<
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.f
-	$(FORTRAN) $(FORTRAN_FLAGS) -c -o $@ $<
-lens_light: $(LL_OBJ)
-	$(GPP) $(LL_FLAGS) -I $(INC_DIR) -o $(BIN_DIR)/lens_light $(LL_OBJ) $(LL_LIBS)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	$(GPP) $(CPP_FLAGS) -I $(EXT_INC_DIR) -c -o $@ $<
+
+lens_light: $(FULL_OBJ)
+	$(GPP) $(CPP_FLAGS) -I $(EXT_INC_DIR) -o $(BIN_DIR)/lens_light $(FULL_OBJ) $(CPP_LIBS) -L $(EXT_LIB_DIR) -Wl,-rpath,$(EXT_LIB_DIR)
 lens_light_clean:
 	$(RM) -r $(OBJ_DIR)/* $(BIN_DIR)/*
-############## END: vkl_lens_light
+############## END: VKL_LENS_LIGHT

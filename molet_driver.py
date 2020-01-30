@@ -66,10 +66,12 @@ myprocess("Getting extended source lensed features...",cmd_list)
 # Intermediate step:
 # Get point source images
 ####################################################################################
-if json_in["point_source"]["type"] != "none":
+if "point_source" in json_in:
     cmd_list = [
-        "echo",
-        "'DO QUASAR STUFF'"
+        molet_home+"lensed_point_source/vkl_point_source/bin/point_source",
+        infile,
+        path+"angular_diameter_distances.json",
+        path
     ]
     myprocess("Getting point-like source lensed images...",cmd_list)  
 

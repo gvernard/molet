@@ -1,0 +1,118 @@
+{
+    "cosmology": {
+	"H0": 67.7,
+	"Om0": 0.309
+    },
+    
+    
+    "lenses": [
+
+	// Lens 1.
+	{
+	    "redshift": 0.77,
+	    
+	    "mass_model": [
+		{
+		    "type": "sie",
+		    "pars": {
+			"sigma": 250.0,
+			"q": 0.8,
+			"pa": -145.0,
+			"x0": 0.0,
+			"y0": 0.0
+		    }
+		},
+		{
+		    "type": "sie",
+		    "pars": {
+			"sigma": 50.0,
+			"q": 0.999,
+			"pa": 0.0,
+			"x0": 0.80,
+			"y0": 0.5
+		    }
+		}	
+            ],
+
+	    "external_shear": {
+		"g": 0.032,
+		"phi": -39.0
+            },
+
+	    "light_profile": {
+		"type": "analytic",
+		"pars": [
+		    {
+			"type": "sersic",
+			"x0": 0.0,
+			"y0": 0.0,
+			"pa": 115.0,
+			"q": 0.7,
+			"i_eff": 1.0,
+			"r_eff": 0.2,
+			"n": 2
+		    }
+		]
+	    }
+	    
+	}
+	
+	// Lens 2.
+    ],
+
+
+    
+    "source": {
+	"redshift": 2.03,
+
+	"light_profile": {
+	    "type": "analytic",
+	    "pars": [
+		{
+		    "type": "gauss",
+		    "x0": -0.05,
+		    "y0": 0.05,
+		    "pa": 23.0,
+		    "q": 0.64,
+		    "i_eff": 1.0,
+		    "r_eff": 0.08
+		},
+		{
+		    "type": "gauss",
+		    "x0": -0.4,
+		    "y0": 0.25,
+		    "pa": 0.0,
+		    "q": 1.0,
+		    "i_eff": 0.65,
+		    "r_eff": 0.1
+		}
+	    ]
+	}
+    },
+    
+
+
+    "point_source": {
+	"type": "AGN",
+	"x0": -0.035,
+	"y0": -0.035,
+	
+	"microlensing": {
+	}
+    },
+    
+    
+    "instrument": {
+	"bands": [
+	    {
+		"name": "some_filter",
+		"lambda_min": 975,
+		"lambda_max": 1200,
+		"resolution": 0.035,
+		"field-of-view_x": 3.5,
+		"field-of-view_y": 3.5,
+		"psf": ""
+	    }
+	]
+    }
+}

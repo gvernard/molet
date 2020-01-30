@@ -1,35 +1,29 @@
 GPP = g++
-MPICC = mpic++
-FORTRAN = gfortran
 
 
-############## START: Fproject
-FORTRAN_FLAGS = -fPIC -frounding-math
-FPROJECT_FLAGS = -std=c++11 -fPIC -g -frounding-math
-FPROJECT_LIBS  = -lgfortran -lCCfits -lcfitsio -ljsoncpp -lgmp -lCGAL
+############## START: VKL_FPROJECT
+CPP_FLAGS = -std=c++11 -fPIC -g -frounding-math
+CPP_LIBS  = -ljsoncpp -lvkl -lgfortran -lCCfits -lcfitsio -lgmp -lCGAL
+EXT_LIB_DIR = common/vkl_lib/lib
 
-FPROJECT_DIR = lensed_extended_source/vkl_fproject
-SRC_DIR = $(FPROJECT_DIR)/src
-INC_DIR = $(FPROJECT_DIR)/inc
-BIN_DIR = $(FPROJECT_DIR)/bin
-OBJ_DIR = $(FPROJECT_DIR)/obj
+ROOT_DIR = lensed_extended_source/vkl_fproject
+EXT_INC_DIR = common/vkl_lib/inc
+SRC_DIR = $(ROOT_DIR)/src
+BIN_DIR = $(ROOT_DIR)/bin
+OBJ_DIR = $(ROOT_DIR)/obj
 $(shell mkdir -p $(OBJ_DIR))
 $(shell mkdir -p $(BIN_DIR))
 
 
-FP_DEPS = initFuncs.hpp polyclip.hpp polygons.hpp sourceProfile.hpp massModels.hpp sourcePlane.hpp imagePlane.hpp nonLinearPars.hpp contour-tracing.hpp tableDefinition.hpp covKernels.hpp
-FP_OBJ  = initFuncs.o   polyclip.o   polygons.o   sourceProfile.o   massModels.o   sourcePlane.o   imagePlane.o   nonLinearPars.o   contour-tracing.o   fastell.o           fproject.o
-FPROJECT_DEPS = $(patsubst %,$(INC_DIR)/%,$(FP_DEPS)) #Pad names with dir
-FPROJECT_OBJ  = $(patsubst %,$(OBJ_DIR)/%,$(FP_OBJ))  #Pad names with dir
-#$(info $$OBJ is [${FPROJECT_DEPS}])
+OBJ  = fproject.o
+FULL_OBJ  = $(patsubst %,$(OBJ_DIR)/%,$(OBJ))  #Pad names with dir
+#$(info $$OBJ is [${FULL_DEPS}])
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(FPROJECT_DEPS)
-	$(GPP) $(FPROJECT_FLAGS) -I $(INC_DIR) -c -o $@ $<
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.f
-	$(FORTRAN) $(FORTRAN_FLAGS) -c -o $@ $<
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	$(GPP) $(CPP_FLAGS) -I $(EXT_INC_DIR) -c -o $@ $<
 
-fproject: $(FPROJECT_OBJ)
-	$(GPP) $(FPROJECT_FLAGS) -I $(INC_DIR) -o $(BIN_DIR)/fproject $(FPROJECT_OBJ) $(FPROJECT_LIBS)
+fproject: $(FULL_OBJ)
+	$(GPP) $(CPP_FLAGS) -I $(EXT_INC_DIR) -o $(BIN_DIR)/fproject $(FULL_OBJ) $(CPP_LIBS) -L $(EXT_LIB_DIR) -Wl,-rpath,$(EXT_LIB_DIR)
 fproject_clean:
 	$(RM) -r $(OBJ_DIR)/* $(BIN_DIR)/*
-############## END: Fproject
+############## END: VKL_FPROJECT
