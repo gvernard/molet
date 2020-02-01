@@ -110,14 +110,11 @@
     ],
     
     
-
-
-    
     "light_profile": {
 	"types": [
 	    {
 		"name": "sersic",
-		"description": "A 2D Sersic profile."
+		"description": "A 2D Sersic profile"
 	    },
 	    {
 		"name": "gaussian",
@@ -171,25 +168,26 @@
     },
 
 
-    "point_source": {
+    "compact_mass_model":{
 	"types": [
 	    {
-		"name": "AGN",
-		"description": "An AGN profile"
-	    },
-	    {
-		"name": "supernova",
-		"description": "A Supernova profile"
+		"name": "mass_to_light",
+		"description": "Convert the light profile to compact mass"
 	    }
+	    // The same options as for the light profile, i.e. sersic, gaussian, custom, etc...
 	],
 
-	"AGN": [
-
-	],
-
-	"supernova": [
-
+	"mass_to_light": [
+	    {
+		"name": "ratio",
+		"description": "A number to convert the flux density to mass density",
+		"units": "kg/W"
+	    }
 	]
+    },    
+
+    
+    "point_source": {
     }
 
     

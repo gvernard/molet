@@ -48,11 +48,18 @@
 			"y0": 0.0,
 			"pa": 115.0,
 			"q": 0.7,
-			"i_eff": 1.0,
+			"i_eff": 0.1,
 			"r_eff": 0.2,
 			"n": 2
 		    }
 		]
+	    },
+
+	    "compact_mass_model": {
+		"type": "mass_to_light",
+		"pars": {
+		    "ratio": 4 // in solar M/L
+		}
 	    }
 	    
 	}
@@ -93,11 +100,10 @@
 
 
     "point_source": {
-	"type": "AGN",
-	"x0": -0.035,
+	"x0": 0.005,
 	"y0": -0.035,
-	
-	"microlensing": {
+	"profile": {
+	    "type": "AGN"
 	}
     },
     

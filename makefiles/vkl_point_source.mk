@@ -16,8 +16,8 @@ $(shell mkdir -p $(OBJ_DIR))
 $(shell mkdir -p $(BIN_DIR))
 
 
-DEPS = polygons.hpp contour-tracing.hpp
-OBJ  = polygons.o   contour-tracing.o   point_source.o
+DEPS = polygons.hpp contour-tracing.hpp simplify_caustics.hpp pointImage.hpp
+OBJ  = polygons.o   contour-tracing.o   simplify_caustics.o   point_source.o
 FULL_DEPS = $(patsubst %,$(INC_DIR)/%,$(DEPS)) #Pad names with dir
 FULL_OBJ  = $(patsubst %,$(OBJ_DIR)/%,$(OBJ))  #Pad names with dir
 #$(info $$OBJ is [${FULL_DEPS}])

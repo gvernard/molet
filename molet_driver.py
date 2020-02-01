@@ -80,12 +80,13 @@ if "point_source" in json_in:
 
 
 # Step 3:
-# Get light profile of the lens
+# Get light profile of the lens (and compact matter if required)
 ####################################################################################
 cmd_list = [
-    molet_home+"lens_light/vkl_lens_light/bin/lens_light",
+    molet_home+"lens_light_mass/vkl_llm/bin/llm",
     infile,
     path+"angular_diameter_distances.json",
+    path+"multiple_images.json",
     path
 ]
 myprocess("Getting light profile of the lens...",cmd_list)

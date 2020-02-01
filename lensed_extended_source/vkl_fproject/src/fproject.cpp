@@ -7,14 +7,6 @@
 
 #include "vkllib.hpp"
 
-using std::cout;
-using std::endl;
-
-double myRandomNumber(double min,double max){
-  double r = (double) rand() / (double)RAND_MAX;
-  return min + r * (max - min);
-}
-
 
 int main(int argc,char* argv[]){
 

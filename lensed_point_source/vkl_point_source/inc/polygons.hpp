@@ -2,7 +2,9 @@
 #define TRIANGLES_HPP
 
 #include <vector>
-#include "massModels.hpp"
+
+class ImagePlane;
+class CollectionMassModels;
 
 struct point {
   double x;
@@ -15,11 +17,18 @@ struct triangle {
   point c;
 };
 
-int pnpoly(int nvert,double* vertx,double* verty,double testx,double testy);
-void findBarycenter(int len,double* x,double* y,double& xc,double& yc);
-std::vector<triangle> srcTriangles(int Ni,int Nj,double w,double h,double* x,double* y,CollectionMassModels* mycollection);
-std::vector<triangle> createTriangles(int Ni,int Nj,double w,double h);
-std::vector<triangle> selectTriangles(std::vector<triangle> triangles,double rlim);
-void deflectTriangles(std::vector<triangle> &triangles,CollectionMassModels* mycollection);
+struct itriangle {
+  int ia;
+  int ib;
+  int ic;
+};
+
+
+std::vector<triangle> imagePlaneToTriangles(ImagePlane* image);
+std::vector<itriangle> imagePlaneToTriangleIndices(ImagePlane* image);
+void deflectTriangles(const std::vector<triangle>& triangles_in,std::vector<triangle>& triangles_out,CollectionMassModels* mycollection);
+bool pointInTriangle(point p0,point p1,point p2,point p3);
+double determinant3x3(std::vector<double> row1,std::vector<double> row2,std::vector<double> row3);
+void circumcircle(point A,point B,point C,double& xc,double& xy,double& r);
 
 #endif /* TRIANGLES_HPP */

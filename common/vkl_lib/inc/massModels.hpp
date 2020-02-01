@@ -33,6 +33,7 @@ public:
   virtual void defl(double xin,double yin,double& xout,double& yout) = 0;
   virtual double kappa(double xin,double yin)   = 0;
   virtual void gamma(double xin,double yin,double& gamma_out_x,double& gamma_out_y) = 0;
+  virtual double psi(double xin,double yin) = 0;
 };
 
 
@@ -42,6 +43,7 @@ public:
   void defl(double xin,double yin,double& xout,double& yout);
   double kappa(double xin,double yin);
   void gamma(double xin,double yin,double& gamma_out_x,double& gamma_out_y);
+  double psi(double xin,double yin);
 };
 
 class Spemd: public BaseMassModel{
@@ -50,6 +52,7 @@ public:
   void defl(double xin,double yin,double& xout,double& yout);
   double kappa(double xin,double yin){};
   void gamma(double xin,double yin,double& gamma_out_x,double& gamma_out_y){};
+  double psi(double xin,double yin){};
 };
 
 class Pert: public BaseMassModel{
@@ -72,6 +75,7 @@ public:
   void defl(double xin,double yin,double& xout,double& yout);
   double kappa(double xin,double yin){};
   void gamma(double xin,double yin,double& gamma_out_x,double& gamma_out_y){};
+  double psi(double xin,double yin){};
   void replaceDpsi(double* new_dpsi);
   void addDpsi(double* corrections);
   void updatePert();
@@ -148,6 +152,8 @@ public:
   void all_kappa(ImagePlane* image,ImagePlane* kappa_tot);
   void all_gamma(double xin,double yin,double& gamma_x,double& gamma_y);
   void all_gamma(ImagePlane* image,ImagePlane* gamma_x,ImagePlane* gamma_y);
+  double all_psi(double xin,double yin);
+  void all_psi(ImagePlane* image,ImagePlane* psi_tot);
   double detJacobian(double xin,double yin);
   void detJacobian(ImagePlane* image,ImagePlane* det);
 };

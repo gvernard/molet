@@ -1,4 +1,144 @@
+#include <vector>
+
 #include "polygons.hpp"
+#include "massModels.hpp"
+#include "imagePlane.hpp"
+
+
+std::vector<triangle> imagePlaneToTriangles(ImagePlane* image){
+  std::vector<triangle> triangles;
+
+  for(int i=0;i<image->Ni-1;i++){
+    for(int j=0;j<image->Nj-1;j++){
+      triangle tri;
+      tri.a.x = image->x[i*image->Nj+j];
+      tri.a.y = image->y[i*image->Nj+j];
+      tri.b.x = image->x[i*image->Nj+j+1];
+      tri.b.y = image->y[i*image->Nj+j+1];
+      tri.c.x = image->x[(i+1)*image->Nj+j+1];
+      tri.c.y = image->y[(i+1)*image->Nj+j+1];
+      triangles.push_back(tri);
+
+      tri.a.x = image->x[i*image->Nj+j];
+      tri.a.y = image->y[i*image->Nj+j];
+      tri.b.x = image->x[(i+1)*image->Nj+j+1];
+      tri.b.y = image->y[(i+1)*image->Nj+j+1];
+      tri.c.x = image->x[(i+1)*image->Nj+j];
+      tri.c.y = image->y[(i+1)*image->Nj+j];
+      triangles.push_back(tri);
+    }
+  }
+   
+  return triangles;
+}
+
+std::vector<itriangle> imagePlaneToTriangleIndices(ImagePlane* image){
+  std::vector<itriangle> itriangles;
+
+  for(int i=0;i<image->Ni-1;i++){
+    for(int j=0;j<image->Nj-1;j++){
+      itriangle tri;
+      tri.ia = i*image->Nj+j;
+      tri.ib = i*image->Nj+j+1;
+      tri.ic = (i+1)*image->Nj+j+1;
+      itriangles.push_back(tri);
+
+      tri.ia = i*image->Nj+j;
+      tri.ib = (i+1)*image->Nj+j+1;
+      tri.ic = (i+1)*image->Nj+j;
+      itriangles.push_back(tri);
+    }
+  }
+   
+  return itriangles;
+}
+
+void deflectTriangles(const std::vector<triangle>& triangles_in,std::vector<triangle>& triangles_out,CollectionMassModels* mycollection){
+  for(int i=0;i<triangles_in.size();i++){
+    mycollection->all_defl(triangles_in[i].a.x,triangles_in[i].a.y,triangles_out[i].a.x,triangles_out[i].a.y);
+    mycollection->all_defl(triangles_in[i].b.x,triangles_in[i].b.y,triangles_out[i].b.x,triangles_out[i].b.y);
+    mycollection->all_defl(triangles_in[i].c.x,triangles_in[i].c.y,triangles_out[i].c.x,triangles_out[i].c.y);
+  }
+}
+
+
+bool pointInTriangle(point p0,point p1,point p2,point p3){
+  double termA = p2.y - p3.y;
+  double termB = p1.y - p3.y;
+  double termC = p3.x - p2.x;
+  double termD = p1.x - p3.x;
+  double termX = p0.x - p3.x;
+  double termY = p0.y - p3.y;
+
+  double den = termA*termD + termC*termB;
+  
+  double L1 = (termA*termX + termC*termY)/den;
+  double L2 = (-termB*termX + termD*termY)/den;
+  double L3 = 1.0 - L1 - L2;
+
+  if( L1 < 0 || L2 < 0 || L3 < 0 ){
+    return false;
+  } else {
+    return true;
+  }
+}
+
+
+
+double determinant3x3(std::vector<double> row1,std::vector<double> row2,std::vector<double> row3){
+  double termA =  row1[0]*(row2[1]*row3[2] - row3[1]*row2[2]);
+  double termB = -row1[1]*(row2[0]*row3[2] - row3[0]*row2[2]);
+  double termC =  row1[2]*(row2[0]*row3[1] - row3[0]*row2[1]);
+  return termA + termB + termC;
+}
+
+void circumcircle(point A,point B,point C,double& xc,double& yc,double& r){
+  std::vector<double> row1;
+  std::vector<double> row2;
+  std::vector<double> row3;
+  double A2 = A.x*A.x + A.y*A.y;
+  double B2 = B.x*B.x + B.y*B.y;
+  double C2 = C.x*C.x + C.y*C.y;
+
+  row1 = {A2,A.y,1};
+  row2 = {B2,B.y,1};
+  row3 = {C2,C.y,1};
+  double sx = 0.5*determinant3x3(row1,row2,row3);
+
+  row1 = {A.x,A2,1};
+  row2 = {B.x,B2,1};
+  row3 = {C.x,C2,1};
+  double sy = 0.5*determinant3x3(row1,row2,row3);
+
+  row1 = {A.x,A.y,1};
+  row2 = {B.x,B.y,1};
+  row3 = {C.x,C.y,1};
+  double aa = determinant3x3(row1,row2,row3);
+
+  row1 = {A.x,A.y,A2};
+  row2 = {B.x,B.y,B2};
+  row3 = {C.x,C.y,C2};
+  double bb = determinant3x3(row1,row2,row3);
+
+  xc = sx/aa;
+  yc = sy/aa;
+  r  = sqrt( bb/aa + (sx*sx+sy*sy)/pow(aa,2) );  
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 int pnpoly(int nvert,double* vertx,double* verty,double testx,double testy){
   int i, j, c = 0;
@@ -135,17 +275,5 @@ std::vector<triangle> selectTriangles(std::vector<triangle> triangles,double rli
 
   return new_triangles;
 }
-
-
-void deflectTriangles(std::vector<triangle>& triangles,CollectionMassModels* mycollection){
-
-  for(int i=0;i<triangles.size();i++){
-    mycollection->all_defl(triangles[i].a.x,triangles[i].a.y,triangles[i].a.x,triangles[i].a.y);
-    mycollection->all_defl(triangles[i].b.x,triangles[i].b.y,triangles[i].b.x,triangles[i].b.y);
-    mycollection->all_defl(triangles[i].c.x,triangles[i].c.y,triangles[i].c.x,triangles[i].c.y);
-  }
-
-}
-
 
 

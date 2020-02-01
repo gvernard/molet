@@ -139,7 +139,12 @@ void Sie::gamma(double xin,double yin,double& gamma_out_x,double& gamma_out_y){
   gamma_out_y = gamma_y;
 }
 
-
+double Sie::psi(double xin,double yin){
+  double ax,ay;
+  this->defl(xin,yin,ax,ay);
+  double psi = xin*ax + yin*ay;
+  return psi;
+}
 
 //Derived class from BaseMassModel: Spemd (Softened Power-law Elliptical Mass Density)
 //===============================================================================================================
@@ -758,5 +763,28 @@ void CollectionMassModels::detJacobian(ImagePlane* image,ImagePlane* detA){
     xin = image->x[j];
     yin = image->y[j];
     detA->img[j] = this->detJacobian(xin,yin);
+  }
+}
+
+double CollectionMassModels::all_psi(double xin,double yin){
+  double psi = 0.0;
+  for(int i=0;i<this->models.size();i++){
+    psi += this->models[i]->psi(xin,yin);
+  }
+  psi += 0.5*this->mpars["gx"]*(xin*xin-yin*yin) + this->mpars["gy"]*xin*yin;
+  return psi;
+}
+
+void CollectionMassModels::all_psi(ImagePlane* image,ImagePlane* psi_tot){
+  double xin,yin;
+  for(int j=0;j<image->Nm;j++){
+    xin = image->x[j];
+    yin = image->y[j];
+    double psi = 0.0;
+    for(int i=0;i<this->models.size();i++){
+      psi += this->models[i]->psi(xin,yin);
+    }
+    psi += this->mpars["gx"]*(xin*xin-yin*yin)/2.0 + this->mpars["gy"]*xin*yin;
+    psi_tot->img[j] = psi;
   }
 }

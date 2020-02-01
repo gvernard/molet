@@ -3,6 +3,7 @@ test_create_mock/*.fits
 test_create_mock/angular_diameter_distances.json
 test_create_mock/caustics.json
 test_create_mock/criticals.json
+test_create_mock/multiple_images.json
 common/vkl_lib/lib/
 common/vkl_lib/obj/
 lensed_extended_source/vkl_fproject/bin/
