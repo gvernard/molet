@@ -44,6 +44,7 @@ cmd_list = [
     infile,
     path
 ]
+#print(" ".join(cmd_list))
 myprocess("Getting angular diameter distances...",cmd_list)
 
 
@@ -58,13 +59,14 @@ cmd_list = [
     path+"angular_diameter_distances.json",
     path
 ]
+#print(" ".join(cmd_list))
 myprocess("Getting extended source lensed features...",cmd_list)
 
 
 
 
 # Intermediate step:
-# Get point source images
+# Get point source images and variability
 ####################################################################################
 if "point_source" in json_in:
     cmd_list = [
@@ -73,9 +75,19 @@ if "point_source" in json_in:
         path+"angular_diameter_distances.json",
         path
     ]
-    myprocess("Getting point-like source lensed images...",cmd_list)  
+    #print(" ".join(cmd_list))
+    myprocess("Getting point-like source lensed images...",cmd_list)
 
-
+    cmd_list = [
+        molet_home+"variability/extrinsic/gerlumph_moving_source/bin/moving_source",
+        infile,
+        path+"angular_diameter_distances.json",
+        path+"gerlumph_maps.json",
+        path+"multiple_images.json",
+        path
+    ]
+    #print(" ".join(cmd_list))
+    myprocess("Getting microlensing variability for each image...",cmd_list)  
 
 
 
@@ -89,6 +101,7 @@ cmd_list = [
     path+"multiple_images.json",
     path
 ]
+#print(" ".join(cmd_list))
 myprocess("Getting light profile of the lens...",cmd_list)
 
 

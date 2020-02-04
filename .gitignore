@@ -4,12 +4,18 @@ test_create_mock/angular_diameter_distances.json
 test_create_mock/caustics.json
 test_create_mock/criticals.json
 test_create_mock/multiple_images.json
+test_create_mock/gerlumph_maps.json
+test_create_mock/light_curves.json
 common/vkl_lib/lib/
 common/vkl_lib/obj/
+common/gerlumph_lib/lib/
+common/gerlumph_lib/obj/
 lensed_extended_source/vkl_fproject/bin/
 lensed_extended_source/vkl_fproject/obj/
 lens_light/vkl_lens_light/bin/
 lens_light/vkl_lens_light/obj/
 lensed_point_source/vkl_point_source/bin/
 lensed_point_source/vkl_point_source/obj/
+variability/extrinsic/gerlumph_moving_source/bin/
+variability/extrinsic/gerlumph_moving_source/obj/
 

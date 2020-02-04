@@ -23,6 +23,21 @@ vkl_llm_clean:
 	make -f makefiles/vkl_llm.mk lens_light_mass_clean
 
 
+# GERLUMPH_LIB
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+current_dir := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
+gerlumph_lib:
+	make -f makefiles/gerlumph_lib.mk cpu MAP_PATH=$(current_dir)/data/gerlumph_mirror/
+gerlumph_lib_clean:
+	make -f makefiles/gerlumph_lib.mk clean
+
+# GERLUMPH_MOVING_SOURCE
+gerlumph_moving_source: gerlumph_lib
+	make -f makefiles/gerlumph_moving_source.mk gerlumph_moving_source
+gerlumph_moving_source_clean:
+	make -f makefiles/gerlumph_moving_source.mk gerlumph_moving_source_clean
+
+
 
 
 all: vkl_fproject vkl_point_source vkl_llm

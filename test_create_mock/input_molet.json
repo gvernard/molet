@@ -100,10 +100,29 @@
 
 
     "point_source": {
-	"x0": 0.005,
+	"x0": 0.015,
 	"y0": -0.035,
-	"profile": {
-	    "type": "AGN"
+	"variability": {
+	    "intrinsic": {
+
+	    },
+	    "extrinsic": {
+		"type": "AGN",
+		"sigma_pec_l": 250,
+		"sigma_pec_s": 250,
+		"sigma_disp": 250,
+		"ra": 340.2,
+		"dec": 0.0,
+		"microlens_mass": 1,
+		"profiles": [
+		    {
+			"type": "uniform",
+			"rhalf": 130.1, // in 10^14 cm
+			"incl": 0,
+			"orient": 0
+		    }
+		]
+	    }
 	}
     },
     
@@ -119,6 +138,8 @@
 		"field-of-view_y": 3.5,
 		"psf": ""
 	    }
-	]
+	],
+	"start": "00:00:00 4-2-2020",
+	"end": "00:00:00 2-4-2026"
     }
 }
