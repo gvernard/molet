@@ -78,59 +78,67 @@ int main(int argc,char* argv[]){
   int Nfilters = root["instrument"]["bands"].size();
   Json::Value images;
   for(int m=0;m<maps.size();m++){
-    MagnificationMap map(maps[m]["id"].asString(),Rein);
+    if( maps[m]["id"].asString() == "none" ){
 
-    std::vector<BaseProfile*> profiles(Nfilters);
-    for(int k=0;k<Nfilters;k++){
-      Json::Value json_profile = root["point_source"]["variability"]["extrinsic"]["profiles"][k];
-      BaseProfile* profile = createProfileFromJson(json_profile,map.pixSizePhys);
-      profiles[k] = profile;
-    }
+      Json::Value image;
+      images.append(image);
 
-    Json::Value image;
-    for(int k=0;k<Nfilters;k++){
-      Json::Value band;
+    } else {
       
-      // set convolution kernel
-      int profMaxOffset = (int) ceil(profiles[Nfilters-1]->Nx/2);
-      EffectiveMap emap(profMaxOffset,&map);
-      Kernel kernel(map.Nx,map.Ny);
-
-      // Rotate map (i.e. rotate the velocity vectors in an opposite way)
-      for(int i=0;i<Nlc;i++){
-	vel.tot[i].phi = vel.tot[i].phi - (multiple_images[m]["phig"].asDouble() - 90);
-	phi_vtot[i]    = phi_vtot[i] - (multiple_images[m]["phig"].asDouble() - 90);
+      MagnificationMap map(maps[m]["id"].asString(),Rein);
+      
+      std::vector<BaseProfile*> profiles(Nfilters);
+      for(int k=0;k<Nfilters;k++){
+	Json::Value json_profile = root["point_source"]["variability"]["extrinsic"]["profiles"][k];
+	BaseProfile* profile = createProfileFromJson(json_profile,map.pixSizePhys);
+	profiles[k] = profile;
       }
-
-      // Set light curves
-      LightCurveCollection mother(Nlc,&emap);
-      mother.createVelocityLocations(213,duration,vtot,phi_vtot);
-
-      kernel.setKernel(profiles[k]);
-      map.convolve(&kernel,&emap);
-
-      mother.extractFull();
-      for(int i=0;i<Nlc;i++){
-	Json::Value lc;
-	for(int j=0;j<mother.lightCurves[i]->Nsamples;j++){
-	  lc.append(mother.lightCurves[i]->m[j]);
+      
+      Json::Value image;
+      for(int k=0;k<Nfilters;k++){
+	Json::Value band;
+	
+	// set convolution kernel
+	int profMaxOffset = (int) ceil(profiles[Nfilters-1]->Nx/2);
+	EffectiveMap emap(profMaxOffset,&map);
+	Kernel kernel(map.Nx,map.Ny);
+	
+	// Rotate map (i.e. rotate the velocity vectors in an opposite way)
+	for(int i=0;i<Nlc;i++){
+	  vel.tot[i].phi = vel.tot[i].phi - (multiple_images[m]["phig"].asDouble() - 90);
+	  phi_vtot[i]    = phi_vtot[i] - (multiple_images[m]["phig"].asDouble() - 90);
 	}
-	band.append(lc);
+	
+	// Set light curves
+	LightCurveCollection mother(Nlc,&emap);
+	mother.createVelocityLocations(213,duration,vtot,phi_vtot);
+	
+	kernel.setKernel(profiles[k]);
+	map.convolve(&kernel,&emap);
+	
+	mother.extractFull();
+	for(int i=0;i<Nlc;i++){
+	  Json::Value lc;
+	  for(int j=0;j<mother.lightCurves[i]->Nsamples;j++){
+	    lc.append(mother.lightCurves[i]->m[j]);
+	  }
+	  band.append(lc);
+	}
+	
+	std::string band_name = root["instrument"]["bands"][k]["name"].asString();
+	image["dt"] = mother.lightCurves[0]->t[1] - mother.lightCurves[0]->t[0];
+	image[band_name] = band;
       }
-
-      std::string band_name = root["instrument"]["bands"][k]["name"].asString();
-      image["dt"] = mother.lightCurves[0]->t[1] - mother.lightCurves[0]->t[0];
-      image[band_name] = band;
+      images.append(image);
+      
+      for(int k=0;k<Nfilters;k++){
+	delete(profiles[k]);
+      }
+      
     }
-    images.append(image);
-
-    for(int k=0;k<Nfilters;k++){
-      delete(profiles[k]);
-    }
-
   }
   //================= END:MAP LOOP =======================
-
+  
   std::ofstream file_images(output+"light_curves.json");
   file_images << images;
   file_images.close();

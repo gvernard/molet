@@ -40,5 +40,5 @@ gerlumph_moving_source_clean:
 
 
 
-all: vkl_fproject vkl_point_source vkl_llm
-clean: vkl_lib_clean vkl_fproject_clean vkl_point_source_clean vkl_llm_clean
+all: vkl_fproject vkl_point_source vkl_llm gerlumph_moving_source
+clean: vkl_lib_clean vkl_fproject_clean vkl_point_source_clean vkl_llm_clean gerlumph_lib_clean gerlumph_moving_source_clean

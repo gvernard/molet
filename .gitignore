@@ -1,4 +1,5 @@
 *.pdf
+data/
 test_create_mock/*.fits
 test_create_mock/angular_diameter_distances.json
 test_create_mock/caustics.json
