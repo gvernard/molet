@@ -353,7 +353,7 @@ int main(int argc,char* argv[]){
     double gamma_x,gamma_y;
     mycollection->all_gamma(x,y,gamma_x,gamma_y);
     multipleImages[i]->g    = hypot(gamma_x,gamma_y);
-    multipleImages[i]->phig = atan2(gamma_y,gamma_x)/0.01745329251 + 90; // in degrees east-of-north;
+    multipleImages[i]->phig = atan2(gamma_y,gamma_x)/0.01745329251 - 90; // in degrees east-of-north;
     multipleImages[i]->mag  = 1.0/mycollection->detJacobian(x,y);
   }
     

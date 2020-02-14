@@ -60,11 +60,11 @@ int main(int argc,char* argv[]){
   velocityComponents vel(Nlc);
   std::vector<double> vtot(Nlc);
   std::vector<double> phi_vtot(Nlc);
-  double ra  = root["point_source"]["variability"]["extrinsic"]["ra"].asDouble();
-  double dec = root["point_source"]["variability"]["extrinsic"]["ra"].asDouble();
-  double sigma_pec_l = root["point_source"]["variability"]["extrinsic"]["sigma_pec_l"].asDouble();
-  double sigma_pec_s = root["point_source"]["variability"]["extrinsic"]["sigma_pec_s"].asDouble();
-  double sigma_disp  = root["point_source"]["variability"]["extrinsic"]["sigma_disp"].asDouble();
+  double ra  = root["point_source"]["variability"]["extrinsic"]["pars"]["ra"].asDouble();
+  double dec = root["point_source"]["variability"]["extrinsic"]["pars"]["dec"].asDouble();
+  double sigma_pec_l = root["point_source"]["variability"]["extrinsic"]["pars"]["sigma_pec_l"].asDouble();
+  double sigma_pec_s = root["point_source"]["variability"]["extrinsic"]["pars"]["sigma_pec_s"].asDouble();
+  double sigma_disp  = root["point_source"]["variability"]["extrinsic"]["pars"]["sigma_disp"].asDouble();
   double zl = root["lenses"][0]["redshift"].asDouble();
   double zs = root["source"]["redshift"].asDouble();
   vel.createVelocitiesK04(321,ra,dec,sigma_pec_l,sigma_pec_s,sigma_disp,1.0,zl,zs,Dl,Ds,Dls);

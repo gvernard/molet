@@ -86,12 +86,10 @@
 	    }
 	],
 	
-	"eagle": [
-	    
+	"eagle": [	    
 	],
 	
 	"custom": [
-	    
 	]	
     },
 
@@ -127,17 +125,52 @@
 	],
 	
 	"sersic": [
+	    {
+		"name": "x0",
+		"description": "Light profile center abscissa",
+		"units": "arcsec"
+	    },
+	    {
+		"name": "y0",
+		"description": "Light profile center ordinate",
+		"units": "arcsec"
+	    },
+	    {
+		"name": "q",
+		"description": "Axis ratio (minor/major)",
+		"units": "-"
+	    },
+	    {
+		"name": "pa",
+		"description": "Position angle, measured east of north",
+		"units": "deg"
+	    },
+	    {
+		"name": "i_eff",
+		"description": "Effective flux",
+		"units": "-"
+	    },
+	    {
+		"name": "r_eff",
+		"description": "Effective radius",
+		"units": "arcsec"
+	    },
+	    {
+		"name": "index",
+		"description": "Sersic index",
+		"units": "-"
+	    }
 	],
 
 	"gaussian": [
 	    {
 		"name": "x0",
-		"description": "Lens light center abscissa",
+		"description": "Light profile center abscissa",
 		"units": "arcsec"
 	    },
 	    {
 		"name": "y0",
-		"description": "Lens light center ordinate",
+		"description": "Light profile center ordinate",
 		"units": "arcsec"
 	    },
 	    {
@@ -157,13 +190,12 @@
 	    },
 	    {
 		"name": "r_eff",
-		"description": "Effective radius",
+		"description": "Standard deviation",
 		"units": "arcsec"
 	    }
 	],
 
 	"custom": [
-
 	]
     },
 
@@ -188,7 +220,103 @@
 
     
     "point_source": {
-    }
+    },
 
+    
+    "variability_intrinsic":{
+	"types": [
+	    {
+		"name": "AGN",
+		"description": "Intrinsic AGN variability light curve"
+	    },
+	    {
+		"name": "SN",
+		"description": "Intrinsic supernova light curve"
+	    },
+	    {
+		"name": "custom",
+		"description": "A given intrinsic variability light curve"
+	    }
+	],
+
+	"AGN": [
+	    "Parameters for the AGN variability third-party code"
+	],
+
+	"SN": [
+	    "Parameters for the SN variability third-party code"
+	],
+	
+	"custom": [
+	]
+    },
+
+
+    
+    "variability_extrinsic": {
+	"types": [
+	    {
+		"name": "AGN",
+		"description": "A moving AGN profile across a magnification map"
+	    },
+	    {
+		"name": "lamppost",
+		"description": "A reverberating and moving AGN profile on a magnification map"
+	    },
+	    {
+		"name": "SN",
+		"description": "An expanding supernova profile on a magnification map"
+	    },
+	    {
+		"name": "moving_SN",
+		"description": "An expanding and moving supernova profile on a magnification map"
+	    },
+	    {
+		"name": "custom",
+		"description": "Given microlensing variability light curves for each multiple image"
+	    }
+	],
+
+	"AGN": [
+	    {
+		"name": "sigma_pec_l",
+		"description": "Sets the dispersion of a Gaussian distribution from which the magnitude of the lens galaxy peculiar velocity vector is drawn",
+		"units": "km/s"
+	    },
+	    {
+		"name": "sigma_pec_s",
+		"description": "Sets the dispersion of a Gaussian distribution from which the magnitude of the source galaxy peculiar velocity vector is drawn",
+		"units": "km/s"
+	    },
+	    {
+		"name": "sigma_disp",
+		"description": "Sets the velocity dispersion of the stars inside the galaxy lens",
+		"units": "km/s"
+	    },
+	    {
+		"name": "ra",
+		"description": "Lens right ascension",
+		"units": "hours"
+	    },
+	    {
+		"name": "dec",
+		"description": "Lens declination",
+		"units": "deg"
+	    }
+	],
+	
+	"lamppost": [
+	],
+	
+	"SN": [
+	],
+	
+	"moving_SN": [
+	],
+	
+	"custom": [
+	]
+    }
+    
     
 }

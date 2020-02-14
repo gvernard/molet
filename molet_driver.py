@@ -97,27 +97,32 @@ myprocess("Getting light profile of the lens...",cmd_list)
 # Get variability
 ####################################################################################
 if "point_source" in json_in:
-    cmd_list = [
-        "python",
-        molet_home+"variability/extrinsic/match_to_gerlumph/match_to_gerlumph.py",
-        molet_home+"data/gerlumph.db",
-        path+"multiple_images.json",
-        path
-    ]
-    #print(" ".join(cmd_list))
-    myprocess("Matching macro-images to GERLUMPH maps...",cmd_list)  
 
+    # Intrinsic
+    if json_in["point_source"]["variability"]["intrinsic"]["type"] != "custom":
     
-    cmd_list = [
-        molet_home+"variability/extrinsic/gerlumph_moving_source/bin/moving_source",
-        infile,
-        path+"angular_diameter_distances.json",
-        path+"gerlumph_maps.json",
-        path+"multiple_images.json",
-        path
-    ]
-    #print(" ".join(cmd_list))
-    myprocess("Getting microlensing variability for each image...",cmd_list)  
+    # Extrinsic
+    if json_in["point_source"]["variability"]["extrinsic"]["type"] != "custom":
+        cmd_list = [
+            "python",
+            molet_home+"variability/extrinsic/match_to_gerlumph/match_to_gerlumph.py",
+            molet_home+"data/gerlumph_database/gerlumph.db",
+            path+"multiple_images.json",
+            path
+        ]
+        #print(" ".join(cmd_list))
+        myprocess("Matching macro-images to GERLUMPH maps...",cmd_list)  
+    
+        cmd_list = [
+            molet_home+"variability/extrinsic/gerlumph_moving_source/bin/moving_source",
+            infile,
+            path+"angular_diameter_distances.json",
+            path+"gerlumph_maps.json",
+            path+"multiple_images.json",
+            path
+        ]
+        #print(" ".join(cmd_list))
+        myprocess("Getting microlensing variability for each image...",cmd_list)  
 
 
 

@@ -67,6 +67,9 @@ int main(int argc,char* argv[]){
 	if( jpars[j] != "type" ){
 	  pars[jpars[j]] = jll["pars"][i][jpars[j]].asDouble();
 	}
+	if( jpars[j] == "pa" ){
+	  pars[jpars[j]] = jll["pars"][i][jpars[j]].asDouble() + 90.0;
+	}
       }
       all_pars.push_back(pars);
     }

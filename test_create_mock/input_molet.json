@@ -104,16 +104,18 @@
 	"y0": -0.035,
 	"variability": {
 	    "intrinsic": {
-
+		"type": "custom"
 	    },
 	    "extrinsic": {
-		"type": "AGN",
-		"sigma_pec_l": 250,
-		"sigma_pec_s": 250,
-		"sigma_disp": 250,
-		"ra": 340.2,
-		"dec": 0.0,
 		"microlens_mass": 1,
+		"type": "AGN",
+		"pars": {
+		    "sigma_pec_l": 250,
+		    "sigma_pec_s": 250,
+		    "sigma_disp": 250,
+		    "ra": 340.2,
+		    "dec": 0.0
+		},
 		"profiles": [
 		    {
 			"type": "uniform",
