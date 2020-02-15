@@ -1,4 +1,4 @@
-/test_create_mock/output/
+/tests/*/output/
 *.pdf
 /data/
 lib

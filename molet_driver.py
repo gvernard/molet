@@ -42,7 +42,7 @@ cmd_list = [
     "python",
     molet_home+"cosmology/angular_diameter_distances.py",
     infile,
-    path
+    path+"output/"
 ]
 #print(" ".join(cmd_list))
 myprocess("Getting angular diameter distances...",cmd_list)
@@ -56,8 +56,8 @@ myprocess("Getting angular diameter distances...",cmd_list)
 cmd_list = [
     molet_home+"lensed_extended_source/vkl_fproject/bin/fproject",
     infile,
-    path+"angular_diameter_distances.json",
-    path
+    path+"output/angular_diameter_distances.json",
+    path+"output/"
 ]
 #print(" ".join(cmd_list))
 myprocess("Getting extended source lensed features...",cmd_list)
@@ -70,8 +70,8 @@ if "point_source" in json_in:
     cmd_list = [
         molet_home+"lensed_point_source/vkl_point_source/bin/point_source",
         infile,
-        path+"angular_diameter_distances.json",
-        path
+        path+"output/angular_diameter_distances.json",
+        path+"output/"
     ]
     #print(" ".join(cmd_list))
     myprocess("Getting point-like source lensed images...",cmd_list)
@@ -84,9 +84,9 @@ if "point_source" in json_in:
 cmd_list = [
     molet_home+"lens_light_mass/vkl_llm/bin/llm",
     infile,
-    path+"angular_diameter_distances.json",
-    path+"multiple_images.json",
-    path
+    path+"output/angular_diameter_distances.json",
+    path+"output/multiple_images.json",
+    path+"output/"
 ]
 #print(" ".join(cmd_list))
 myprocess("Getting light profile of the lens...",cmd_list)
@@ -100,6 +100,7 @@ if "point_source" in json_in:
 
     # Intrinsic
     if json_in["point_source"]["variability"]["intrinsic"]["type"] != "custom":
+        dummm = "yo"
     
     # Extrinsic
     if json_in["point_source"]["variability"]["extrinsic"]["type"] != "custom":
@@ -107,8 +108,8 @@ if "point_source" in json_in:
             "python",
             molet_home+"variability/extrinsic/match_to_gerlumph/match_to_gerlumph.py",
             molet_home+"data/gerlumph_database/gerlumph.db",
-            path+"multiple_images.json",
-            path
+            path+"output/multiple_images.json",
+            path+"output/"
         ]
         #print(" ".join(cmd_list))
         myprocess("Matching macro-images to GERLUMPH maps...",cmd_list)  
@@ -116,10 +117,10 @@ if "point_source" in json_in:
         cmd_list = [
             molet_home+"variability/extrinsic/gerlumph_moving_source/bin/moving_source",
             infile,
-            path+"angular_diameter_distances.json",
-            path+"gerlumph_maps.json",
-            path+"multiple_images.json",
-            path
+            path+"output/angular_diameter_distances.json",
+            path+"output/gerlumph_maps.json",
+            path+"output/multiple_images.json",
+            path+"output/"
         ]
         #print(" ".join(cmd_list))
         myprocess("Getting microlensing variability for each image...",cmd_list)  
@@ -132,4 +133,4 @@ if "point_source" in json_in:
 
 
 print("\nCompleted successfully!\n")
-print("Output in: ",path)
+print("Output in: ",path+"output/")
