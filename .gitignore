@@ -1,12 +1,6 @@
-test_create_mock/*.fits
-angular_diameter_distances.json
-caustics.json
-criticals.json
-multiple_images.json
-gerlumph_maps.json
-light_curves.json
+/test_create_mock/output/
 *.pdf
-data/
+/data/
 lib
 obj
 bin
