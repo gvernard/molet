@@ -3,7 +3,7 @@ GPP = g++
 
 ############## START: Fproject
 CPP_FLAGS = -std=c++11 -fPIC -g -frounding-math
-CPP_LIBS  =  -ljsoncpp -lvkl -lgfortran -lCCfits -lcfitsio -lgmp -lCGAL
+CPP_LIBS  =  -lfftw3 -ljsoncpp -lvkl -lgfortran -lCCfits -lcfitsio -lgmp -lCGAL
 EXT_LIB_DIR = common/vkl_lib/lib
 
 ROOT_DIR = instrument_combined_light
