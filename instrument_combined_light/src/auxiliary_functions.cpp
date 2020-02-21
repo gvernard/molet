@@ -207,3 +207,31 @@ offsetPSF PSF::offsetPSFtoPosition(double x,double y,ImagePlane* image){
   PSFoffset.ni = ni;
   return PSFoffset;
 }
+
+
+
+
+
+LightCurve::LightCurve(const Json::Value lc){
+  for(int t=0;t<lc["time"].size();t++){
+    this->time.push_back( lc["time"][t].asDouble() );
+    this->signal.push_back( lc["signal"][t].asDouble() );
+  }
+}
+
+void LightCurve::interpolate(std::vector<double> obs_time,double delay,double* interpolated){
+  // Assumption 1: obs_time and interpolated have the same length
+  // Assumption 2: the light curve is at least as long as obs_time (in actual time values)
+  int i = 0;
+  int j  = 1;
+  while( i < obs_time.size() ){
+    double t = obs_time[i] + delay;
+    if( this->time[j] > t ){
+      //interpolate
+      interpolated[i] = this->signal[j-1]+(t-this->time[j-1])*(this->signal[j]-this->signal[j-1])/(this->time[j]-this->time[j-1]);
+      i++;
+    } else {
+      j++;
+    }
+  }
+}

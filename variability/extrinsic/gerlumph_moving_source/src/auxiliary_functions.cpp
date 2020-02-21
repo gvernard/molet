@@ -7,6 +7,19 @@
 
 #include "auxiliary_functions.hpp"
 
+int filterMaxVelTot(std::vector<double> vtot){
+  int index;
+  double vtot_max = 0.0;
+  for(int i=0;i<vtot.size();i++){
+    if( vtot[i] > vtot_max ){
+      index = i;
+      vtot_max = vtot[i];
+    }
+  }
+  return index;
+}
+
+
 double dateDifference(std::string start,std::string end){
   struct std::tm tm_start;
   strptime(start.c_str(),"%H:%M:%S %d-%m-%Y",&tm_start);

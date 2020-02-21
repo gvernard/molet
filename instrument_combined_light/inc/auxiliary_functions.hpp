@@ -2,6 +2,7 @@
 #define AUXILIARY_HPP
 
 #include <string>
+#include "json/json.h"
 
 class ImagePlane;
 
@@ -38,5 +39,19 @@ public:
   void convolve(ImagePlane* image);
   offsetPSF offsetPSFtoPosition(double x,double y,ImagePlane* image);
 };
+
+// Light curve related functions
+class LightCurve{
+public:
+  std::vector<double> time;
+  std::vector<double> signal;
+  
+  LightCurve(const Json::Value lc);
+
+  void interpolate(std::vector<double> obs_time,double delay,double* interpolated);
+};
+
+
+
 
 #endif /* AUXILIARY_HPP */

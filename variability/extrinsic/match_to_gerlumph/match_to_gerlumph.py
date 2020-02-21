@@ -4,16 +4,21 @@ import json
 import math
 import sqlite3
 
+'''
+Reuiqres:
+- multiple_images.json
+'''
 
 dbfile     = sys.argv[1]
+path       = sys.argv[2]
 
-f          = open(sys.argv[2],'r')
+f          = open(path+"output/multiple_images.json",'r')
 input_str  = f.read()
 input_str  = re.sub(re.compile("/\*.*?\*/",re.DOTALL),"",input_str)
 input_str  = re.sub(re.compile("//.*?\n" ),"",input_str)
 images     = json.loads(input_str)
 
-outfile = sys.argv[3]+"gerlumph_maps.json"
+outfile = path+"output/gerlumph_maps.json"
 
 
 

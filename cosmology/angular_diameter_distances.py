@@ -13,7 +13,7 @@ input_str  = re.sub(re.compile("//.*?\n" ),"",input_str)
 myinput    = json.loads(input_str)
 
 
-outfile = sys.argv[2]+"angular_diameter_distances.json"
+outfile = sys.argv[2]+"output/angular_diameter_distances.json"
 H0      = myinput["cosmology"]["H0"]  # in km s^-1 Mpc^-1
 Om0     = myinput["cosmology"]["Om0"] # Omega matter at t=t_0 (now)
 cosmo   = FlatLambdaCDM(H0=H0 * u.km / u.s / u.Mpc, Om0=Om0)

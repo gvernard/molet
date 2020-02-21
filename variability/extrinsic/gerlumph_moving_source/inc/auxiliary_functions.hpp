@@ -5,6 +5,7 @@
 #include "json/json.h"
 #include "gerlumph.hpp"
 
+int filterMaxVelTot(std::vector<double> vtot);
 double dateDifference(std::string start,std::string end);
 BaseProfile* createProfileFromJson(Json::Value profile,double pixSizePhys);
 

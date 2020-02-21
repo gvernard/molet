@@ -9,7 +9,12 @@
 
 
 int main(int argc,char* argv[]){
+  /*
+    Requires:
+    - angular_diameter_distances.json
+  */
 
+  
   //=============== BEGIN:PARSE INPUT =======================
   std::ifstream fin;
   Json::Value::Members jmembers;
@@ -19,15 +24,18 @@ int main(int argc,char* argv[]){
   fin.open(argv[1],std::ifstream::in);
   fin >> root;
   fin.close();
+
+  std::string path = argv[2];
+  std::string output = path+"output/";
+  
+
   
   // Read the cosmological parameters
   Json::Value cosmo;
-  fin.open(argv[2],std::ifstream::in);
+  fin.open(output+"angular_diameter_distances.json",std::ifstream::in);
   fin >> cosmo;
   fin.close();
 
-  std::string output = argv[3];
-  
   // Initialize image plane
   const Json::Value jiplane = root["instrument"]["bands"][0];
   double width  = jiplane["field-of-view_x"].asDouble();

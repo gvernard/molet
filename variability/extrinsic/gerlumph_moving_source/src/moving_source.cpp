@@ -12,6 +12,13 @@
 
 int main(int argc,char* argv[]){
 
+  /*
+    Requires:
+    - angular_diameter_distances.json
+    - gerlumph_maps.json
+    - multiple_images.json
+  */
+  
   //=============== BEGIN:INITIALIZE =======================
   std::ifstream fin;
   Json::Value::Members jmembers;
@@ -21,33 +28,33 @@ int main(int argc,char* argv[]){
   fin.open(argv[1],std::ifstream::in);
   fin >> root;
   fin.close();
+
+  std::string path = argv[2];
+  std::string output = path + "output/";
+
   
   // Read the cosmological parameters
   Json::Value cosmo;
-  fin.open(argv[2],std::ifstream::in);
+  fin.open(output+"angular_diameter_distances.json",std::ifstream::in);
   fin >> cosmo;
   fin.close();
 
   // Read matching gerlumph map parameters
   Json::Value maps;
-  fin.open(argv[3],std::ifstream::in);
+  fin.open(output+"gerlumph_maps.json",std::ifstream::in);
   fin >> maps;
   fin.close();
 
   // Read multiple image parameters
   Json::Value multiple_images;
-  fin.open(argv[4],std::ifstream::in);
+  fin.open(output+"multiple_images.json",std::ifstream::in);
   fin >> multiple_images;
   fin.close();
 
-  std::string output = argv[5];
 
 
-  // Number of light curves
-  int Nlc = 10;
-
-  // Get total duration of the observations
-  double duration = dateDifference(root["instrument"]["start"].asString(),root["instrument"]["end"].asString()); // in days
+  int Nlc = 100;
+  int Nfilters = root["instrument"]["bands"].size();
 
   // Calculate the Einstein radius of the microlenses on the source plane
   double Dl  = cosmo[0]["Dl"].asDouble();
@@ -70,12 +77,25 @@ int main(int argc,char* argv[]){
   vel.createVelocitiesK04(321,ra,dec,sigma_pec_l,sigma_pec_s,sigma_disp,1.0,zl,zs,Dl,Ds,Dls);
   for(int i=0;i<Nlc;i++){
     vtot[i]     = vel.tot[i].v;
+    std::cout << i << " " << vtot[i] << std::endl;
     phi_vtot[i] = vel.tot[i].phi;
   }
+
+  // Monitoring time duration in each filter
+  std::vector<double> duration;
+  for(int k=0;k<Nfilters;k++){
+    //  double duration = dateDifference(root["instrument"]["start"].asString(),root["instrument"]["end"].asString()); // in days
+    int Ntime   = root["instrument"]["bands"][k]["time"].size();
+    double t0   = root["instrument"]["bands"][k]["time"][0].asDouble();
+    double tmax = root["instrument"]["bands"][k]["time"][Ntime-1].asDouble();
+    duration.push_back( ceil(tmax-t0) );
+  }	
   //================= END:INITIALIZE =======================
+
+
+
   
   //=============== BEGIN:MAP LOOP =======================
-  int Nfilters = root["instrument"]["bands"].size();
   Json::Value images;
   for(int m=0;m<maps.size();m++){
     if( maps[m]["id"].asString() == "none" ){
@@ -84,7 +104,6 @@ int main(int argc,char* argv[]){
       images.append(image);
 
     } else {
-      
       MagnificationMap map(maps[m]["id"].asString(),Rein);
       
       std::vector<BaseProfile*> profiles(Nfilters);
@@ -96,8 +115,6 @@ int main(int argc,char* argv[]){
       
       Json::Value image;
       for(int k=0;k<Nfilters;k++){
-	Json::Value band;
-	
 	// set convolution kernel
 	int profMaxOffset = (int) ceil(profiles[Nfilters-1]->Nx/2);
 	EffectiveMap emap(profMaxOffset,&map);
@@ -111,23 +128,29 @@ int main(int argc,char* argv[]){
 	
 	// Set light curves
 	LightCurveCollection mother(Nlc,&emap);
-	mother.createVelocityLocations(213,duration,vtot,phi_vtot);
+	mother.createVelocityLocations(213,duration[k],vtot,phi_vtot);
 	
 	kernel.setKernel(profiles[k]);
 	map.convolve(&kernel,&emap);
 	
 	mother.extractFull();
-	for(int i=0;i<Nlc;i++){
-	  Json::Value lc;
-	  for(int j=0;j<mother.lightCurves[i]->Nsamples;j++){
-	    lc.append(mother.lightCurves[i]->m[j]);
-	  }
-	  band.append(lc);
+
+
+	// Filter light curves
+	int lc_index = filterMaxVelTot(vtot);
+	std::cout << lc_index << std::endl;
+	// Output light curve
+	LightCurve* lc_final = mother.lightCurves[lc_index];
+	Json::Value time;
+	Json::Value signal;
+	double t_interval = 11574*map.pixSizePhys/vtot[lc_index]; // 11574 = 1/86400 * 10^9, first term from [day] in [s], second from 10^14 cm pixel size
+	for(int j=0;j<lc_final->Nsamples;j++){
+	  time.append(lc_final->t[j]*t_interval);
+	  signal.append(lc_final->m[j]);
 	}
-	
 	std::string band_name = root["instrument"]["bands"][k]["name"].asString();
-	image["dt"] = mother.lightCurves[0]->t[1] - mother.lightCurves[0]->t[0];
-	image[band_name] = band;
+	image[band_name]["time"] = time;
+	image[band_name]["signal"] = signal;
       }
       images.append(image);
       
@@ -139,7 +162,7 @@ int main(int argc,char* argv[]){
   }
   //================= END:MAP LOOP =======================
   
-  std::ofstream file_images(output+"light_curves.json");
+  std::ofstream file_images(output+"extrinsic_light_curves.json");
   file_images << images;
   file_images.close();
 
