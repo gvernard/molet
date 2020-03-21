@@ -124,7 +124,7 @@ cmd_list = [
     infile,
     path
 ]
-#print(" ".join(cmd_list))
+print(" ".join(cmd_list))
 myprocess("Combining light components and including instrumental effects...",cmd_list) 
     
 

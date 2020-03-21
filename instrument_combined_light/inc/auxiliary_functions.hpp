@@ -14,6 +14,7 @@ public:
   int ni;
 };
 
+
 class PSF {
 public:
   ImagePlane* original_psf = NULL;
@@ -40,8 +41,27 @@ public:
   offsetPSF offsetPSFtoPosition(double x,double y,ImagePlane* image);
 };
 
-// Light curve related functions
-class LightCurve{
+
+class TransformPSF {
+public:
+  double x0; // in arcsec
+  double y0; // in arcsec
+  double rot; // degrees normal cartesian
+  bool flip_x;
+  bool flip_y;
+
+  TransformPSF(double a,double b,double c,bool d,bool e);
+  
+  void applyTransform(double xin,double yin,double& xout,double& yout);
+  double interpolateValue(double x,double y,PSF* mypsf);
+
+private:
+  double cosrot;
+  double sinrot;
+};
+
+
+class LightCurve {
 public:
   std::vector<double> time;
   std::vector<double> signal;

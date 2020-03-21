@@ -3,6 +3,37 @@
 #include "vkllib.hpp"
 #include "auxiliary_functions.hpp"
 
+
+
+TransformPSF::TransformPSF(double a,double b,double c,bool d,bool e){
+  this->x0 = a;
+  this->y0 = b;
+  this->rot = c * 0.01745329251;// converting to rad
+  this->flip_x = d;
+  this->flip_y = e;
+
+  this->cosrot = cos(this->rot);
+  this->sinrot = sin(this->rot);
+}
+
+void TransformPSF::applyTransform(double xin,double yin,double& xout,double& yout){
+  xout =  (xin-this->x0)*this->cosrot + (yin-this->y0)*this->sinrot;
+  yout = -(xin-this->x0)*this->sinrot + (yin-this->y0)*this->cosrot;
+  if( this->flip_x ){
+    xout *= -1.0;
+  }
+  if( this->flip_y ){
+    yout *= -1.0;
+  }
+}
+
+double TransformPSF::interpolateValue(double x,double y,PSF* mypsf){
+  return 1.0;
+}
+
+
+
+
 void PSF::interpolatePSF(ImagePlane* mydata){
   //    double newPixSize  = (mydata->xmax - mydata->xmin)/mydata->Nj;
   double newPixSize  = (mydata->width)/(mydata->Nj);
@@ -207,6 +238,11 @@ offsetPSF PSF::offsetPSFtoPosition(double x,double y,ImagePlane* image){
   PSFoffset.ni = ni;
   return PSFoffset;
 }
+
+
+
+
+
 
 
 

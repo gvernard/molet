@@ -157,7 +157,7 @@ int main(int argc,char* argv[]){
       }
       free(intrinsic_signal);
 
-
+      /*
       for(int t=0;t<obs_time.size();t++){
 	printf("%3d: ",t);
 	for(int q=0;q<images.size();q++){
@@ -165,33 +165,90 @@ int main(int argc,char* argv[]){
 	}
 	printf("\n");
       }
+      */
+
+
+
 
       
+      
+      // Perturb the PSF at each image location
+      std::vector<PSF*> PSF_list(images.size());
+      for(int q=0;q<images.size();q++){
+	//TransformPSF* dum = new TransformPSF(images[q]["x"].asDouble(),images[q]["y"].asDouble(),0.0,false,false);
+	//transPSF[q] = dum;
+	PSF_list[q] = &mypsf; // just copy the same psf per image
+      }
+            
+
       // Set the PSF related offsets for each image
       std::vector<offsetPSF> PSFoffsets(images.size());
       for(int q=0;q<images.size();q++){
-	PSFoffsets[q] = mypsf.offsetPSFtoPosition(images[q]["x"].asDouble(),images[q]["y"].asDouble(),&mysim);
-	//printf("%d %d %d %d\n",PSFoffsets[q].offset_image,PSFoffsets[q].offset_cropped,PSFoffsets[q].nj,PSFoffsets[q].ni);
+	PSFoffsets[q] = PSF_list[q]->offsetPSFtoPosition(images[q]["x"].asDouble(),images[q]["y"].asDouble(),&mysim);
       }
-
+      // Calculate the appropriate PSF sums
+      std::vector<double> psf_partial_sum(images.size());
+      for(int q=0;q<images.size();q++){
+	double sum = 0.0;
+	for(int i=0;i<PSFoffsets[q].ni;i++){
+	  for(int j=0;j<PSFoffsets[q].nj;j++){
+	    int index_psf = i*PSF_list[q]->cropped_psf->Nj + j;
+	    sum += PSF_list[q]->cropped_psf->img[index_psf];
+	  }
+	}
+	psf_partial_sum[q] = sum;
+      }
+	
+      
       // Loop over time starts here
       for(int t=0;t<obs_time.size();t++){
 	ImagePlane pp_light(super_res_x,super_res_y,width,height);
-	
+
+	/*
 	for(int q=0;q<images.size();q++){
+	  // Calcuate the PSF sum and its contribution to each image pixel, and keep only the non-zeros
+	  double value,xout,yout;
+	  double sum = 0.0;
+	  std::vector<int> indices;
+	  std::vector<double> values;
+	  for(int i=0;i<pp_light.Nm;i++){
+	    transPSF[q]->applyTransform(pp_light.x[i],pp_light.y[i],xout,yout);
+	    value = transPSF[q]->interpolateValue(xout,yout,&mypsf);
+	    if( value > 0.0 ){
+	      indices.push_back(i);
+	      values.push_back(value);
+	      sum += value;
+	    }
+	  }
+
+	  // Assign the corrected by the PSF sum value to each image pixel
+	  double macro_mag = abs(images[q]["mag"].asDouble());
+	  double factor = macro_mag*img_signal[q][t]/sum;
+	  for(int j=0;j<indices.size();j++){
+	    pp_light.img[indices[j]] += factor*values[j];
+	  }
+	}
+	*/
+	
+        for(int q=0;q<images.size();q++){
 	  double macro_mag = abs(images[q]["mag"].asDouble());
 	  //double macro_mag = 10.0;
-	  double factor = macro_mag * img_signal[q][t];
+	  double factor = macro_mag*(img_signal[q][t]/psf_partial_sum[q]);
 	  for(int i=0;i<PSFoffsets[q].ni;i++){
 	    for(int j=0;j<PSFoffsets[q].nj;j++){
 	      int index_img = pp_light.Nj*i + j;
-	      int index_psf = i*mypsf.cropped_psf->Nj + j;
-	      //	    pp_light.img[PSFoffsets[q].offset_image + pp_light.Nj*i + j] += 1.0;
-	      pp_light.img[PSFoffsets[q].offset_image + index_img] += factor*mypsf.cropped_psf->img[PSFoffsets[q].offset_cropped + index_psf];
+	      int index_psf = i*PSF_list[q]->cropped_psf->Nj + j;
+	      //pp_light.img[PSFoffsets[q].offset_image + pp_light.Nj*i + j] += 1.0;
+	      pp_light.img[PSFoffsets[q].offset_image + index_img] += factor*PSF_list[q]->cropped_psf->img[PSFoffsets[q].offset_cropped + index_psf];
 	    }
 	  }
 	}
+
 	
+
+
+
+	// Add time-dependent image to base
 	for(int i=0;i<pp_light.Nm;i++){
 	  pp_light.img[i] = pp_light.img[i] + base.img[i];
 	}
@@ -222,8 +279,10 @@ int main(int argc,char* argv[]){
 	obs_img.writeImage(output + "OBS_" + band_name + "_" + timestep + ".fits");
       }
 
+      
       for(int q=0;q<images.size();q++){
 	free(img_signal[q]);
+	//free(transPSF[q]);
       }
       free(img_signal);
       //================= END:CREATE THE TIME VARYING LIGHT ====================
