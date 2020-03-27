@@ -1,3 +1,5 @@
+#define _USE_MATH_DEFINES
+
 #include "sourceProfile.hpp"
 
 #include <iostream>
@@ -5,7 +7,7 @@
 #include <map>
 #include <sstream>
 #include <fstream>
-
+#include <cmath>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Delaunay_triangulation_2.h>
@@ -86,11 +88,12 @@ Sersic::Sersic(std::map<std::string,double> pars){
   this->type          = "sersic";
   this->pars["n"]     = pars["n"];
   this->pars["r_eff"] = pars["r_eff"];
-  this->pars["i_eff"] = pars["i_eff"];
+  this->pars["M_tot"] = pars["M_tot"];
   this->pars["q"]     = pars["q"];
   this->pars["x0"]    = pars["x0"];
   this->pars["y0"]    = pars["y0"];
   this->pars["pa"]    = pars["pa"];
+  this->scaleProfile();
 }
 
 double Sersic::function_value(double x,double y){
@@ -104,6 +107,16 @@ double Sersic::function_value(double x,double y){
   r = sqrt(this->pars["q"]*this->pars["q"]*u*u + v*v);
   fac2 = pow(r/this->pars["r_eff"],1./this->pars["n"]);
   return this->pars["i_eff"]*exp(-bn*fac2 - 1);
+}
+
+void Sersic::scaleProfile(){
+  double gamma = 1.0;
+  for(int i=1;i<2*this->pars["n"]-1;i++){
+    gamma *= i;
+  }
+  double bn = 1.9992*this->pars["n"] - 0.3271;//From Capaccioli 1989
+  double den = pow(this->pars["r_eff"],2)*2*M_PI*this->pars["n"]*exp(bn)*gamma/pow(bn,2*this->pars["n"]);
+  this->pars["i_eff"] = pow(10.0,-0.4*this->pars["M_tot"])/den;
 }
 
 std::vector<double> Sersic::extent(){
@@ -122,11 +135,12 @@ std::vector<double> Sersic::extent(){
 proGauss::proGauss(std::map<std::string,double> pars){
   this->type          = "gauss";
   this->pars["r_eff"] = pars["r_eff"];
-  this->pars["i_eff"] = pars["i_eff"];
+  this->pars["M_tot"] = pars["M_tot"];
   this->pars["q"]     = pars["q"];
   this->pars["x0"]    = pars["x0"];
   this->pars["y0"]    = pars["y0"];
   this->pars["pa"]    = pars["pa"];
+  this->scaleProfile();
 }
 
 double proGauss::function_value(double x,double y){
@@ -142,6 +156,11 @@ double proGauss::function_value(double x,double y){
   r2 = (this->pars["q"]*this->pars["q"]*u*u + v*v)/sdev;
   //    return (this->ieff*exp(-r2)/(sqrt(sdev*3.14159)));
   return this->pars["i_eff"]*exp(-r2);
+}
+
+void proGauss::scaleProfile(){
+  double den = 2.0*M_PI*pow(this->pars["r_eff"],2);
+  this->pars["i_eff"] = pow(10.0,-0.4*this->pars["M_tot"])*this->pars["q"]/den;
 }
 
 std::vector<double> proGauss::extent(){
@@ -197,10 +216,9 @@ void Analytic::outputProfile(std::string filename){
 
 
 
-
 //Derived class from BaseProfile: fromFITS
 //===============================================================================================================
-fromFITS::fromFITS(std::string filename,int Ni,int Nj,double height,double width,double x0,double y0){
+fromFITS::fromFITS(std::string filename,int Ni,int Nj,double height,double width,double x0,double y0,double Mtot){
   this->type = "fromfits";
   this->Ni = Ni;
   this->Nj = Nj;
@@ -208,6 +226,7 @@ fromFITS::fromFITS(std::string filename,int Ni,int Nj,double height,double width
   this->width  = width;
   this->x0 = x0;
   this->y0 = y0;
+  this->Mtot = Mtot;
   this->mySource = new ImagePlane(filename,Ni,Nj,height,width);
   scaleProfile();
   // ImagePlane sets the coordinate origin in the center of the image, so I can re-position it here.
@@ -250,14 +269,14 @@ void fromFITS::outputProfile(std::string filename){
 }
 
 void fromFITS::scaleProfile(){
-  double max = 0.0;
+  double sum = 0.0;
+  double dS = (this->width/this->Nj) * (this->height/this->Ni);
   for(int i=0;i<this->mySource->Nm;i++){
-    if( this->mySource->img[i] > max ){
-      max = this->mySource->img[i];
-    }
+    sum += this->mySource->img[i]*dS;
   }
+  double factor = pow(10.0,-0.4*this->Mtot)/sum;
   for(int i=0;i<this->mySource->Nm;i++){
-    this->mySource->img[i] /= max;    
+    this->mySource->img[i] *= factor;
   }
 }
 

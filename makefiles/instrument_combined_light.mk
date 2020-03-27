@@ -16,8 +16,8 @@ $(shell mkdir -p $(OBJ_DIR))
 $(shell mkdir -p $(BIN_DIR))
 
 
-DEPS = auxiliary_functions.hpp
-OBJ  = auxiliary_functions.o   combine_light.o
+DEPS = mask_functions.hpp auxiliary_functions.hpp
+OBJ  = mask_functions.o   auxiliary_functions.o   combine_light.o
 FULL_DEPS = $(patsubst %,$(INC_DIR)/%,$(DEPS)) #Pad names with dir
 FULL_OBJ  = $(patsubst %,$(OBJ_DIR)/%,$(OBJ))  #Pad names with dir
 #$(info $$OBJ is [${FULL_DEPS}])

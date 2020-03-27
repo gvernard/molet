@@ -143,7 +143,8 @@ int main(int argc,char* argv[]){
     double width         = jsource["pars"]["width"].asDouble();
     double x0            = jsource["pars"]["x0"].asDouble();
     double y0            = jsource["pars"]["y0"].asDouble();
-    mysource = new fromFITS(filename,Ni,Nj,height,width,x0,y0);
+    double Mtot          = jsource["pars"]["M_tot"].asDouble();
+    mysource = new fromFITS(filename,Ni,Nj,height,width,x0,y0,Mtot);
 
   } else {
 

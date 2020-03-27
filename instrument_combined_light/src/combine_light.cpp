@@ -8,6 +8,7 @@
 #include "vkllib.hpp"
 
 #include "auxiliary_functions.hpp"
+#include "mask_functions.hpp"
 
 int main(int argc,char* argv[]){
 
@@ -97,6 +98,7 @@ int main(int argc,char* argv[]){
 
 
     //=============== BEGIN:CREATE FIXED MASKS ====================
+    //createMask(extended,0.3,0.08,output+"mask_lensed_image_super.fits");
     //================= END:CREATE FIXED MASKS ====================
 
 
@@ -119,7 +121,7 @@ int main(int argc,char* argv[]){
       for(int t=0;t<bands[b]["time"].size();t++){
 	obs_time.push_back(bands[b]["time"][t].asDouble());
       }
-      
+	
       // Get maximum image time delay
       double td_max = 0.0;
       for(int q=0;q<images.size();q++){
@@ -128,9 +130,35 @@ int main(int argc,char* argv[]){
 	  td_max = td;
 	}
       }
-	
-      // Read the light curves
+
+      // Read the intrinsic light curves
       LightCurve LC_intrinsic(intrinsic_lc[band_name]);
+      for(int i=0;i<LC_intrinsic.signal.size();i++){
+	LC_intrinsic.signal[i] = pow(10.0,-0.4*LC_intrinsic.signal[i]); // convert from magnitudes to intensities
+      }
+
+
+      // Check time limitations
+      double tmax_intrinsic = LC_intrinsic.time.back();
+      double tmax_obs = obs_time.back();
+      if( td_max > tmax_obs ){
+	printf("Observing period (%f days) shorter than the maximum time delay (%f days).\n",tmax_obs,td_max);
+	printf("Increase the observing time period!!!\n");
+	return 1;
+      }
+      if( (td_max+tmax_obs) > tmax_intrinsic ){
+	printf("Intrinsic light curve duration (%f days) shorter than the maximum time delay plus the observing period (%f + %f days).\n",tmax_intrinsic,td_max,tmax_obs);
+	int i=0;
+	while( obs_time[i] < (tmax_intrinsic-td_max) ){
+	  i++;
+	}
+	obs_time.resize(i);
+	printf("Observing period is truncated to %f days!!!\n",obs_time.back());
+      }
+
+      
+
+      // Read the extrinsic light curves
       std::vector<LightCurve> LC_extrinsic;
       for(int q=0;q<images.size();q++){
 	LC_extrinsic.push_back(extrinsic_lc[q][band_name]);
@@ -157,6 +185,21 @@ int main(int argc,char* argv[]){
       }
       free(intrinsic_signal);
 
+      Json::Value total_lcs;
+      for(int q=0;q<images.size();q++){
+	double macro_mag = abs(images[q]["mag"].asDouble());
+	Json::Value total_lc,signal;
+	for(int t=0;t<obs_time.size();t++){
+	  signal.append(-2.5*log10(macro_mag*img_signal[q][t]));
+	}
+	total_lc[band_name]["signal"] = signal;
+	total_lcs.append(total_lc);
+      }
+      std::ofstream file_total_lcs(output+"observed_light_curves.json");
+      file_total_lcs << total_lcs;
+      file_total_lcs.close();
+      
+      
       /*
       for(int t=0;t<obs_time.size();t++){
 	printf("%3d: ",t);
@@ -197,6 +240,7 @@ int main(int argc,char* argv[]){
 	  }
 	}
 	psf_partial_sum[q] = sum;
+	psf_partial_sum[q] = 1.0;
       }
 	
       
@@ -250,7 +294,8 @@ int main(int argc,char* argv[]){
 
 	// Add time-dependent image to base
 	for(int i=0;i<pp_light.Nm;i++){
-	  pp_light.img[i] = pp_light.img[i] + base.img[i];
+	  //pp_light.img[i] = pp_light.img[i] + base.img[i];
+	  pp_light.img[i] = -2.5*log10(pp_light.img[i] + base.img[i]);
 	}
 
 	// Bin image from 'super' to observed resolution
@@ -273,6 +318,11 @@ int main(int argc,char* argv[]){
 	}
 	free(counts);
 
+
+
+	// Adding noise here
+
+	
 	char buf[4];
 	sprintf(buf,"%03d",t);
 	std::string timestep = buf;

@@ -41,7 +41,6 @@ int main(int argc,char* argv[]){
   fin >> images;
   fin.close();
   
-  
   // Initialize image plane
   const Json::Value jiplane = root["instrument"]["bands"][0];
   double width  = jiplane["field-of-view_x"].asDouble();
@@ -92,7 +91,8 @@ int main(int argc,char* argv[]){
     double width         = jll["pars"]["width"].asDouble();
     double x0            = jll["pars"]["x0"].asDouble();
     double y0            = jll["pars"]["y0"].asDouble();
-    lens_light = new fromFITS(filename,Ni,Nj,height,width,x0,y0);
+    double Mtot          = jll["pars"]["M_tot"].asDouble();
+    lens_light = new fromFITS(filename,Ni,Nj,height,width,x0,y0,Mtot);
 
   } else {
 
@@ -163,7 +163,8 @@ int main(int argc,char* argv[]){
       double width         = jlm["pars"]["width"].asDouble();
       double x0            = jlm["pars"]["x0"].asDouble();
       double y0            = jlm["pars"]["y0"].asDouble();
-      lens_compact = new fromFITS(filename,Ni,Nj,height,width,x0,y0);
+      double Mtot          = jlm["pars"]["M_tot"].asDouble();
+      lens_compact = new fromFITS(filename,Ni,Nj,height,width,x0,y0,Mtot);
       
     } else {
       
