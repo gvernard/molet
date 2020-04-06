@@ -110,7 +110,31 @@ int main(int argc,char* argv[]){
     delete(extended);
     delete(lens_light);
 
+    ImagePlane obs_base(res_x,res_y,width,height);
+    int* counts = (int*) calloc(obs_base.Nm,sizeof(int));
+    double inf_dx = width/super_res_x;
+    double inf_dy = height/super_res_y;
+    double obs_dx = width/res_x;
+    double obs_dy = height/res_y;
+    for(int i=0;i<base.Ni;i++){
+      int ii = (int) floor(i*inf_dy/obs_dy);
+      for(int j=0;j<base.Nj;j++){
+	int jj = (int) floor(j*inf_dx/obs_dx);
+	obs_base.img[ii*obs_base.Nj + jj] += base.img[i*base.Nj + j];
+	counts[ii*obs_base.Nj + jj] += 1;
+      }
+    }
+    for(int i=0;i<obs_base.Nm;i++){
+      obs_base.img[i] = obs_base.img[i]/counts[i];
+    }
+    free(counts);
 
+
+
+
+
+
+    
     
     if( root.isMember("point_source") ){
 	
@@ -168,6 +192,7 @@ int main(int argc,char* argv[]){
       double* intrinsic_signal = (double*) malloc(obs_time.size()*sizeof(double));
       double** img_signal = (double**) malloc(images.size()*sizeof(double*));
       for(int q=0;q<images.size();q++){
+	double macro_mag = abs(images[q]["mag"].asDouble());
 	LC_intrinsic.interpolate(obs_time,td_max - images[q]["dt"].asDouble(),intrinsic_signal);
 	img_signal[q] = (double*) malloc(obs_time.size()*sizeof(double));
 	if( LC_extrinsic[q].time.size() > 0 ){
@@ -175,11 +200,11 @@ int main(int argc,char* argv[]){
 	  for(int t=0;t<obs_time.size();t++){
 	    // Do nothing in this loop in order to keep the microlensing signal only
 	    //img_signal[q][t] = intrinsic_signal[t]; // this line includes only the intrinsic signal and excludes microlensing
-	    img_signal[q][t] *= intrinsic_signal[t]; // this line includes both intrinsic and microlensing signals
+	    img_signal[q][t] = img_signal[q][t] * macro_mag * intrinsic_signal[t]; // this line includes both intrinsic and microlensing signals
 	  }
 	} else {
 	  for(int t=0;t<obs_time.size();t++){
-	    img_signal[q][t] = intrinsic_signal[t]; // this line includes only the intrinsic signal and excludes microlensing
+	    img_signal[q][t] = macro_mag * intrinsic_signal[t]; // this line includes only the intrinsic signal and excludes microlensing
 	  }
 	}
       }
@@ -187,10 +212,9 @@ int main(int argc,char* argv[]){
 
       Json::Value total_lcs;
       for(int q=0;q<images.size();q++){
-	double macro_mag = abs(images[q]["mag"].asDouble());
 	Json::Value total_lc,signal;
 	for(int t=0;t<obs_time.size();t++){
-	  signal.append(-2.5*log10(macro_mag*img_signal[q][t]));
+	  signal.append(-2.5*log10(img_signal[q][t]));
 	}
 	total_lc[band_name]["signal"] = signal;
 	total_lcs.append(total_lc);
@@ -229,6 +253,7 @@ int main(int argc,char* argv[]){
       for(int q=0;q<images.size();q++){
 	PSFoffsets[q] = PSF_list[q]->offsetPSFtoPosition(images[q]["x"].asDouble(),images[q]["y"].asDouble(),&mysim);
       }
+      
       // Calculate the appropriate PSF sums
       std::vector<double> psf_partial_sum(images.size());
       for(int q=0;q<images.size();q++){
@@ -240,13 +265,13 @@ int main(int argc,char* argv[]){
 	  }
 	}
 	psf_partial_sum[q] = sum;
-	psf_partial_sum[q] = 1.0;
       }
-	
+
+
+
       
       // Loop over time starts here
       for(int t=0;t<obs_time.size();t++){
-	ImagePlane pp_light(super_res_x,super_res_y,width,height);
 
 	/*
 	for(int q=0;q<images.size();q++){
@@ -273,34 +298,40 @@ int main(int argc,char* argv[]){
 	  }
 	}
 	*/
-	
+
+	ImagePlane pp_light(super_res_x,super_res_y,width,height); // this has to be in intensity units in order to be able to add the different light components
         for(int q=0;q<images.size();q++){
-	  double macro_mag = abs(images[q]["mag"].asDouble());
-	  //double macro_mag = 10.0;
-	  double factor = macro_mag*(img_signal[q][t]/psf_partial_sum[q]);
 	  for(int i=0;i<PSFoffsets[q].ni;i++){
 	    for(int j=0;j<PSFoffsets[q].nj;j++){
 	      int index_img = pp_light.Nj*i + j;
 	      int index_psf = i*PSF_list[q]->cropped_psf->Nj + j;
 	      //pp_light.img[PSFoffsets[q].offset_image + pp_light.Nj*i + j] += 1.0;
-	      pp_light.img[PSFoffsets[q].offset_image + index_img] += factor*PSF_list[q]->cropped_psf->img[PSFoffsets[q].offset_cropped + index_psf];
+	      double psf_pix = PSF_list[q]->cropped_psf->img[PSFoffsets[q].offset_cropped + index_psf];
+	      pp_light.img[PSFoffsets[q].offset_image + index_img] += img_signal[q][t]*psf_pix/psf_partial_sum[q];
 	    }
 	  }
 	}
 
-	
 
-
-
-	// Add time-dependent image to base
+	// Check the expected brightness of the multiple images vs the image
+	/*
+	double sum = 0.0;
 	for(int i=0;i<pp_light.Nm;i++){
-	  //pp_light.img[i] = pp_light.img[i] + base.img[i];
-	  pp_light.img[i] = -2.5*log10(pp_light.img[i] + base.img[i]);
+	  sum += pp_light.img[i];
 	}
+	double fac = inf_dx*inf_dy;
+	double true_sum = 0.0;
+	for(int q=0;q<images.size();q++){
+	  true_sum += img_signal[q][t];
+	}
+	printf("True: %15.10f (%15.10f)  Numerical: %15.10f (%15.10f)\n",true_sum,-2.5*log10(true_sum),sum,-2.5*log10(sum));
+	*/	
 
 	// Bin image from 'super' to observed resolution
 	ImagePlane obs_img(res_x,res_y,width,height);
-	int* counts = (int*) calloc(obs_img.Nm,sizeof(int));
+	for(int i=0;i<obs_img.Nm;i++){
+	  obs_img.img[i] = obs_base.img[i];
+	}
 	double inf_dx = width/super_res_x;
 	double inf_dy = height/super_res_y;
 	double obs_dx = width/res_x;
@@ -310,17 +341,17 @@ int main(int argc,char* argv[]){
 	  for(int j=0;j<pp_light.Nj;j++){
 	    int jj = (int) floor(j*inf_dx/obs_dx);
 	    obs_img.img[ii*obs_img.Nj + jj] += pp_light.img[i*pp_light.Nj + j];
-	    counts[ii*obs_img.Nj + jj] += 1;
 	  }
 	}
-	for(int i=0;i<obs_img.Nm;i++){
-	  obs_img.img[i] = obs_img.img[i]/counts[i];
-	}
-	free(counts);
 
-
-
+	
 	// Adding noise here
+
+
+	for(int i=0;i<obs_img.Nm;i++){
+	  obs_img.img[i] = -2.5*log10(obs_img.img[i]);
+	}
+	
 
 	
 	char buf[4];
@@ -339,26 +370,10 @@ int main(int argc,char* argv[]){
 
     } else {
 
-      // Bin image from 'super' to observed resolution
-      ImagePlane obs_img(res_x,res_y,width,height);
-      int* counts = (int*) calloc(obs_img.Nm,sizeof(int));
-      double inf_dx = width/super_res_x;
-      double inf_dy = height/super_res_y;
-      double obs_dx = width/res_x;
-      double obs_dy = height/res_y;
-      for(int i=0;i<base.Ni;i++){
-	int ii = (int) floor(i*inf_dy/obs_dy);
-	for(int j=0;j<base.Nj;j++){
-	  int jj = (int) floor(j*inf_dx/obs_dx);
-	  obs_img.img[ii*obs_img.Nj + jj] += base.img[i*base.Nj + j];
-	  counts[ii*obs_img.Nj + jj] += 1;
-	}
+      for(int i=0;i<obs_base.Nm;i++){
+	obs_base.img[i] = -2.5*log10(obs_base.img[i]);
       }
-      for(int i=0;i<obs_img.Nm;i++){
-	obs_img.img[i] = obs_img.img[i]/counts[i];
-      }
-      free(counts);
-      obs_img.writeImage(output + "OBS_" + band_name + ".fits");
+      obs_base.writeImage(output + "OBS_" + band_name + ".fits");
       
     }
     

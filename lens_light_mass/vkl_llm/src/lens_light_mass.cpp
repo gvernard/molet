@@ -108,6 +108,18 @@ int main(int argc,char* argv[]){
 
   // Super-resolved lens light profile image
   mylight.writeImage(output + "lens_light_super.fits");
+
+
+  // Confirm that the total brightness is conserved (by numerical integration)
+  /*
+  double sum = 0.0;
+  for(int i=0;i<mylight.Nm;i++){
+    sum += mylight.img[i];
+  }
+  double fac = (width/super_res_x)*(height/super_res_y);
+  sum *= fac;
+  printf("Itot = %15.10f  Mtot = %15.10f\n",sum,-2.5*log10(sum));
+  */  
   //================= END:CREATE LENS LIGHT ================
 
 

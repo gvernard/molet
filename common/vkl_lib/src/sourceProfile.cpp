@@ -105,18 +105,14 @@ double Sersic::function_value(double x,double y){
   u =   (x - this->pars["x0"])*cosphi + (y - this->pars["y0"])*sinphi;
   v = - (x - this->pars["x0"])*sinphi + (y - this->pars["y0"])*cosphi;
   r = sqrt(this->pars["q"]*this->pars["q"]*u*u + v*v);
-  fac2 = pow(r/this->pars["r_eff"],1./this->pars["n"]);
-  return this->pars["i_eff"]*exp(-bn*fac2 - 1);
+  fac2 = pow(r/this->pars["r_eff"],1.0/this->pars["n"]) - 1.0;
+  return this->pars["i_eff"]*exp(-bn*fac2);
 }
 
 void Sersic::scaleProfile(){
-  double gamma = 1.0;
-  for(int i=1;i<2*this->pars["n"]-1;i++){
-    gamma *= i;
-  }
   double bn = 1.9992*this->pars["n"] - 0.3271;//From Capaccioli 1989
-  double den = pow(this->pars["r_eff"],2)*2*M_PI*this->pars["n"]*exp(bn)*gamma/pow(bn,2*this->pars["n"]);
-  this->pars["i_eff"] = pow(10.0,-0.4*this->pars["M_tot"])/den;
+  double den = pow(this->pars["r_eff"],2)*2*M_PI*this->pars["n"]*exp(bn)*tgamma(2*this->pars["n"])/pow(bn,2*this->pars["n"]);
+  this->pars["i_eff"] = (1.0/this->pars["q"])*pow(10.0,-0.4*this->pars["M_tot"])/den;
 }
 
 std::vector<double> Sersic::extent(){
