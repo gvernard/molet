@@ -112,7 +112,7 @@ double Sersic::function_value(double x,double y){
 void Sersic::scaleProfile(){
   double bn = 1.9992*this->pars["n"] - 0.3271;//From Capaccioli 1989
   double den = pow(this->pars["r_eff"],2)*2*M_PI*this->pars["n"]*exp(bn)*tgamma(2*this->pars["n"])/pow(bn,2*this->pars["n"]);
-  this->pars["i_eff"] = (1.0/this->pars["q"])*pow(10.0,-0.4*this->pars["M_tot"])/den;
+  this->pars["i_eff"] = this->pars["q"]*pow(10.0,-0.4*this->pars["M_tot"])/den;
 }
 
 std::vector<double> Sersic::extent(){

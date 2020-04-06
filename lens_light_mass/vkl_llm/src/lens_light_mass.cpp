@@ -119,7 +119,7 @@ int main(int argc,char* argv[]){
   double fac = (width/super_res_x)*(height/super_res_y);
   sum *= fac;
   printf("Itot = %15.10f  Mtot = %15.10f\n",sum,-2.5*log10(sum));
-  */  
+  */
   //================= END:CREATE LENS LIGHT ================
 
 
