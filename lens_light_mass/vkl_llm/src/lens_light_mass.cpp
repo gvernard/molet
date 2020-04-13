@@ -144,9 +144,9 @@ int main(int argc,char* argv[]){
 
       lens_compact = lens_light;
       double ratio = jlm["pars"]["ratio"].asDouble(); // in units of Y_solar
-      ratio *= 5133; // in units of kg/m^2 per W
-      sigma_crit /= ratio; // in units of W kg/m^2, because I will use it to divide a flux (mass-to-light ratio) as opposed to the other purely mass profiles below
-      
+      ratio *= 5133; // in units of kg/W
+      sigma_crit /= ratio; // now Sigma_crit is in W/m^2
+
     } else if( compact_model == "analytic" ){
       
       std::vector<std::string> names;

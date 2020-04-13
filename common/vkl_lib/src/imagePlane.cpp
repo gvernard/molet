@@ -689,3 +689,38 @@ void ImagePlane::printCross(int k){
   printf("%10.3f %10.3f %10.3f %10.3f\n",coeffs[6],coeffs[7],coeffs[8],coeffs[9]);
   printf("%10s %10.3f %10.3f %10s\n"," ",coeffs[10],coeffs[11]," ");
 }
+
+void ImagePlane::lowerResRebinAdditive(ImagePlane* newImage){
+  double inf_dx = this->width/this->Nj;
+  double inf_dy = this->height/this->Ni;
+  double new_dx = newImage->width/newImage->Nj;
+  double new_dy = newImage->height/newImage->Ni;
+  for(int i=0;i<this->Ni;i++){
+    int ii = (int) floor(i*inf_dy/new_dy);
+    for(int j=0;j<this->Nj;j++){
+      int jj = (int) floor(j*inf_dx/new_dx);
+      newImage->img[ii*newImage->Nj + jj] += this->img[i*this->Nj + j];
+    }
+  }
+}
+
+void ImagePlane::lowerResRebinIntegrate(ImagePlane* newImage){
+  // Integrating over equally sized elements is equivalent to getting the average
+  int* counts = (int*) calloc(newImage->Nm,sizeof(int));
+  double inf_dx = this->width/this->Nj;
+  double inf_dy = this->height/this->Ni;
+  double new_dx = newImage->width/newImage->Nj;
+  double new_dy = newImage->height/newImage->Ni;
+  for(int i=0;i<this->Ni;i++){
+    int ii = (int) floor(i*inf_dy/new_dy);
+    for(int j=0;j<this->Nj;j++){
+      int jj = (int) floor(j*inf_dx/new_dx);
+      newImage->img[ii*newImage->Nj + jj] += this->img[i*this->Nj + j];
+      counts[ii*newImage->Nj + jj] += 1;
+    }
+  }
+  for(int i=0;i<newImage->Nm;i++){
+    newImage->img[i] = newImage->img[i]/counts[i];
+  }
+  free(counts);
+}

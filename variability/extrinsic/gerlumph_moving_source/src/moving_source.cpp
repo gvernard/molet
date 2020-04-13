@@ -53,7 +53,7 @@ int main(int argc,char* argv[]){
 
 
 
-  int Nlc = 100;
+  int Nlc = root["point_source"]["variability"]["extrinsic"]["Nex"].asInt();
   int Nfilters = root["instrument"]["bands"].size();
 
   // Calculate the Einstein radius of the microlenses on the source plane
@@ -77,7 +77,6 @@ int main(int argc,char* argv[]){
   vel.createVelocitiesK04(321,ra,dec,sigma_pec_l,sigma_pec_s,sigma_disp,1.0,zl,zs,Dl,Ds,Dls);
   for(int i=0;i<Nlc;i++){
     vtot[i]     = vel.tot[i].v;
-    std::cout << i << " " << vtot[i] << std::endl;
     phi_vtot[i] = vel.tot[i].phi;
   }
 
@@ -88,7 +87,7 @@ int main(int argc,char* argv[]){
     int Ntime   = root["instrument"]["bands"][k]["time"].size();
     double t0   = root["instrument"]["bands"][k]["time"][0].asDouble();
     double tmax = root["instrument"]["bands"][k]["time"][Ntime-1].asDouble();
-    duration.push_back( ceil(tmax-t0) );
+    duration.push_back( ceil(tmax) - floor(t0) );
   }	
   //================= END:INITIALIZE =======================
 
@@ -101,6 +100,10 @@ int main(int argc,char* argv[]){
     if( maps[m]["id"].asString() == "none" ){
 
       Json::Value image;
+      for(int k=0;k<Nfilters;k++){
+ 	std::string band_name = root["instrument"]["bands"][k]["name"].asString();
+	image[band_name] = Json::Value(Json::arrayValue);
+      }
       images.append(image);
 
     } else {
@@ -134,25 +137,31 @@ int main(int argc,char* argv[]){
 	map.convolve(&kernel,&emap);
 	
 	mother.extractFull();
-
-
 	// Filter light curves
-	int lc_index = filterMaxVelTot(vtot);
-	std::cout << lc_index << std::endl;
+	//	int lc_index = filterMaxVelTot(vtot);
+	
+
+	
 	// Output light curve
-	LightCurve* lc_final = mother.lightCurves[lc_index];
-	Json::Value time;
-	Json::Value signal;
-	double t_interval = 11574*map.pixSizePhys/vtot[lc_index]; // 11574 = 1/86400 * 10^9, first term from [day] in [s], second from 10^14 cm pixel size
-	for(int j=0;j<lc_final->Nsamples;j++){
-	  time.append(lc_final->t[j]*t_interval);
-	  signal.append(lc_final->m[j]);
-	}
 	std::string band_name = root["instrument"]["bands"][k]["name"].asString();
-	image[band_name]["time"] = time;
-	image[band_name]["signal"] = signal;
+	Json::Value lcs;
+	for(int i=0;i<Nlc;i++){
+	  Json::Value lc;
+	  Json::Value time;
+	  Json::Value signal;
+	  double t_interval = 11574*map.pixSizePhys/vtot[i]; // 11574 = 1/86400 * 10^9, first term from [day] in [s], second from 10^14 cm pixel size
+	  for(int j=0;j<mother.lightCurves[i]->Nsamples;j++){
+	    time.append(mother.lightCurves[i]->t[j]*t_interval);
+	    signal.append(mother.lightCurves[i]->m[j]);
+	  }
+	  lc["time"] = time;
+	  lc["signal"] = signal;
+	  lcs.append(lc);
+	}
+	image[band_name] = lcs;
       }
       images.append(image);
+
       
       for(int k=0;k<Nfilters;k++){
 	delete(profiles[k]);

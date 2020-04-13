@@ -9,8 +9,12 @@ vkl_lib_clean:
 #======================================================
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
+root_dir := $(dir $(mkfile_path))
+#$(info $$mkfile_dir is [${mkfile_dir}])
+
+
 gerlumph_lib:
-	make -f makefiles/gerlumph_lib.mk cpu MAP_PATH=$(current_dir)/data/gerlumph_mirror/
+	make -f makefiles/gerlumph_lib.mk cpu MAP_PATH=$(root_dir)data/gerlumph_mirror/
 gerlumph_lib_clean:
 	make -f makefiles/gerlumph_lib.mk clean
 

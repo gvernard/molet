@@ -117,17 +117,16 @@
     "point_source": {
 	"x0": 0.015,
 	"y0": -0.035,
-	"output_cutouts": false,
 	"variability": {
 	    "intrinsic": {
 		"type": "custom"
 	    },
 	    "extrinsic": {
-//		"type": "custom"
-	
+		"type": "custom"
+/*		
 		"microlens_mass": 1,
 		"type": "AGN",
-		"Nex": 100,
+		"Nex": 10,
 		"pars": {
 		    "sigma_pec_l": 250,
 		    "sigma_pec_s": 250,
@@ -143,7 +142,7 @@
 			"orient": 0
 		    }
 		]
-		
+*/		
 	    }
 	}
     },

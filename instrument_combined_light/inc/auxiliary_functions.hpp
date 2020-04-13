@@ -66,12 +66,19 @@ public:
   std::vector<double> time;
   std::vector<double> signal;
   
+  LightCurve(){};
   LightCurve(const Json::Value lc);
-
+  LightCurve(std::vector<double> time);
+  LightCurve(std::vector<double> time,std::vector<double> signal);
+  
   void interpolate(std::vector<double> obs_time,double delay,double* interpolated);
+  void interpolate(LightCurve* int_lc,double delay);
+  Json::Value jsonOut();
+  Json::Value jsonOutMag();
 };
 
 
-
+void outputLightCurvesJson(std::vector<LightCurve*> lcs,std::string filename);
+  
 
 #endif /* AUXILIARY_HPP */

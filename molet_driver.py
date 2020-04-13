@@ -31,7 +31,8 @@ input_str  = re.sub(re.compile("//.*?\n" ),"",input_str)
 json_in    = json.loads(input_str)
 
 
-
+if os.path.isdir(path+"output") == False:
+    os.mkdir(path+"output")
 
 
 
@@ -118,7 +119,22 @@ if "point_source" in json_in:
         myprocess("Getting microlensing variability for each image...",cmd_list)  
 
 
-cmd_list = []
+
+# Step 4:
+# Combine different light components
+####################################################################################
+# Create output directories if necessary
+if "point_source" in json_in:
+    cmd_list = [
+        "python",
+        molet_home+"instrument_combined_light/setup_dirs.py",
+        infile,
+        path
+    ]
+    #print(" ".join(cmd_list))
+    myprocess("Mock output directories created...",cmd_list)  
+
+# Combine light
 cmd_list = [
     molet_home+"instrument_combined_light/bin/combine_light",
     infile,

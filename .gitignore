@@ -1,4 +1,5 @@
 /tests/*/output/
+/tests/*/mock_*
 *.pdf
 /data/
 lib

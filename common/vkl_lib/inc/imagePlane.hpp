@@ -79,7 +79,10 @@ public:
   void maskData(std::map<int,int> lookup,ImagePlane* masked);
   //  void printCross(int k,mytable Ds);
   void printCross(int k);
+  void lowerResRebinAdditive(ImagePlane* newImage);
+  void lowerResRebinIntegrate(ImagePlane* newImage);
 
+  
 private:
   void setCroppedLimitsEven(int k,int Ncrop,int Nimg,int Nquad,int &Npre,int &Npost,int& offset);
   void setCroppedLimitsOdd(int k,int Ncrop,int Nimg,int Nquad,int &Npre,int &Npost,int& offset);

@@ -27,125 +27,90 @@ int main(int argc,char* argv[]){
   std::string output     = path + "output/";
   std::string input_path = path + "input_files/";
 
-  Json::Value images;
-  Json::Value intrinsic_lc;
-  Json::Value extrinsic_lc;
-  if( root.isMember("point_source") ){
-    // Read the image parameters
-    fin.open(output+"multiple_images.json",std::ifstream::in);
-    fin >> images;
-    fin.close();
-    
-    // Read intrinsic light curve
-    if( root["point_source"]["variability"]["intrinsic"]["type"].asString() == "custom" ){
-      fin.open(input_path+"intrinsic_light_curves.json",std::ifstream::in);
-    } else {
-      fin.open(output+"intrinsic_light_curves.json",std::ifstream::in);
-    }
-    fin >> intrinsic_lc;
-    fin.close();
-
-    // Read extrinsic light curve
-    if( root["point_source"]["variability"]["extrinsic"]["type"].asString() == "custom" ){
-      fin.open(input_path+"extrinsic_light_curves.json",std::ifstream::in);
-    } else {
-      fin.open(output+"extrinsic_light_curves.json",std::ifstream::in);
-    }
-    fin >> extrinsic_lc;
-    fin.close();
-  }
-  //================= END:PARSE INPUT =======================
 
 
 
   // Loop over the bands
-  const Json::Value bands = root["instrument"]["bands"];
-  for(int b=0;b<bands.size();b++){
-    std::string band_name = bands[b]["name"].asString();
+  // ===================================================================================================================
+  // ===================================================================================================================
+  for(int b=0;b<root["instrument"]["bands"].size();b++){
+    const Json::Value band = root["instrument"]["bands"][b];
+    std::string band_name = band["name"].asString();
     
     // Set output image plane in super-resolution
-    double width  = bands[b]["field-of-view_x"].asDouble();
-    double height = bands[b]["field-of-view_y"].asDouble();
-    int res_x = static_cast<int>(ceil(width/bands[b]["resolution"].asDouble()));
-    int res_y = static_cast<int>(ceil(height/bands[b]["resolution"].asDouble()));
+    double width  = band["field-of-view_x"].asDouble();
+    double height = band["field-of-view_y"].asDouble();
+    int res_x = static_cast<int>(ceil(width/band["resolution"].asDouble()));
+    int res_y = static_cast<int>(ceil(height/band["resolution"].asDouble()));
     int super_res_x = 10*res_x;
     int super_res_y = 10*res_y;
     ImagePlane mysim(super_res_x,super_res_y,width,height);
-
+    
     
     // Get the psf in super-resolution, crop it, and create convolution kernel
     std::string psf_path = input_path + "psf_" + band_name + ".fits";
-    double psf_width  = bands[b]["psf"]["width"].asDouble();
-    double psf_height = bands[b]["psf"]["height"].asDouble();
-    int psf_Nx = bands[b]["psf"]["pix_x"].asInt();
-    int psf_Ny = bands[b]["psf"]["pix_y"].asInt();
+    double psf_width  = band["psf"]["width"].asDouble();
+    double psf_height = band["psf"]["height"].asDouble();
+    int psf_Nx = band["psf"]["pix_x"].asInt();
+    int psf_Ny = band["psf"]["pix_y"].asInt();
     PSF mypsf(psf_path,psf_Nx,psf_Ny,psf_width,psf_height,&mysim);
     mypsf.cropPSF(0.99);
     mypsf.createKernel(mysim.Ni,mysim.Nj);
-
     
-    //=============== BEGIN:CREATE THE FIXED EXTENDED LENSED LIGHT ====================
+    
+    // Create the fixed extended lensed light
     ImagePlane* extended = new ImagePlane(output+"lensed_image_super.fits",super_res_x,super_res_y,width,height);
     mypsf.convolve(extended);
     //extended->writeImage(output+"psf_lensed_image_super.fits");
-    //================= END:CREATE THE FIXED EXTENDED LENSED LIGHT ====================
-
-    //=============== BEGIN:CREATE THE FIXED LENS GALAXY LIGHT ====================
+    
+    // Create the fixed lens galaxy light
     ImagePlane* lens_light = new ImagePlane(output+"lens_light_super.fits",super_res_x,super_res_y,width,height);
     mypsf.convolve(lens_light);
     //lens_light->writeImage(output+"psf_lens_light_super.fits");
-    //================= END:CREATE THE FIXED LENS GALAXY LIGHT ====================
-
-
-    //=============== BEGIN:CREATE FIXED MASKS ====================
-    //createMask(extended,0.3,0.08,output+"mask_lensed_image_super.fits");
-    //================= END:CREATE FIXED MASKS ====================
-
-
-    // Create combined extended lensed features and lens light
-    ImagePlane base(super_res_x,super_res_y,width,height); 
-    for(int i=0;i<base.Nm;i++){
-      base.img[i] = lens_light->img[i] + extended->img[i];
+    
+    // Combined light of the observed base image (binned from 'super' to observed resolution)
+    ImagePlane* base = new ImagePlane(super_res_x,super_res_y,width,height); 
+    for(int i=0;i<base->Nm;i++){
+      base->img[i] = lens_light->img[i] + extended->img[i];
     }
     delete(extended);
     delete(lens_light);
+    ImagePlane obs_base(res_x,res_y,width,height); // obs_base.img array is initialized to zero
+    base->lowerResRebinIntegrate(&obs_base);
+    delete(base);
 
-    ImagePlane obs_base(res_x,res_y,width,height);
-    int* counts = (int*) calloc(obs_base.Nm,sizeof(int));
-    double inf_dx = width/super_res_x;
-    double inf_dy = height/super_res_y;
-    double obs_dx = width/res_x;
-    double obs_dy = height/res_y;
-    for(int i=0;i<base.Ni;i++){
-      int ii = (int) floor(i*inf_dy/obs_dy);
-      for(int j=0;j<base.Nj;j++){
-	int jj = (int) floor(j*inf_dx/obs_dx);
-	obs_base.img[ii*obs_base.Nj + jj] += base.img[i*base.Nj + j];
-	counts[ii*obs_base.Nj + jj] += 1;
+
+
+    // All the static light components have been created.
+    // The resulting observed image (not super-resolved) is "obs_base".
+    // If there is no time dimension required, the code just outputs the obs_base image and stops.
+    // But further work is done when it comes to time varying images in three nested loops:
+    // - one over all the intrinsic variability light curves,
+    // - one over all the extrinsic variability light curves,
+    // - and one over the observed time.
+
+    
+
+    if( !root.isMember("point_source") ){
+      //=============== CREATE A SINGLE STATIC IMAGE ====================
+
+      // Adding noise here
+
+      // Output the observed base image
+      for(int i=0;i<obs_base.Nm;i++){
+	obs_base.img[i] = -2.5*log10(obs_base.img[i]);
       }
-    }
-    for(int i=0;i<obs_base.Nm;i++){
-      obs_base.img[i] = obs_base.img[i]/counts[i];
-    }
-    free(counts);
-
-
-
-
-
-
-    
-    
-    if( root.isMember("point_source") ){
-	
-      //=============== BEGIN:CREATE THE TIME VARYING LIGHT ====================
+      obs_base.writeImage(output + "OBS_" + band_name + ".fits");
       
-      // Read observed time vector
-      std::vector<double> obs_time;
-      for(int t=0;t<bands[b]["time"].size();t++){
-	obs_time.push_back(bands[b]["time"][t].asDouble());
-      }
-	
+    } else {
+      //=============== CREATE THE TIME VARYING LIGHT ====================
+      
+      // Read the multiple images' parameters from JSON
+      Json::Value images;
+      fin.open(output+"multiple_images.json",std::ifstream::in);
+      fin >> images;
+      fin.close();
+
       // Get maximum image time delay
       double td_max = 0.0;
       for(int q=0;q<images.size();q++){
@@ -155,90 +120,115 @@ int main(int argc,char* argv[]){
 	}
       }
 
-      // Read the intrinsic light curves
-      LightCurve LC_intrinsic(intrinsic_lc[band_name]);
-      for(int i=0;i<LC_intrinsic.signal.size();i++){
-	LC_intrinsic.signal[i] = pow(10.0,-0.4*LC_intrinsic.signal[i]); // convert from magnitudes to intensities
+      
+
+
+      // Get observed time vector
+      std::vector<double> tobs;
+      for(int t=0;t<band["time"].size();t++){
+	tobs.push_back(band["time"][t].asDouble());
+      }
+      double tobs_t0   = tobs[0];
+      double tobs_tmax = tobs.back();
+      double tobs_Dt   = tobs_tmax - tobs_t0;
+
+      // Create a 'continuous' time vector: daily cadence
+      int Ndays = (int) ceil(tobs_Dt);
+      std::vector<double> tcont(Ndays);
+      for(int t=0;t<Ndays;t++){
+	tcont[t] = tobs_t0 + t;
       }
 
-
-      // Check time limitations
-      double tmax_intrinsic = LC_intrinsic.time.back();
-      double tmax_obs = obs_time.back();
-      if( td_max > tmax_obs ){
-	printf("Observing period (%f days) shorter than the maximum time delay (%f days).\n",tmax_obs,td_max);
+      // Quick check on time delay and observing time compatibility
+      if( td_max > tobs_tmax ){
+	printf("Observing period (%f days) shorter than the maximum time delay (%f days).\n",tobs_tmax,td_max);
 	printf("Increase the observing time period!!!\n");
 	return 1;
       }
-      if( (td_max+tmax_obs) > tmax_intrinsic ){
-	printf("Intrinsic light curve duration (%f days) shorter than the maximum time delay plus the observing period (%f + %f days).\n",tmax_intrinsic,td_max,tmax_obs);
-	int i=0;
-	while( obs_time[i] < (tmax_intrinsic-td_max) ){
-	  i++;
-	}
-	obs_time.resize(i);
-	printf("Observing period is truncated to %f days!!!\n",obs_time.back());
-      }
+
+
 
       
-
-      // Read the extrinsic light curves
-      std::vector<LightCurve> LC_extrinsic;
-      for(int q=0;q<images.size();q++){
-	LC_extrinsic.push_back(extrinsic_lc[q][band_name]);
+      // Read intrinsic light curve(s) from JSON
+      Json::Value intrinsic_lc;
+      if( root["point_source"]["variability"]["intrinsic"]["type"].asString() == "custom" ){
+	fin.open(input_path+"intrinsic_light_curves.json",std::ifstream::in);
+      } else {
+	fin.open(output+"intrinsic_light_curves.json",std::ifstream::in);
       }
+      fin >> intrinsic_lc;
+      fin.close();
+      int N_in = intrinsic_lc[band_name].size();
 
-      // Create interpolated intrinsic + extrinsic signal for each image
-      double* intrinsic_signal = (double*) malloc(obs_time.size()*sizeof(double));
-      double** img_signal = (double**) malloc(images.size()*sizeof(double*));
-      for(int q=0;q<images.size();q++){
-	double macro_mag = abs(images[q]["mag"].asDouble());
-	LC_intrinsic.interpolate(obs_time,td_max - images[q]["dt"].asDouble(),intrinsic_signal);
-	img_signal[q] = (double*) malloc(obs_time.size()*sizeof(double));
-	if( LC_extrinsic[q].time.size() > 0 ){
-	  LC_extrinsic[q].interpolate(obs_time,0.0,img_signal[q]);
-	  for(int t=0;t<obs_time.size();t++){
-	    // Do nothing in this loop in order to keep the microlensing signal only
-	    //img_signal[q][t] = intrinsic_signal[t]; // this line includes only the intrinsic signal and excludes microlensing
-	    img_signal[q][t] = img_signal[q][t] * macro_mag * intrinsic_signal[t]; // this line includes both intrinsic and microlensing signals
+      // Process the intrinsic light curves
+      std::vector<LightCurve*> LC_intrinsic(N_in);
+      for(int lc_in=0;lc_in<N_in;lc_in++){
+	LC_intrinsic[lc_in] = new LightCurve(intrinsic_lc[band_name][lc_in]);
+
+	// Convert from magnitudes to intensities
+	for(int i=0;i<LC_intrinsic[lc_in]->signal.size();i++){
+	  LC_intrinsic[lc_in]->signal[i] = pow(10.0,-0.4*LC_intrinsic[lc_in]->signal[i]);
+	}
+	
+	// Check time limitations
+	double tmax_intrinsic = LC_intrinsic[lc_in]->time.back();
+	if( (td_max+tobs_tmax) > tmax_intrinsic ){
+	  printf("Intrinsic light curve %i duration (%f days) is shorter than the maximum time delay plus the observing period (%f + %f days).\n",lc_in,tmax_intrinsic,td_max,tobs_tmax);
+	  int i=0;
+	  while( tobs[i] < (tmax_intrinsic-td_max) ){
+	    i++;
 	  }
-	} else {
-	  for(int t=0;t<obs_time.size();t++){
-	    img_signal[q][t] = macro_mag * intrinsic_signal[t]; // this line includes only the intrinsic signal and excludes microlensing
+	  tobs.resize(i);
+	  printf("Observing period is truncated to %f days!!!\n",tobs_tmax);
+	}
+      }
+      
+      
+
+      
+      // Read extrinsic light curve(s) from JSON
+      Json::Value extrinsic_lc;
+      if( root["point_source"]["variability"]["extrinsic"]["type"].asString() == "custom" ){
+	fin.open(input_path+"extrinsic_light_curves.json",std::ifstream::in);
+      } else {
+	fin.open(output+"extrinsic_light_curves.json",std::ifstream::in);
+      }
+      fin >> extrinsic_lc;
+      fin.close();
+      int N_ex;
+      for(int q=0;q<extrinsic_lc.size();q++){
+	if( extrinsic_lc[q][band_name].size() > 0 ){
+	  N_ex = extrinsic_lc[q][band_name].size();
+	  break;
+	}
+      }
+      
+      // Process the extrinsic light curves
+      std::vector< std::vector<LightCurve*> > LC_extrinsic(images.size());
+      for(int q=0;q<images.size();q++){
+	LC_extrinsic[q].resize(N_ex);
+      }
+      for(int q=0;q<images.size();q++){
+	for(int lc_ex=0;lc_ex<N_ex;lc_ex++){
+	  if( extrinsic_lc[q][band_name].size() > 0 ){
+	    LC_extrinsic[q][lc_ex] = new LightCurve(extrinsic_lc[q][band_name][lc_ex]);
+	    // Ex. light curves' time begins at 0, so I need to add t0 (of both tobs and tcont) so that the time vectors match
+	    for(int t=0;t<LC_extrinsic[q][lc_ex]->time.size();t++){
+	      LC_extrinsic[q][lc_ex]->time[t] += tobs_t0;
+	    }
+	  } else {
+	    LC_extrinsic[q][lc_ex] = new LightCurve();
 	  }
 	}
       }
-      free(intrinsic_signal);
-
-      Json::Value total_lcs;
-      for(int q=0;q<images.size();q++){
-	Json::Value total_lc,signal;
-	for(int t=0;t<obs_time.size();t++){
-	  signal.append(-2.5*log10(img_signal[q][t]));
-	}
-	total_lc[band_name]["signal"] = signal;
-	total_lcs.append(total_lc);
-      }
-      std::ofstream file_total_lcs(output+"observed_light_curves.json");
-      file_total_lcs << total_lcs;
-      file_total_lcs.close();
       
       
-      /*
-      for(int t=0;t<obs_time.size();t++){
-	printf("%3d: ",t);
-	for(int q=0;q<images.size();q++){
-	  printf("%f ",img_signal[q][t]);
-	}
-	printf("\n");
-      }
-      */
-
-
+      
+      
 
 
       
-      
+      // Configure the PSF for the point source
       // Perturb the PSF at each image location
       std::vector<PSF*> PSF_list(images.size());
       for(int q=0;q<images.size();q++){
@@ -246,14 +236,11 @@ int main(int argc,char* argv[]){
 	//transPSF[q] = dum;
 	PSF_list[q] = &mypsf; // just copy the same psf per image
       }
-            
-
       // Set the PSF related offsets for each image
       std::vector<offsetPSF> PSFoffsets(images.size());
       for(int q=0;q<images.size();q++){
 	PSFoffsets[q] = PSF_list[q]->offsetPSFtoPosition(images[q]["x"].asDouble(),images[q]["y"].asDouble(),&mysim);
       }
-      
       // Calculate the appropriate PSF sums
       std::vector<double> psf_partial_sum(images.size());
       for(int q=0;q<images.size();q++){
@@ -266,118 +253,187 @@ int main(int argc,char* argv[]){
 	}
 	psf_partial_sum[q] = sum;
       }
-
-
-
       
-      // Loop over time starts here
-      for(int t=0;t<obs_time.size();t++){
+      
+      
+      
+      
+      
+      // Loop over intrinsic light curves
+      //0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=
+      for(int lc_in=0;lc_in<N_in;lc_in++){
+	// Loop over extrinsic light curves
+	//0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=
+	for(int lc_ex=0;lc_ex<N_ex;lc_ex++){ // use the first multiple image to get the number of extrinsic light curves
 
-	/*
-	for(int q=0;q<images.size();q++){
-	  // Calcuate the PSF sum and its contribution to each image pixel, and keep only the non-zeros
-	  double value,xout,yout;
-	  double sum = 0.0;
-	  std::vector<int> indices;
-	  std::vector<double> values;
-	  for(int i=0;i<pp_light.Nm;i++){
-	    transPSF[q]->applyTransform(pp_light.x[i],pp_light.y[i],xout,yout);
-	    value = transPSF[q]->interpolateValue(xout,yout,&mypsf);
-	    if( value > 0.0 ){
-	      indices.push_back(i);
-	      values.push_back(value);
-	      sum += value;
+	  // Output directory
+	  char buffer[15];
+	  sprintf(buffer,"mock_%04d_%04d",lc_in,lc_ex);
+	  std::string mock = buffer;
+	  //std::cout << mock << std::endl;
+
+
+	  // *********************** Product: Observed continuous light curves ***********************
+	  LightCurve* cont_LC_intrinsic = new LightCurve(tcont);
+	  std::vector<LightCurve*> cont_LC(images.size());
+	  for(int q=0;q<images.size();q++){
+	    cont_LC[q] = new LightCurve(tcont);
+	  }
+
+	  // Calculate the combined light curve for each image
+	  for(int q=0;q<images.size();q++){
+	    double macro_mag = abs(images[q]["mag"].asDouble());
+	    LC_intrinsic[lc_in]->interpolate(cont_LC_intrinsic,td_max - images[q]["dt"].asDouble());
+
+	    // Check if multiple image does not have a corresponding extrinsic light curve (i.e. a maximum image without a magnification map)
+	    if( LC_extrinsic[q][lc_ex]->time.size() > 0 ){
+	      LC_extrinsic[q][lc_ex]->interpolate(cont_LC[q],0.0);
+	      for(int t=0;t<tcont.size();t++){
+		cont_LC[q]->signal[t] = cont_LC[q]->signal[t] * macro_mag * cont_LC_intrinsic->signal[t]; // this line includes both intrinsic and microlensing signals
+		//cont_LC[q]->signal[t] = macro_mag * cont_LC_intrinsic->signal[t];
+	      }
+	    } else {
+	      for(int t=0;t<tcont.size();t++){
+		cont_LC[q]->signal[t] = macro_mag * cont_LC_intrinsic->signal[t]; // this line includes only the intrinsic signal and excludes microlensing
+	      }
 	    }
 	  }
 
-	  // Assign the corrected by the PSF sum value to each image pixel
-	  double macro_mag = abs(images[q]["mag"].asDouble());
-	  double factor = macro_mag*img_signal[q][t]/sum;
-	  for(int j=0;j<indices.size();j++){
-	    pp_light.img[indices[j]] += factor*values[j];
-	  }
-	}
-	*/
+	  // Write json light curves
+	  outputLightCurvesJson(cont_LC,path+mock+"/LCcont_"+band_name+".json");
 
-	ImagePlane pp_light(super_res_x,super_res_y,width,height); // this has to be in intensity units in order to be able to add the different light components
-        for(int q=0;q<images.size();q++){
-	  for(int i=0;i<PSFoffsets[q].ni;i++){
-	    for(int j=0;j<PSFoffsets[q].nj;j++){
-	      int index_img = pp_light.Nj*i + j;
-	      int index_psf = i*PSF_list[q]->cropped_psf->Nj + j;
-	      //pp_light.img[PSFoffsets[q].offset_image + pp_light.Nj*i + j] += 1.0;
-	      double psf_pix = PSF_list[q]->cropped_psf->img[PSFoffsets[q].offset_cropped + index_psf];
-	      pp_light.img[PSFoffsets[q].offset_image + index_img] += img_signal[q][t]*psf_pix/psf_partial_sum[q];
+	  // Clean up
+	  delete(cont_LC_intrinsic);
+	  for(int q=0;q<images.size();q++){
+	    delete(cont_LC[q]);
+	  }
+	  // *********************** End of product **************************************************
+
+
+
+	  // *********************** Product: Observed sampled light curves **************************
+	  LightCurve* samp_LC_intrinsic = new LightCurve(tobs);
+	  std::vector<LightCurve*> samp_LC(images.size());
+	  for(int q=0;q<images.size();q++){
+	    samp_LC[q] = new LightCurve(tobs);
+	  }
+
+	  // Calculate the combined light curve for each image
+	  for(int q=0;q<images.size();q++){
+	    double macro_mag = abs(images[q]["mag"].asDouble());
+	    LC_intrinsic[lc_in]->interpolate(samp_LC_intrinsic,td_max - images[q]["dt"].asDouble());
+
+	    // Check if multiple image does not have a corresponding extrinsic light curve (i.e. a maximum image without a magnification map)
+	    if( LC_extrinsic[q][lc_ex]->time.size() > 0 ){
+	      LC_extrinsic[q][lc_ex]->interpolate(samp_LC[q],0.0);
+	      for(int t=0;t<tobs.size();t++){
+		samp_LC[q]->signal[t] = samp_LC[q]->signal[t] * macro_mag * samp_LC_intrinsic->signal[t]; // this line includes both intrinsic and microlensing signals
+		//samp_LC[q]->signal[t] = macro_mag * samp_LC_intrinsic->signal[t];
+	      }
+	    } else {
+	      for(int t=0;t<tobs.size();t++){
+		samp_LC[q]->signal[t] = macro_mag * samp_LC_intrinsic->signal[t]; // this line includes only the intrinsic signal and excludes microlensing
+	      }
 	    }
 	  }
-	}
+
+	  // Write json light curves
+	  outputLightCurvesJson(samp_LC,path+mock+"/LCsamp_"+band_name+".json");
+	  // *********************** End of product **************************************************
 
 
-	// Check the expected brightness of the multiple images vs the image
-	/*
-	double sum = 0.0;
-	for(int i=0;i<pp_light.Nm;i++){
-	  sum += pp_light.img[i];
-	}
-	double fac = inf_dx*inf_dy;
-	double true_sum = 0.0;
-	for(int q=0;q<images.size();q++){
-	  true_sum += img_signal[q][t];
-	}
-	printf("True: %15.10f (%15.10f)  Numerical: %15.10f (%15.10f)\n",true_sum,-2.5*log10(true_sum),sum,-2.5*log10(sum));
-	*/	
 
-	// Bin image from 'super' to observed resolution
-	ImagePlane obs_img(res_x,res_y,width,height);
-	for(int i=0;i<obs_img.Nm;i++){
-	  obs_img.img[i] = obs_base.img[i];
-	}
-	double inf_dx = width/super_res_x;
-	double inf_dy = height/super_res_y;
-	double obs_dx = width/res_x;
-	double obs_dy = height/res_y;
-	for(int i=0;i<pp_light.Ni;i++){
-	  int ii = (int) floor(i*inf_dy/obs_dy);
-	  for(int j=0;j<pp_light.Nj;j++){
-	    int jj = (int) floor(j*inf_dx/obs_dx);
-	    obs_img.img[ii*obs_img.Nj + jj] += pp_light.img[i*pp_light.Nj + j];
+
+
+	  
+	  
+	  // *********************** Product: Observed sampled cut-outs (images) *****************************
+	  if( root["point_source"]["output_cutouts"].asBool() ){
+	    for(int t=0;t<tobs.size();t++){
+	      
+	      // Loop over the truncated PSF (through PSF_offsets) for each image, and add their light to the pp_light image that contains all the point source light.
+	      ImagePlane pp_light(super_res_x,super_res_y,width,height); // this has to be in intensity units in order to be able to add the different light components
+	      for(int q=0;q<images.size();q++){
+		for(int i=0;i<PSFoffsets[q].ni;i++){
+		  for(int j=0;j<PSFoffsets[q].nj;j++){
+		    int index_img = pp_light.Nj*i + j;
+		    int index_psf = i*PSF_list[q]->cropped_psf->Nj + j;
+		    //pp_light.img[PSFoffsets[q].offset_image + pp_light.Nj*i + j] += 1.0;
+		    double psf_pix = PSF_list[q]->cropped_psf->img[PSFoffsets[q].offset_cropped + index_psf];
+		    pp_light.img[PSFoffsets[q].offset_image + index_img] += samp_LC[q]->signal[t]*psf_pix/psf_partial_sum[q];
+		  }
+		}
+	      }
+	      
+	      
+	      // Check the expected brightness of the multiple images vs the image
+
+		//double sum = 0.0;
+		//for(int i=0;i<pp_light.Nm;i++){
+		//sum += pp_light.img[i];
+		//}
+		//double fac = inf_dx*inf_dy;
+		//double true_sum = 0.0;
+		//for(int q=0;q<images.size();q++){
+		//true_sum += img_signal[q][t];
+		//}
+		//printf("True: %15.10f (%15.10f)  Numerical: %15.10f (%15.10f)\n",true_sum,-2.5*log10(true_sum),sum,-2.5*log10(sum));
+	      
+	      // Bin image from 'super' to observed resolution
+	      ImagePlane obs_img = obs_base;
+	      pp_light.lowerResRebinAdditive(&obs_img);
+    
+	      
+	      
+	      // Adding time-dependent noise here
+	      
+	      
+	      
+	      // Finalize output (e.g convert to magnitudes) and write
+	      for(int i=0;i<obs_img.Nm;i++){
+		obs_img.img[i] = -2.5*log10(obs_img.img[i]);
+	      }
+	      char buf[4];
+	      sprintf(buf,"%03d",t);
+	      std::string timestep = buf;
+	      obs_img.writeImage(path+mock+"/OBS_"+band_name+"_"+timestep+".fits");
+	    }
 	  }
+	  // *********************** End of product **************************************************	    
+
+	  // Do some cleanup
+	  delete(samp_LC_intrinsic);
+	  for(int q=0;q<images.size();q++){
+	    delete(samp_LC[q]);
+	  }
+	  
+	  //std::cout << "done" << std::endl;
 	}
-
-	
-	// Adding noise here
-
-
-	for(int i=0;i<obs_img.Nm;i++){
-	  obs_img.img[i] = -2.5*log10(obs_img.img[i]);
-	}
-	
-
-	
-	char buf[4];
-	sprintf(buf,"%03d",t);
-	std::string timestep = buf;
-	obs_img.writeImage(output + "OBS_" + band_name + "_" + timestep + ".fits");
+	// Loop over extrinsic light curves ends here
+	//0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=
       }
+      // Loop over intrinsic light curves ends here
+      //0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=
 
-      
+      for(int lc_in=0;lc_in<N_in;lc_in++){
+	delete(LC_intrinsic[lc_in]);
+      }
       for(int q=0;q<images.size();q++){
-	free(img_signal[q]);
-	//free(transPSF[q]);
+	for(int lc_ex=0;lc_ex<N_ex;lc_ex++){
+	  delete(LC_extrinsic[q][lc_ex]);
+	}
       }
-      free(img_signal);
-      //================= END:CREATE THE TIME VARYING LIGHT ====================
-
-    } else {
-
-      for(int i=0;i<obs_base.Nm;i++){
-	obs_base.img[i] = -2.5*log10(obs_base.img[i]);
-      }
-      obs_base.writeImage(output + "OBS_" + band_name + ".fits");
       
     }
-    
+    //================= END:CREATE THE TIME VARYING LIGHT ====================
+      
+
+
   }
+  // Loop over the bands ends here
+  // ===================================================================================================================
+  // ===================================================================================================================
+
   
   return 0;
 }
