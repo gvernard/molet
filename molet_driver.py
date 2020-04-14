@@ -5,12 +5,18 @@ import json
 from subprocess import Popen,PIPE
 
 
-def myprocess(msg,cmd_list):
+def myprocess(msg,cmd_list,log_file):
     print("%-100s" % msg,end="",flush=True)
     p = Popen(cmd_list,universal_newlines=True,stdout=PIPE,stderr=PIPE)
     out,err = p.communicate()
     if len(err) != 0:
         sys.exit("\n===> Failed with error: \n%s" % (str(err)))
+    if p.returncode != 0:
+        sys.exit("\n===> Failed with unspecified error\n===> Use the following command on its own to debug:\n"+" ".join(cmd_list))
+    log_file.write("COMMAND: "+" ".join(cmd_list)+"\n")
+    log_file.write("===="*50+"\n")
+    if len(out) != 0:
+        log_file.write(out)
     print("%-10s" % "...done",flush=True)
 
 
@@ -30,11 +36,13 @@ input_str  = re.sub(re.compile("/\*.*?\*/",re.DOTALL),"",input_str)
 input_str  = re.sub(re.compile("//.*?\n" ),"",input_str)
 json_in    = json.loads(input_str)
 
-
 if os.path.isdir(path+"output") == False:
     os.mkdir(path+"output")
 
+log_file = open(path+"log.txt",'w')
 
+
+    
 
 # Step 1:
 # Get angular diameter distances
@@ -46,8 +54,7 @@ cmd_list = [
     path
 ]
 #print(" ".join(cmd_list))
-myprocess("Getting angular diameter distances...",cmd_list)
-
+myprocess("Getting angular diameter distances...",cmd_list,log_file)
 
 
 
@@ -60,7 +67,8 @@ cmd_list = [
     path
 ]
 #print(" ".join(cmd_list))
-myprocess("Getting extended source lensed features...",cmd_list)
+myprocess("Getting extended source lensed features...",cmd_list,log_file)
+
 
 
 # Intermediate step:
@@ -73,7 +81,7 @@ if "point_source" in json_in:
         path
     ]
     #print(" ".join(cmd_list))
-    myprocess("Getting point-like source lensed images...",cmd_list)
+    myprocess("Getting point-like source lensed images...",cmd_list,log_file)
 
 
     
@@ -86,7 +94,7 @@ cmd_list = [
     path
 ]
 #print(" ".join(cmd_list))
-myprocess("Getting light profile of the lens...",cmd_list)
+myprocess("Getting light profile of the lens...",cmd_list,log_file)
 
 
 
@@ -108,7 +116,7 @@ if "point_source" in json_in:
             path
         ]
         #print(" ".join(cmd_list))
-        myprocess("Matching macro-images to GERLUMPH maps...",cmd_list)  
+        myprocess("Matching macro-images to GERLUMPH maps...",cmd_list,log_file)
     
         cmd_list = [
             molet_home+"variability/extrinsic/gerlumph_moving_source/bin/moving_source",
@@ -116,7 +124,7 @@ if "point_source" in json_in:
             path
         ]
         #print(" ".join(cmd_list))
-        myprocess("Getting microlensing variability for each image...",cmd_list)  
+        myprocess("Getting microlensing variability for each image...",cmd_list,log_file)
 
 
 
@@ -132,7 +140,7 @@ if "point_source" in json_in:
         path
     ]
     #print(" ".join(cmd_list))
-    myprocess("Mock output directories created...",cmd_list)  
+    myprocess("Mock output directories created...",cmd_list,log_file)
 
 # Combine light
 cmd_list = [
@@ -141,8 +149,9 @@ cmd_list = [
     path
 ]
 #print(" ".join(cmd_list))
-myprocess("Combining light components and including instrumental effects...",cmd_list) 
+myprocess("Combining light components and including instrumental effects...",cmd_list,log_file)
     
 
+log_file.close()
 print("\nCompleted successfully!\n")
 print("Output in: ",path+"output/")

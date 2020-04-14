@@ -14,7 +14,6 @@ int main(int argc,char* argv[]){
     - angular_diameter_distances.json
   */
 
-  
   //=============== BEGIN:PARSE INPUT =======================
   std::ifstream fin;
   Json::Value::Members jmembers;
