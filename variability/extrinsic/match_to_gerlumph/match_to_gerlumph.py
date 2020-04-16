@@ -9,6 +9,9 @@ Reuiqres:
 - multiple_images.json
 '''
 
+print("NOPE",file=sys.stderr)
+
+
 dbfile     = sys.argv[1]
 path       = sys.argv[2]
 

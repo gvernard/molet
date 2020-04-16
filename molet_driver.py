@@ -135,7 +135,7 @@ if "point_source" in json_in:
 if "point_source" in json_in:
     cmd_list = [
         "python",
-        molet_home+"instrument_combined_light/setup_dirs.py",
+        molet_home+"combined_light/setup_dirs.py",
         infile,
         path
     ]
@@ -144,7 +144,7 @@ if "point_source" in json_in:
 
 # Combine light
 cmd_list = [
-    molet_home+"instrument_combined_light/bin/combine_light",
+    molet_home+"combined_light/bin/combine_light",
     infile,
     path
 ]
@@ -154,4 +154,4 @@ myprocess("Combining light components and including instrumental effects...",cmd
 
 log_file.close()
 print("\nCompleted successfully!\n")
-print("Output in: ",path+"output/")
+print("Output in: ",path)

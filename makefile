@@ -1,60 +1,39 @@
-# VKL_LIB
-#======================================================
-vkl_lib:
-	make -f makefiles/vkl_lib.mk vkl_lib
-vkl_lib_clean:
-	make -f makefiles/vkl_lib.mk vkl_lib_clean
-
-# GERLUMPH_LIB
-#======================================================
-mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
-current_dir := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
-root_dir := $(dir $(mkfile_path))
-#$(info $$mkfile_dir is [${mkfile_dir}])
-
-
-gerlumph_lib:
-	make -f makefiles/gerlumph_lib.mk cpu MAP_PATH=$(root_dir)data/gerlumph_mirror/
-gerlumph_lib_clean:
-	make -f makefiles/gerlumph_lib.mk clean
-
 # VKL_FPROJECT
 #======================================================
-vkl_fproject: vkl_lib
+vkl_fproject:
 	make -f makefiles/vkl_fproject.mk fproject
 vkl_fproject_clean:
 	make -f makefiles/vkl_fproject.mk fproject_clean
 
 # VKL_QUASAR
 #======================================================
-vkl_point_source: vkl_lib
+vkl_point_source:
 	make -f makefiles/vkl_point_source.mk point_source
 vkl_point_source_clean:
 	make -f makefiles/vkl_point_source.mk point_source_clean
 
 # VKL_LLM
 #======================================================
-vkl_llm: vkl_lib
+vkl_llm:
 	make -f makefiles/vkl_llm.mk lens_light_mass
 vkl_llm_clean:
 	make -f makefiles/vkl_llm.mk lens_light_mass_clean
 
-# INSTRUMENT_COMBINED_LIGHT
-#======================================================
-instrument_combined_light: vkl_lib
-	make -f makefiles/instrument_combined_light.mk instrument_combined_light
-instrument_combined_light_clean:
-	make -f makefiles/instrument_combined_light.mk instrument_combined_light_clean
-
 # GERLUMPH_MOVING_SOURCE
 #======================================================
-gerlumph_moving_source: gerlumph_lib
+gerlumph_moving_source:
 	make -f makefiles/gerlumph_moving_source.mk gerlumph_moving_source
 gerlumph_moving_source_clean:
 	make -f makefiles/gerlumph_moving_source.mk gerlumph_moving_source_clean
 
+# INSTRUMENT_COMBINED_LIGHT
+#======================================================
+combined:
+	make -f makefiles/combined_light.mk combined_light
+combined_clean:
+	make -f makefiles/combined_light.mk combined_light_clean
 
 
 
-all: vkl_fproject vkl_point_source vkl_llm gerlumph_moving_source instrument_combined_light
-clean: vkl_lib_clean vkl_fproject_clean vkl_point_source_clean vkl_llm_clean gerlumph_lib_clean gerlumph_moving_source_clean instrument_combined_light_clean
+all: vkl_fproject vkl_point_source vkl_llm gerlumph_moving_source combined
+clean: vkl_fproject_clean vkl_point_source_clean vkl_llm_clean gerlumph_moving_source_clean combined_clean

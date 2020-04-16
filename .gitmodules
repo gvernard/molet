@@ -1,3 +1,0 @@
-[submodule "common/gerlumph_lib"]
-	path = common/gerlumph_lib
-	url = https://github.com/gvernard/gerlumphpp.git
