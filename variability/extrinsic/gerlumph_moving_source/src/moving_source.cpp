@@ -29,8 +29,8 @@ int main(int argc,char* argv[]){
   fin >> root;
   fin.close();
 
-  std::string path = argv[2];
-  std::string output = path + "output/";
+  std::string out_path = argv[2];
+  std::string output = out_path + "output/";
 
   
   // Read the cosmological parameters

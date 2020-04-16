@@ -22,11 +22,8 @@ int main(int argc,char* argv[]){
   fin >> root;
   fin.close();
 
-  std::string path = argv[2];
-
-  std::string output     = path + "output/";
-  std::string input_path = path + "input_files/";
-
+  std::string in_path = argv[2];
+  std::string out_path = argv[3];
 
 
 
@@ -48,7 +45,7 @@ int main(int argc,char* argv[]){
     
     
     // Get the psf in super-resolution, crop it, and create convolution kernel
-    std::string psf_path = input_path + "psf_" + band_name + ".fits";
+    std::string psf_path = in_path + "/input_files/psf_" + band_name + ".fits";
     double psf_width  = band["psf"]["width"].asDouble();
     double psf_height = band["psf"]["height"].asDouble();
     int psf_Nx = band["psf"]["pix_x"].asInt();
@@ -59,12 +56,12 @@ int main(int argc,char* argv[]){
     
     
     // Create the fixed extended lensed light
-    ImagePlane* extended = new ImagePlane(output+"lensed_image_super.fits",super_res_x,super_res_y,width,height);
+    ImagePlane* extended = new ImagePlane(out_path+"output/lensed_image_super.fits",super_res_x,super_res_y,width,height);
     mypsf.convolve(extended);
     //extended->writeImage(output+"psf_lensed_image_super.fits");
     
     // Create the fixed lens galaxy light
-    ImagePlane* lens_light = new ImagePlane(output+"lens_light_super.fits",super_res_x,super_res_y,width,height);
+    ImagePlane* lens_light = new ImagePlane(out_path+"output/lens_light_super.fits",super_res_x,super_res_y,width,height);
     mypsf.convolve(lens_light);
     //lens_light->writeImage(output+"psf_lens_light_super.fits");
     
@@ -100,14 +97,14 @@ int main(int argc,char* argv[]){
       for(int i=0;i<obs_base.Nm;i++){
 	obs_base.img[i] = -2.5*log10(obs_base.img[i]);
       }
-      obs_base.writeImage(output + "OBS_" + band_name + ".fits");
+      obs_base.writeImage(out_path + "output/OBS_" + band_name + ".fits");
       
     } else {
       //=============== CREATE THE TIME VARYING LIGHT ====================
       
       // Read the multiple images' parameters from JSON
       Json::Value images;
-      fin.open(output+"multiple_images.json",std::ifstream::in);
+      fin.open(out_path+"output/multiple_images.json",std::ifstream::in);
       fin >> images;
       fin.close();
 
@@ -152,9 +149,9 @@ int main(int argc,char* argv[]){
       // Read intrinsic light curve(s) from JSON
       Json::Value intrinsic_lc;
       if( root["point_source"]["variability"]["intrinsic"]["type"].asString() == "custom" ){
-	fin.open(input_path+"intrinsic_light_curves.json",std::ifstream::in);
+	fin.open(in_path+"/input_files/intrinsic_light_curves.json",std::ifstream::in);
       } else {
-	fin.open(output+"intrinsic_light_curves.json",std::ifstream::in);
+	fin.open(out_path+"output/intrinsic_light_curves.json",std::ifstream::in);
       }
       fin >> intrinsic_lc;
       fin.close();
@@ -189,9 +186,9 @@ int main(int argc,char* argv[]){
       // Read extrinsic light curve(s) from JSON
       Json::Value extrinsic_lc;
       if( root["point_source"]["variability"]["extrinsic"]["type"].asString() == "custom" ){
-	fin.open(input_path+"extrinsic_light_curves.json",std::ifstream::in);
+	fin.open(in_path+"/input_files/extrinsic_light_curves.json",std::ifstream::in);
       } else {
-	fin.open(output+"extrinsic_light_curves.json",std::ifstream::in);
+	fin.open(out_path+"output/extrinsic_light_curves.json",std::ifstream::in);
       }
       fin >> extrinsic_lc;
       fin.close();
@@ -300,7 +297,7 @@ int main(int argc,char* argv[]){
 	  }
 
 	  // Write json light curves
-	  outputLightCurvesJson(cont_LC,path+mock+"/LCcont_"+band_name+".json");
+	  outputLightCurvesJson(cont_LC,out_path+mock+"/LCcont_"+band_name+".json");
 
 	  // Clean up
 	  delete(cont_LC_intrinsic);
@@ -338,7 +335,7 @@ int main(int argc,char* argv[]){
 	  }
 
 	  // Write json light curves
-	  outputLightCurvesJson(samp_LC,path+mock+"/LCsamp_"+band_name+".json");
+	  outputLightCurvesJson(samp_LC,out_path+mock+"/LCsamp_"+band_name+".json");
 	  // *********************** End of product **************************************************
 
 
@@ -396,7 +393,7 @@ int main(int argc,char* argv[]){
 	      char buf[4];
 	      sprintf(buf,"%03d",t);
 	      std::string timestep = buf;
-	      obs_img.writeImage(path+mock+"/OBS_"+band_name+"_"+timestep+".fits");
+	      obs_img.writeImage(out_path+mock+"/OBS_"+band_name+"_"+timestep+".fits");
 	    }
 	  }
 	  // *********************** End of product **************************************************	    

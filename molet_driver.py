@@ -26,8 +26,16 @@ infile = sys.argv[1]
 infile = os.path.abspath(infile) # make sure this is the absolute path
 
 dum  = infile.split("/")
-path = "/".join(dum[:-1]) + "/"
-name = dum[-1]
+in_path = "/".join(dum[:-1]) + "/"
+
+# Check if input_files directory exists (it needs to contain at least the psf files)
+
+if len(sys.argv) > 2:
+    out_path = sys.argv[2]
+    if out_path[-1] != "/":
+        out_path += "/"
+else:
+    out_path = in_path    
 
 molet_home = os.path.dirname(os.path.abspath(__file__)) + "/"
 
@@ -37,10 +45,10 @@ input_str  = re.sub(re.compile("/\*.*?\*/",re.DOTALL),"",input_str)
 input_str  = re.sub(re.compile("//.*?\n" ),"",input_str)
 json_in    = json.loads(input_str)
 
-if os.path.isdir(path+"output") == False:
-    os.mkdir(path+"output")
+if os.path.isdir(out_path+"output") == False:
+    os.mkdir(out_path+"output")
 
-log_file = open(path+"log.txt",'w')
+log_file = open(out_path+"log.txt",'w')
 
 
     
@@ -52,7 +60,7 @@ cmd_list = [
     "python3",
     molet_home+"cosmology/angular_diameter_distances.py",
     infile,
-    path
+    out_path
 ]
 #print(" ".join(cmd_list))
 myprocess("Getting angular diameter distances...",cmd_list,log_file)
@@ -65,7 +73,7 @@ myprocess("Getting angular diameter distances...",cmd_list,log_file)
 cmd_list = [
     molet_home+"lensed_extended_source/vkl_fproject/bin/fproject",
     infile,
-    path
+    out_path
 ]
 #print(" ".join(cmd_list))
 myprocess("Getting extended source lensed features...",cmd_list,log_file)
@@ -79,7 +87,7 @@ if "point_source" in json_in:
     cmd_list = [
         molet_home+"lensed_point_source/vkl_point_source/bin/point_source",
         infile,
-        path
+        out_path
     ]
     #print(" ".join(cmd_list))
     myprocess("Getting point-like source lensed images...",cmd_list,log_file)
@@ -92,7 +100,7 @@ if "point_source" in json_in:
 cmd_list = [
     molet_home+"lens_light_mass/vkl_llm/bin/llm",
     infile,
-    path
+    out_path
 ]
 #print(" ".join(cmd_list))
 myprocess("Getting light profile of the lens...",cmd_list,log_file)
@@ -114,7 +122,7 @@ if "point_source" in json_in:
             "python3",
             molet_home+"variability/extrinsic/match_to_gerlumph/match_to_gerlumph.py",
             molet_home+"data/gerlumph_database/gerlumph.db",
-            path
+            out_path
         ]
         #print(" ".join(cmd_list))
         myprocess("Matching macro-images to GERLUMPH maps...",cmd_list,log_file)
@@ -122,7 +130,7 @@ if "point_source" in json_in:
         cmd_list = [
             molet_home+"variability/extrinsic/gerlumph_moving_source/bin/moving_source",
             infile,
-            path
+            out_path
         ]
         #print(" ".join(cmd_list))
         myprocess("Getting microlensing variability for each image...",cmd_list,log_file)
@@ -138,7 +146,8 @@ if "point_source" in json_in:
         "python3",
         molet_home+"combined_light/setup_dirs.py",
         infile,
-        path
+        in_path,
+        out_path
     ]
     #print(" ".join(cmd_list))
     myprocess("Mock output directories created...",cmd_list,log_file)
@@ -147,7 +156,8 @@ if "point_source" in json_in:
 cmd_list = [
     molet_home+"combined_light/bin/combine_light",
     infile,
-    path
+    in_path,
+    out_path
 ]
 #print(" ".join(cmd_list))
 myprocess("Combining light components and including instrumental effects...",cmd_list,log_file)
@@ -155,4 +165,4 @@ myprocess("Combining light components and including instrumental effects...",cmd
 
 log_file.close()
 print("\nCompleted successfully!\n")
-print("Output in: ",path)
+print("Output in: ",out_path)

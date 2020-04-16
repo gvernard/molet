@@ -13,15 +13,15 @@ print("NOPE",file=sys.stderr)
 
 
 dbfile     = sys.argv[1]
-path       = sys.argv[2]
+out_path   = sys.argv[2]
 
-f          = open(path+"output/multiple_images.json",'r')
+f          = open(out_path+"output/multiple_images.json",'r')
 input_str  = f.read()
 input_str  = re.sub(re.compile("/\*.*?\*/",re.DOTALL),"",input_str)
 input_str  = re.sub(re.compile("//.*?\n" ),"",input_str)
 images     = json.loads(input_str)
 
-outfile = path+"output/gerlumph_maps.json"
+outfile = out_path+"output/gerlumph_maps.json"
 
 
 
