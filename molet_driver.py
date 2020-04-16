@@ -29,6 +29,9 @@ dum  = infile.split("/")
 in_path = "/".join(dum[:-1]) + "/"
 
 # Check if input_files directory exists (it needs to contain at least the psf files)
+if not os.path.isdir(in_path+"input_files"):
+    print("Input files must be in a directory named 'input_files', at the same path as the 'input_molet.json' file!")
+    sys.exit()
 
 if len(sys.argv) > 2:
     out_path = sys.argv[2]
@@ -36,7 +39,7 @@ if len(sys.argv) > 2:
         out_path += "/"
 else:
     out_path = in_path    
-
+    
 molet_home = os.path.dirname(os.path.abspath(__file__)) + "/"
 
 f          = open(infile,'r')
