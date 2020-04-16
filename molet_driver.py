@@ -48,7 +48,7 @@ log_file = open(path+"log.txt",'w')
 # Get angular diameter distances
 ####################################################################################
 cmd_list = [
-    "python",
+    "python3",
     molet_home+"cosmology/angular_diameter_distances.py",
     infile,
     path
@@ -110,7 +110,7 @@ if "point_source" in json_in:
     # Extrinsic
     if json_in["point_source"]["variability"]["extrinsic"]["type"] != "custom":
         cmd_list = [
-            "python",
+            "python3",
             molet_home+"variability/extrinsic/match_to_gerlumph/match_to_gerlumph.py",
             molet_home+"data/gerlumph_database/gerlumph.db",
             path
@@ -134,7 +134,7 @@ if "point_source" in json_in:
 # Create output directories if necessary
 if "point_source" in json_in:
     cmd_list = [
-        "python",
+        "python3",
         molet_home+"combined_light/setup_dirs.py",
         infile,
         path
