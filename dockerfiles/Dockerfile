@@ -1,0 +1,159 @@
+FROM gcc:7.5
+
+ARG LIBDIR=/home/libraries
+
+WORKDIR /home/src
+
+
+# Install gerlumphpp and dependencies
+#########################################################################################################
+# Install fftw
+RUN wget http://www.fftw.org/fftw-3.3.8.tar.gz \
+	&&	tar -xvf fftw-3.3.8.tar.gz \
+	&&	mv fftw-3.3.8 fftw \
+	&&	cd fftw \
+	&&	./configure --prefix=$LIBDIR/fftw --enable-shared \
+	&&	make CFLAGS=-fPIC \
+	&&	make install
+
+# Install cfitsio
+RUN wget http://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio-3.47.tar.gz \
+	&&	tar -xvf cfitsio-3.47.tar.gz \
+	&&	mv cfitsio-3.47 cfitsio \
+	&&	cd cfitsio \
+	&&	./configure --prefix=$LIBDIR/cfitsio \
+	&&	make \
+	&&	make install
+
+# Install CCfits
+RUN wget https://heasarc.gsfc.nasa.gov/fitsio/CCfits/CCfits-2.5.tar.gz \
+	&&	tar -xvf CCfits-2.5.tar.gz \
+	&&	cd CCfits \
+	&&	./configure --prefix=$LIBDIR/CCfits --with-cfitsio=$LIBDIR/cfitsio \
+	&&	make \
+	&&	make install
+
+# Install libpng
+RUN apt-get update \
+	&&	apt-get install -y \
+	libpng-dev
+
+# Setup environment variables required by gerlumphpp
+ENV CPATH $CPATH:$LIBDIR/fftw/include:$LIBDIR/cfitsio/include:$LIBDIR/CCfits/include
+ENV LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH::$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib
+
+# Install gerlumphpp
+RUN cd $LIBDIR \
+	&&	git clone https://github.com/gvernard/gerlumphpp.git \
+	&&	cd gerlumphpp \
+	&&	make cpu MAP_PATH=/home/gerlumph_maps/
+ENV CPATH $CPATH:$LIBDIR/gerlumphpp/include
+ENV LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/gerlumphpp/lib
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$LIBDIR/gerlumphpp/lib
+#########################################################################################################
+
+
+
+# Instal vkl_lib and dependencies
+#########################################################################################################
+# Install gmp
+RUN wget https://gmplib.org/download/gmp/gmp-6.1.2.tar.xz \
+	&&	tar -xvf gmp-6.1.2.tar.xz \
+	&&	cd gmp-6.1.2 \
+	&&	./configure --prefix=$LIBDIR/gmp \
+	&&	make \
+	&&	make install
+
+# Install mpfr
+RUN wget http://www.mpfr.org/mpfr-4.0.2/mpfr-4.0.2.tar.gz \
+	&&	tar -xvf mpfr-4.0.2.tar.gz \
+	&&	cd mpfr-4.0.2 \
+	&&	./configure --with-gmp=$LIBDIR/gmp --prefix=$LIBDIR/mpfr \
+	&&	make \
+	&&	make install
+
+# Install boost
+RUN wget https://dl.bintray.com/boostorg/release/1.66.0/source/boost_1_66_0.tar.gz \
+	&&	tar -xvf boost_1_66_0.tar.gz \
+	&&	cd boost_1_66_0 \
+	&&	./bootstrap.sh --with-libraries=thread \
+	&&	./b2 --prefix=$LIBDIR/boost install
+
+# Install cmake
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.15.5/cmake-3.15.5-Linux-x86_64.sh \
+	-q -O /tmp/cmake-install.sh \
+	&&	chmod u+x /tmp/cmake-install.sh \
+	&&	mkdir /usr/bin/cmake \
+	&&	/tmp/cmake-install.sh --skip-license --prefix=/usr/bin/cmake \
+	&&	rm /tmp/cmake-install.sh
+ENV PATH=$PATH:/usr/bin/cmake/bin
+
+# Install CGAL
+RUN wget https://github.com/CGAL/cgal/archive/releases/CGAL-4.11.2.tar.gz \
+	&&	tar -xvf CGAL-4.11.2.tar.gz \
+	&&	cd cgal-releases-CGAL-4.11.2 \
+	&&	mkdir build_CGAL \
+	&&	cd build_CGAL \
+	&&	cmake \
+	-DGMP_INCLUDE_DIR=$LIBDIR/gmp/include \
+	-DGMP_LIBRARIES=$LIBDIR/gmp/lib \
+	-DMPFR_INCLUDE_DIR=$LIBDIR/mpfr/include \
+	-DMPFR_LIBRARIES=$LIBDIR/mpfr/lib \
+	-DBOOST_INCLUDEDIR=$LIBDIR/boost/include \
+	-DCMAKE_INSTALL_PREFIX=$LIBDIR/CGAL \
+	.. \
+	&&	make \
+	&&	make install
+
+# Install jsoncpp
+RUN git clone https://github.com/open-source-parsers/jsoncpp.git \
+	&&	cd jsoncpp \
+	&&	mkdir -p build \
+	&&	cd build \
+	&&	cmake \
+	-DCMAKE_BUILD_TYPE=release \
+	-DBUILD_SHARED_LIBS=ON \
+	-DARCHIVE_INSTALL_DIR=. \
+	-DCMAKE_INSTALL_PREFIX=$LIBDIR/jsoncpp \
+	-G "Unix Makefiles" \
+	.. \
+	&&	make \
+	&&	make install
+
+ENV CPATH $CPATH:$LIBDIR/gmp/include:$LIBDIR/mpfr/include:$LIBDIR/boost/include:$LIBDIR/CGAL/include:$LIBDIR/jsoncpp/include
+ENV LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/gmp/lib:$LIBDIR/mpfr/lib:$LIBDIR/boost/lib:$LIBDIR/CGAL/lib:$LIBDIR/jsoncpp/lib
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$LIBDIR/gmp/lib:$LIBDIR/mpfr/lib:$LIBDIR/boost/lib:$LIBDIR/CGAL/lib:$LIBDIR/jsoncpp/lib
+
+# Install vkl_lib
+RUN cd $LIBDIR \
+	&&	git clone https://github.com/gvernard/vkl_lib.git \
+	&&	cd vkl_lib \
+	&&	make
+ENV CPATH $CPATH:$LIBDIR/vkl_lib/inc
+ENV LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/vkl_lib/lib
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$LIBDIR/vkl_lib/lib
+#########################################################################################################
+
+
+
+# Install python packages (not required for compilling but required at runtime)
+#########################################################################################################
+RUN apt-get update \
+	&&	apt-get -y install \
+	curl \
+	python3-pip
+RUN pip3 install astropy==2.0.3 "scipy>=0.18"
+#########################################################################################################
+
+
+
+# Install MOLET
+#########################################################################################################
+RUN cd /home \
+	&&	git clone https://github.com/gvernard/molet.git \
+	&&	cd molet \
+	&&	make all
+#########################################################################################################
+
+WORKDIR /home/molet
