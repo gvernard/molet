@@ -29,7 +29,8 @@ dum  = infile.split("/")
 path = "/".join(dum[:-1]) + "/"
 name = dum[-1]
 
-molet_home = "/home/george/myCodes/molet/"
+molet_home = os.path.dirname(os.path.abspath(__file__)) + "/"
+
 f          = open(infile,'r')
 input_str  = f.read()
 input_str  = re.sub(re.compile("/\*.*?\*/",re.DOTALL),"",input_str)
