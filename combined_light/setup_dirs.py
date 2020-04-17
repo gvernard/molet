@@ -17,8 +17,6 @@ myinput    = json.loads(input_str)
 # Choose the first band (number of light curves, in or ex, should be the same in all bands
 band_name = myinput["instrument"]["bands"][0]["name"]
 
-
-
 lc_path = ""
 if myinput["point_source"]["variability"]["intrinsic"]["type"] == "custom":
     lc_path = in_path + "input_files/intrinsic_light_curves.json" 

@@ -78,6 +78,7 @@
 	    }
 	    
 	}
+	
     ],
 
 
@@ -121,7 +122,24 @@
 		"type": "custom"
 	    },
 	    "extrinsic": {
-		"type": "custom"
+		"microlens_mass": 1,
+		"type": "AGN",
+		"Nex": 100,
+		"pars": {
+		    "sigma_pec_l": 250,
+		    "sigma_pec_s": 250,
+		    "sigma_disp": 250,
+		    "ra": 340.2,
+		    "dec": 0.0
+		},
+		"profiles": [
+		    {
+			"type": "uniform",
+			"rhalf": 1.0, // in 10^14 cm
+			"incl": 0,
+			"orient": 0
+		    }
+		]
 	    }
 	}
     },
