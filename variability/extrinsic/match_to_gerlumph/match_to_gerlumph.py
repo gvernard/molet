@@ -1,19 +1,19 @@
+import os
 import re
 import sys
 import json
 import math
 import sqlite3
+import urllib.parse
 
 '''
 Reuiqres:
 - multiple_images.json
 '''
 
-#print("NOPE",file=sys.stderr)
-
-
 dbfile     = sys.argv[1]
-out_path   = sys.argv[2]
+map_path   = sys.argv[2]
+out_path   = sys.argv[3]
 
 f          = open(out_path+"output/multiple_images.json",'r')
 input_str  = f.read()
@@ -38,26 +38,41 @@ for image in images:
     cur.execute("SELECT id,k,g,s,(k-?)*(k-?)+(g-?)*(g-?) AS d,ABS(s-?) as ds FROM gerlumph GROUP BY d,ds HAVING d < ?*? ORDER BY d ASC,ds ASC LIMIT 10;",[k0,k0,g0,g0,s0,kg_sep,kg_sep])
     cases = cur.fetchall()
 
-    map = {}
+    mymap = {}
     if len(cases) == 0:
-        map["id"]  = "none"
-        map["k"]   = 0
-        map["g"]   = 0
-        map["s"]   = 0
-        map["dkg"] = 0
-        map["ds"]  = 0
+        mymap["id"]  = "none"
+        mymap["k"]   = 0
+        mymap["g"]   = 0
+        mymap["s"]   = 0
+        mymap["dkg"] = 0
+        mymap["ds"]  = 0
     else: 
-        map["id"]  = cases[0][0]
-        map["k"]   = float(cases[0][1])
-        map["g"]   = float(cases[0][2])
-        map["s"]   = float(cases[0][3])
-        map["dkg"] = math.sqrt(cases[0][4])
-        map["ds"]  = cases[0][5]
-    gerlumph_maps.append(map)
+        mymap["id"]  = cases[0][0]
+        mymap["k"]   = float(cases[0][1])
+        mymap["g"]   = float(cases[0][2])
+        mymap["s"]   = float(cases[0][3])
+        mymap["dkg"] = math.sqrt(cases[0][4])
+        mymap["ds"]  = cases[0][5]
+    gerlumph_maps.append(mymap)
     
 conn.close()
 
 
+missing = []
+for mymap in gerlumph_maps:
+    if mymap["id"] != "none":
+        if not os.path.isdir(map_path+str(mymap["id"])):
+            missing.append(str(mymap["id"]))
 
-with open(outfile,"w") as file:
-    json.dump(gerlumph_maps,file,indent=4)
+if len(missing) > 0:
+    missing = list(dict.fromkeys(missing))
+    missing = list( map(lambda x: "ids[]="+x,missing) )
+    print("ATTENTION: missing GERLUMPH maps from '"+map_path+"' !",file=sys.stderr)
+    print("Click the following link to download them:",file=sys.stderr)
+    print("\n",file=sys.stderr)
+    myurl = "gerlumph.swin.edu.au/inc/generic/put_to_cart.php?"+"&".join(missing)
+    print("      http://"+urllib.parse.quote(myurl),file=sys.stderr)
+    print("\n",file=sys.stderr)
+else:
+    with open(outfile,"w") as file:
+        json.dump(gerlumph_maps,file,indent=4)

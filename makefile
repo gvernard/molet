@@ -26,6 +26,13 @@ gerlumph_moving_source:
 gerlumph_moving_source_clean:
 	make -f makefiles/gerlumph_moving_source.mk gerlumph_moving_source_clean
 
+# GET_MAP_PATH
+#======================================================
+get_map_path:
+	make -f makefiles/get_map_path.mk get_map_path
+get_map_path_clean:
+	make -f makefiles/get_map_path.mk get_map_path_clean
+
 # INSTRUMENT_COMBINED_LIGHT
 #======================================================
 combined:
@@ -35,5 +42,5 @@ combined_clean:
 
 
 
-all: vkl_fproject vkl_point_source vkl_llm gerlumph_moving_source combined
-clean: vkl_fproject_clean vkl_point_source_clean vkl_llm_clean gerlumph_moving_source_clean combined_clean
+all: vkl_fproject vkl_point_source vkl_llm get_map_path gerlumph_moving_source combined
+clean: vkl_fproject_clean vkl_point_source_clean vkl_llm_clean get_map_path_clean gerlumph_moving_source_clean combined_clean

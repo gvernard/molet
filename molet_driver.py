@@ -10,7 +10,7 @@ def myprocess(msg,cmd_list,log_file):
     p = Popen(cmd_list,universal_newlines=True,stdout=PIPE,stderr=PIPE)
     out,err = p.communicate()
     if len(err) != 0:
-        sys.exit("\n===> Failed with error: \n%s" % (str(err)))
+        sys.exit("\n===> Failed with error: \n%s" % (str(err))+"\n===> Use the following command on its own to debug:\n"+" ".join(cmd_list))
     if p.returncode != 0:
         sys.exit("\n===> Failed with unspecified error\n===> Use the following command on its own to debug:\n"+" ".join(cmd_list))
     log_file.write("COMMAND: "+" ".join(cmd_list)+"\n")
@@ -41,6 +41,14 @@ else:
     out_path = in_path    
     
 molet_home = os.path.dirname(os.path.abspath(__file__)) + "/"
+
+
+# Get map path
+p = Popen([molet_home+"variability/extrinsic/get_map_path/bin/get_map_path"],universal_newlines=True,stdout=PIPE,stderr=PIPE)
+out,err = p.communicate()
+p.kill()
+map_path = out.strip()
+
 
 f          = open(infile,'r')
 input_str  = f.read()
@@ -125,6 +133,7 @@ if "point_source" in json_in:
             "python3",
             molet_home+"variability/extrinsic/match_to_gerlumph/match_to_gerlumph.py",
             molet_home+"data/gerlumph_database/gerlumph.db",
+            map_path,
             out_path
         ]
         #print(" ".join(cmd_list))
