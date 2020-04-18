@@ -1,8 +1,9 @@
 FROM gcc:7.5
 
 ARG LIBDIR=/home/libraries
+ARG SRCDIR=/home/src
 
-WORKDIR /home/src
+WORKDIR $SRCDIR
 
 
 # Install gerlumphpp and dependencies
@@ -34,14 +35,17 @@ RUN wget https://heasarc.gsfc.nasa.gov/fitsio/CCfits/CCfits-2.5.tar.gz \
 	&&	make install
 
 # Install libpng
-RUN apt-get update \
-	&&	apt-get install -y \
-	libpng-dev
+RUN wget https://sourceforge.net/projects/libpng/files/libpng16/1.6.37/libpng-1.6.37.tar.gz \
+	&&	tar -xvf libpng-1.6.37.tar.gz \
+	&&	cd libpng-1.6.37 \
+	&&	./configure --prefix=$LIBDIR/libpng \
+	&&	make check \
+	&&	make install
 
 # Setup environment variables required by gerlumphpp
-ENV CPATH $CPATH:$LIBDIR/fftw/include:$LIBDIR/cfitsio/include:$LIBDIR/CCfits/include
-ENV LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH::$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib
+ENV CPATH $CPATH:$LIBDIR/fftw/include:$LIBDIR/cfitsio/include:$LIBDIR/CCfits/include:$LIBDIR/libpng/include
+ENV LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib:$LIBDIR/libpng/lib
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH::$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib:$LIBDIR/libpng/lib
 
 # Install gerlumphpp
 RUN cd $LIBDIR \
@@ -130,22 +134,10 @@ RUN cd $LIBDIR \
 	&&	git clone https://github.com/gvernard/vkl_lib.git \
 	&&	cd vkl_lib \
 	&&	make
-ENV CPATH $CPATH:$LIBDIR/vkl_lib/inc
+ENV CPATH $CPATH:$LIBDIR/vkl_lib/include
 ENV LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/vkl_lib/lib
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$LIBDIR/vkl_lib/lib
 #########################################################################################################
-
-
-
-# Install python packages (not required for compilling but required at runtime)
-#########################################################################################################
-RUN apt-get update \
-	&&	apt-get -y install \
-	curl \
-	python3-pip
-RUN pip3 install astropy==2.0.3 "scipy>=0.18"
-#########################################################################################################
-
 
 
 # Install MOLET
@@ -156,4 +148,5 @@ RUN cd /home \
 	&&	make all
 #########################################################################################################
 
+RUN rm -r -f $SRCDIR
 WORKDIR /home/molet

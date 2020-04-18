@@ -2,7 +2,9 @@
 /tests/*/mock_*
 log.txt
 *.pdf
-/data/
 lib
 obj
 bin
+
+/data/*
+!/data/gerlumph.db

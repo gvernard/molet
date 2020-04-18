@@ -1,0 +1,21 @@
+FROM molet:latest
+
+#FROM ubuntu:bionic
+FROM python:3.7-slim-buster
+COPY --from=0 /home/libraries /home/libraries
+COPY --from=0 /home/molet /home/molet
+WORKDIR /home/molet
+
+RUN apt-get update\
+	&& apt-get install -y libgfortran4\
+	libcurl4\
+	&& rm -r /var/lib/apt/lists/*
+
+ARG LIBDIR=/home/libraries
+
+ENV CPATH $LIBDIR/fftw/include:$LIBDIR/cfitsio/include:$LIBDIR/CCfits/include:$LIBDIR/libpng/include:$LIBDIR/gerlumphpp/include:$LIBDIR/gmp/include:$LIBDIR/mpfr/include:$LIBDIR/boost/include:$LIBDIR/CGAL/include:$LIBDIR/jsoncpp/include:$LIBDIR/vkl_lib/include
+ENV LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib:$LIBDIR/libpng/lib:$LIBDIR/gerlumphpp/lib:$LIBDIR/gmp/lib:$LIBDIR/mpfr/lib:$LIBDIR/boost/lib:$LIBDIR/CGAL/lib:$LIBDIR/jsoncpp/lib:$LIBDIR/vkl_lib/lib
+ENV LD_LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib:$LIBDIR/libpng/lib:$LIBDIR/gerlumphpp/lib:$LIBDIR/gmp/lib:$LIBDIR/mpfr/lib:$LIBDIR/boost/lib:$LIBDIR/CGAL/lib:$LIBDIR/jsoncpp/lib:$LIBDIR/vkl_lib/lib
+
+
+CMD ["/bin/bash"]
