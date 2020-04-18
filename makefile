@@ -1,3 +1,10 @@
+# ANGULAR_DIAMETER_DISTANCES
+#======================================================
+angular_diameter_distances:
+	make -f makefiles/angular_diameter_distances.mk angular_diameter_distances
+angular_diameter_distances_clean:
+	make -f makefiles/angular_diameter_distances.mk angular_diameter_distances_clean
+
 # VKL_FPROJECT
 #======================================================
 vkl_fproject:
@@ -42,5 +49,17 @@ combined_clean:
 
 
 
-all: vkl_fproject vkl_point_source vkl_llm get_map_path gerlumph_moving_source combined
-clean: vkl_fproject_clean vkl_point_source_clean vkl_llm_clean get_map_path_clean gerlumph_moving_source_clean combined_clean
+
+ALL_DEPS := angular_diameter_distances
+ALL_DEPS += vkl_fproject
+ALL_DEPS += vkl_point_source
+ALL_DEPS += vkl_llm
+ALL_DEPS += get_map_path
+ALL_DEPS += gerlumph_moving_source
+ALL_DEPS += combined
+
+CLEAN_DEPS = $(patsubst %,%_clean,$(ALL_DEPS))
+#$(info $$OBJ is [${CLEAN_DEPS}])
+
+all: $(ALL_DEPS)
+clean: $(CLEAN_DEPS)

@@ -68,8 +68,7 @@ log_file = open(out_path+"log.txt",'w')
 # Get angular diameter distances
 ####################################################################################
 cmd_list = [
-    "python3",
-    molet_home+"cosmology/angular_diameter_distances.py",
+    molet_home+"cosmology/angular_diameter_distances/bin/angular_diameter_distances",
     infile,
     out_path
 ]
