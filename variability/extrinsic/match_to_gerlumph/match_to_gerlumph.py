@@ -58,12 +58,15 @@ for image in images:
 conn.close()
 
 
+with open(outfile,"w") as file:
+    json.dump(gerlumph_maps,file,indent=4)
+
 missing = []
 for mymap in gerlumph_maps:
     if mymap["id"] != "none":
         if not os.path.isdir(map_path+str(mymap["id"])):
             missing.append(str(mymap["id"]))
-
+            
 if len(missing) > 0:
     missing = list(dict.fromkeys(missing))
     missing = list( map(lambda x: "ids[]="+x,missing) )
@@ -73,6 +76,4 @@ if len(missing) > 0:
     myurl = "gerlumph.swin.edu.au/inc/generic/put_to_cart.php?"+"&".join(missing)
     print("      http://"+urllib.parse.quote(myurl),file=sys.stderr)
     print("\n",file=sys.stderr)
-else:
-    with open(outfile,"w") as file:
-        json.dump(gerlumph_maps,file,indent=4)
+

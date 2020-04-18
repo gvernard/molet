@@ -42,25 +42,6 @@ RUN wget https://sourceforge.net/projects/libpng/files/libpng16/1.6.37/libpng-1.
 	&&	make check \
 	&&	make install
 
-# Setup environment variables required by gerlumphpp
-ENV CPATH $CPATH:$LIBDIR/fftw/include:$LIBDIR/cfitsio/include:$LIBDIR/CCfits/include:$LIBDIR/libpng/include
-ENV LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib:$LIBDIR/libpng/lib
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH::$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib:$LIBDIR/libpng/lib
-
-# Install gerlumphpp
-RUN cd $LIBDIR \
-	&&	git clone https://github.com/gvernard/gerlumphpp.git \
-	&&	cd gerlumphpp \
-	&&	make cpu MAP_PATH=/home/gerlumph_maps/
-ENV CPATH $CPATH:$LIBDIR/gerlumphpp/include
-ENV LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/gerlumphpp/lib
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$LIBDIR/gerlumphpp/lib
-#########################################################################################################
-
-
-
-# Instal vkl_lib and dependencies
-#########################################################################################################
 # Install gmp
 RUN wget https://gmplib.org/download/gmp/gmp-6.1.2.tar.xz \
 	&&	tar -xvf gmp-6.1.2.tar.xz \
@@ -125,20 +106,39 @@ RUN git clone https://github.com/open-source-parsers/jsoncpp.git \
 	&&	make \
 	&&	make install
 
-ENV CPATH $CPATH:$LIBDIR/gmp/include:$LIBDIR/mpfr/include:$LIBDIR/boost/include:$LIBDIR/CGAL/include:$LIBDIR/jsoncpp/include
-ENV LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/gmp/lib:$LIBDIR/mpfr/lib:$LIBDIR/boost/lib:$LIBDIR/CGAL/lib:$LIBDIR/jsoncpp/lib
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$LIBDIR/gmp/lib:$LIBDIR/mpfr/lib:$LIBDIR/boost/lib:$LIBDIR/CGAL/lib:$LIBDIR/jsoncpp/lib
 
+ENV CPATH $CPATH:$LIBDIR/fftw/include:$LIBDIR/cfitsio/include:$LIBDIR/CCfits/include:$LIBDIR/libpng/include:$LIBDIR/gmp/include:$LIBDIR/mpfr/include:$LIBDIR/boost/include:$LIBDIR/CGAL/include:$LIBDIR/jsoncpp/include
+ENV LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib:$LIBDIR/libpng/lib:$LIBDIR/gmp/lib:$LIBDIR/mpfr/lib:$LIBDIR/boost/lib:$LIBDIR/CGAL/lib:$LIBDIR/jsoncpp/lib
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib:$LIBDIR/libpng/lib:$LIBDIR/gmp/lib:$LIBDIR/mpfr/lib:$LIBDIR/boost/lib:$LIBDIR/CGAL/lib:$LIBDIR/jsoncpp/lib
+#########################################################################################################
+
+
+
+### Uncomment the line below to use cache up to here and update the libraries and code with their latest versions
+#ARG DUMMY=unknown
+
+# Install 'gerlumphpp' and 'vkl_lib' libraries
+#########################################################################################################
 # Install vkl_lib
 RUN cd $LIBDIR \
 	&&	git clone https://github.com/gvernard/vkl_lib.git \
 	&&	cd vkl_lib \
 	&&	make
-ENV CPATH $CPATH:$LIBDIR/vkl_lib/include
-ENV LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/vkl_lib/lib
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$LIBDIR/vkl_lib/lib
+
+# Install gerlumphpp
+RUN cd $LIBDIR \
+	&&	git clone https://github.com/gvernard/gerlumphpp.git \
+	&&	cd gerlumphpp \
+	&&	make cpu MAP_PATH=/home/gerlumph_maps/
+
+ENV CPATH $CPATH:$LIBDIR/vkl_lib/include:$LIBDIR/gerlumphpp/include
+ENV LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/vkl_lib/lib:$LIBDIR/gerlumphpp/lib
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$LIBDIR/vkl_lib/lib:$LIBDIR/gerlumphpp/lib
 #########################################################################################################
 
+
+### Uncomment the line below to use cache up to here and update the code with the latest version
+#ARG DUMMY=unknown
 
 # Install MOLET
 #########################################################################################################

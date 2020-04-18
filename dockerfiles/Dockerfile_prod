@@ -1,6 +1,5 @@
-FROM molet:latest
+FROM molet:development
 
-#FROM ubuntu:bionic
 FROM python:3.7-slim-buster
 COPY --from=0 /home/libraries /home/libraries
 COPY --from=0 /home/molet /home/molet

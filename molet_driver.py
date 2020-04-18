@@ -131,7 +131,7 @@ if "point_source" in json_in:
         cmd_list = [
             "python3",
             molet_home+"variability/extrinsic/match_to_gerlumph/match_to_gerlumph.py",
-            molet_home+"data/gerlumph_database/gerlumph.db",
+            molet_home+"data/gerlumph.db",
             map_path,
             out_path
         ]
