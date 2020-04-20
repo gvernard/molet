@@ -56,12 +56,12 @@
 	    },
 
 	    "compact_mass_model": {
-		/*
-		"type": "mass_to_light",
-		"pars": {
-		    "ratio": 10 // in solar mass-to-light ratio (Y_solar = 5133 kg/W). Typical values for galaxies are 2-10 Y_solar.
-		}
-		*/
+		
+		//"type": "mass_to_light",
+		//"pars": {
+		//    "ratio": 10 // in solar mass-to-light ratio (Y_solar = 5133 kg/W). Typical values for galaxies are 2-10 Y_solar.
+		//}
+		
 		"type": "analytic",
 		"pars": [
 		    {
