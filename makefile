@@ -33,6 +33,13 @@ gerlumph_moving_source:
 gerlumph_moving_source_clean:
 	make -f makefiles/gerlumph_moving_source.mk gerlumph_moving_source_clean
 
+# MATCH TO GERLUMPH MAPS
+#======================================================
+match_to_gerlumph:
+	make -f makefiles/match_to_gerlumph.mk match_to_gerlumph
+match_to_gerlumph_clean:
+	make -f makefiles/match_to_gerlumph.mk match_to_gerlumph_clean
+
 # GET_MAP_PATH
 #======================================================
 get_map_path:
@@ -55,6 +62,7 @@ ALL_DEPS += vkl_fproject
 ALL_DEPS += vkl_point_source
 ALL_DEPS += vkl_llm
 ALL_DEPS += get_map_path
+ALL_DEPS += match_to_gerlumph
 ALL_DEPS += gerlumph_moving_source
 ALL_DEPS += combined
 

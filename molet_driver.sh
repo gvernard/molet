@@ -134,7 +134,11 @@ then
     if [ $ex_type != "custom" ]
     then
 	msg="Matching macro-images to GERLUMPH maps..."
-	cmd="python3 "$molet_home"variability/extrinsic/match_to_gerlumph/match_to_gerlumph.py "$molet_home"data/gerlumph.db "$map_path" "$out_path
+	cmd=$molet_home"variability/extrinsic/match_to_gerlumph/bin/match_to_gerlumph "$molet_home"data/gerlumph.db "$out_path
+	myprocess "$msg" "$cmd" "$log_file"
+
+	msg="Checking if GERLUMPH maps exist locally..."
+	cmd=$molet_home"variability/extrinsic/match_to_gerlumph/check_map_files.sh "$map_path" "$out_path
 	myprocess "$msg" "$cmd" "$log_file"
 	
 	msg="Getting microlensing variability for each image..."
