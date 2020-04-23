@@ -1,13 +1,19 @@
-FROM gvernard/molet:development
-
+FROM gvernard/molet:development AS dev
 FROM gcc:7.5
-COPY --from=0 /home/libraries /home/libraries
 
 ARG LIBDIR=/home/libraries
 
-ENV CPATH $LIBDIR/fftw/include:$LIBDIR/cfitsio/include:$LIBDIR/CCfits/include:$LIBDIR/libpng/include:$LIBDIR/gerlumphpp/include:$LIBDIR/gmp/include:$LIBDIR/mpfr/include:$LIBDIR/boost/include:$LIBDIR/CGAL/include:$LIBDIR/jsoncpp/include:$LIBDIR/vkl_lib/include
+COPY --from=dev /home/libraries /home/libraries
+
+RUN apt-get update\
+	&& apt-get install -y\
+	libsqlite3-dev\
+	jq\
+	&& rm -r /var/lib/apt/lists/*
+
+ENV CPATH $CPATH:$LIBDIR/fftw/include:$LIBDIR/cfitsio/include:$LIBDIR/CCfits/include:$LIBDIR/includepng/include:$LIBDIR/gerlumphpp/include:$LIBDIR/gmp/include:$LIBDIR/mpfr/include:$LIBDIR/boost/include:$LIBDIR/CGAL/include:$LIBDIR/jsoncpp/include:$LIBDIR/vkl_lib/include
 ENV LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib:$LIBDIR/libpng/lib:$LIBDIR/gerlumphpp/lib:$LIBDIR/gmp/lib:$LIBDIR/mpfr/lib:$LIBDIR/boost/lib:$LIBDIR/CGAL/lib:$LIBDIR/jsoncpp/lib:$LIBDIR/vkl_lib/lib
-ENV LD_LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib:$LIBDIR/libpng/lib:$LIBDIR/gerlumphpp/lib:$LIBDIR/gmp/lib:$LIBDIR/mpfr/lib:$LIBDIR/boost/lib:$LIBDIR/CGAL/lib:$LIBDIR/jsoncpp/lib:$LIBDIR/vkl_lib/lib
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib:$LIBDIR/libpng/lib:$LIBDIR/gerlumphpp/lib:$LIBDIR/gmp/lib:$LIBDIR/mpfr/lib:$LIBDIR/boost/lib:$LIBDIR/CGAL/lib:$LIBDIR/jsoncpp/lib:$LIBDIR/vkl_lib/lib
 
 
 # Install MOLET

@@ -1,18 +1,37 @@
-FROM gvernard/molet:development
+FROM gvernard/molet:development AS dev
+FROM gvernard/molet:production AS prod
+FROM ubuntu:focal
 
-FROM python:3.7-slim-buster
-#FROM python:3.7-alpine
-COPY --from=0 /home/libraries /home/libraries
-COPY --from=0 /home/molet /home/molet
-
-RUN apt-get update\
-	&& apt-get install -y libgfortran4\
-	libcurl4\
-	&& rm -r /var/lib/apt/lists/*
 
 ARG LIBDIR=/home/libraries
+ARG LIBDIR_src=/home/libraries
 
-ENV CPATH $LIBDIR/fftw/include:$LIBDIR/cfitsio/include:$LIBDIR/CCfits/include:$LIBDIR/libpng/include:$LIBDIR/gerlumphpp/include:$LIBDIR/gmp/include:$LIBDIR/mpfr/include:$LIBDIR/boost/include:$LIBDIR/CGAL/include:$LIBDIR/jsoncpp/include:$LIBDIR/vkl_lib/include
+# Copy libraries but keep only the lib/ directory
+COPY --from=dev $LIBDIR_src/gerlumphpp/lib/* $LIBDIR/gerlumphpp/lib/
+COPY --from=dev $LIBDIR_src/vkl_lib/lib/* $LIBDIR/vkl_lib/lib/
+COPY --from=dev $LIBDIR_src/boost/lib/* $LIBDIR/boost/lib/
+COPY --from=dev $LIBDIR_src/CGAL/lib/* $LIBDIR/CGAL/lib/
+COPY --from=dev $LIBDIR_src/mpfr/lib/* $LIBDIR/mpfr/lib/
+COPY --from=dev $LIBDIR_src/gmp/lib/* $LIBDIR/gmp/lib/
+COPY --from=dev $LIBDIR_src/cfitsio/lib/* $LIBDIR/cfitsio/lib/
+COPY --from=dev $LIBDIR_src/CCfits/lib/* $LIBDIR/CCfits/lib/
+COPY --from=dev $LIBDIR_src/libpng/lib/* $LIBDIR/libpng/lib/
+COPY --from=dev $LIBDIR_src/jsoncpp/lib/* $LIBDIR/jsoncpp/lib/
+COPY --from=dev $LIBDIR_src/fftw/lib/* $LIBDIR/fftw/lib/
+
+# Copy MOLET
+COPY --from=prod /home/molet /home/molet
+
+# Install necessary runtime libraries 
+RUN apt-get update\
+	&& apt-get install -y\
+	libgfortran4\
+	libcurl4\
+	libsqlite3-dev\
+	jq\
+	&& rm -r /var/lib/apt/lists/*
+
+# Define library path environment variables (no CPATH with includes is needed)
 ENV LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib:$LIBDIR/libpng/lib:$LIBDIR/gerlumphpp/lib:$LIBDIR/gmp/lib:$LIBDIR/mpfr/lib:$LIBDIR/boost/lib:$LIBDIR/CGAL/lib:$LIBDIR/jsoncpp/lib:$LIBDIR/vkl_lib/lib
 ENV LD_LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib:$LIBDIR/libpng/lib:$LIBDIR/gerlumphpp/lib:$LIBDIR/gmp/lib:$LIBDIR/mpfr/lib:$LIBDIR/boost/lib:$LIBDIR/CGAL/lib:$LIBDIR/jsoncpp/lib:$LIBDIR/vkl_lib/lib
 
