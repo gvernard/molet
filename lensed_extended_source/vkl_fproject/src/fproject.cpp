@@ -6,7 +6,7 @@
 #include "json/json.h"
 
 #include "vkllib.hpp"
-
+#include "instruments.hpp"
 
 int main(int argc,char* argv[]){
   /*
@@ -27,8 +27,6 @@ int main(int argc,char* argv[]){
   std::string out_path = argv[2];
   std::string output = out_path+"output/";
   
-
-  
   // Read the cosmological parameters
   Json::Value cosmo;
   fin.open(output+"angular_diameter_distances.json",std::ifstream::in);
@@ -36,11 +34,11 @@ int main(int argc,char* argv[]){
   fin.close();
 
   // Initialize image plane
-  const Json::Value jiplane = root["instrument"]["bands"][0];
-  double width  = jiplane["field-of-view_x"].asDouble();
-  double height = jiplane["field-of-view_y"].asDouble();
-  int super_res_x = 10*( static_cast<int>(ceil(width/jiplane["resolution"].asDouble())) );
-  int super_res_y = 10*( static_cast<int>(ceil(height/jiplane["resolution"].asDouble())) );
+  double width  = root["instruments"][0]["field-of-view_x"].asDouble();
+  double height = root["instruments"][0]["field-of-view_y"].asDouble();
+  double resolution = Instrument::getResolution(root["instruments"][0]["name"].asString());
+  int super_res_x = 10*( static_cast<int>(ceil(width/resolution)) );
+  int super_res_y = 10*( static_cast<int>(ceil(height/resolution)) );
   ImagePlane mysim(super_res_x,super_res_y,width,height);
   //================= END:PARSE INPUT =======================
 

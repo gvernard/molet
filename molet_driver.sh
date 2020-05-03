@@ -29,9 +29,9 @@ myprocess () {
 	printf "$cmd_list\n"
     fi
        
-    echo "COMMAND: $cmd_list\n" >> $log_file
-    dum="========================================"
-    echo $dum$dum$dum$dum$dum"\n" >> $log_file
+    echo "COMMAND: $cmd_list" >> $log_file
+    dum="=========================================="
+    echo $dum$dum$dum$dum$dum >> $log_file
     
     if [ ! -z "$out" ]
     then
@@ -51,12 +51,15 @@ in_path=`dirname $infile`"/"
 molet_home=`pwd`"/"
 
 
-# Check if input_files directory exists (it needs to contain at least the psf files)
+# Check if input_files directory exists (it needs to contain at least the intrinsic variability file)
 if [ ! -d ${in_path}"input_files" ]
 then
-    printf "Input files must be in a directory named 'input_files', at the same path as the 'input_molet.json' file!"
+    printf "Input files must be in a directory named 'input_files', at the same path as the 'input_molet.json' file!\n"
     exit
 fi
+
+# Check if instruments match the intrinsic and extrinsic light curve files (one file per instrument)
+
 
 # Check if optional output path argument is present
 if [ $# -eq 2 ]
@@ -102,7 +105,7 @@ myprocess "$msg" "$cmd" "$log_file"
 
 
 # Intermediate step:
-# Get point source images, locations are needed for the following
+# Get point source images, their locations are needed for the following
 ####################################################################################
 check=`echo $injson | jq '. | select(.point_source)'`
 if [ ! -z "${check}" ]

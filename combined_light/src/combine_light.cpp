@@ -9,6 +9,7 @@
 
 #include "auxiliary_functions.hpp"
 #include "mask_functions.hpp"
+#include "instruments.hpp"
 
 int main(int argc,char* argv[]){
 
@@ -27,42 +28,38 @@ int main(int argc,char* argv[]){
 
 
 
-  // Loop over the bands
+  // Loop over the instruments
   // ===================================================================================================================
   // ===================================================================================================================
-  for(int b=0;b<root["instrument"]["bands"].size();b++){
-    const Json::Value band = root["instrument"]["bands"][b];
-    std::string band_name = band["name"].asString();
+  for(int b=0;b<root["instruments"].size();b++){
+    const Json::Value instrument = root["instruments"][b];
+    std::string instrument_name = root["instruments"][b]["name"].asString();
+    Instrument mycam(instrument_name);
     
     // Set output image plane in super-resolution
-    double width  = band["field-of-view_x"].asDouble();
-    double height = band["field-of-view_y"].asDouble();
-    int res_x = static_cast<int>(ceil(width/band["resolution"].asDouble()));
-    int res_y = static_cast<int>(ceil(height/band["resolution"].asDouble()));
+    double width  = instrument["field-of-view_x"].asDouble();
+    double height = instrument["field-of-view_y"].asDouble();
+    int res_x = static_cast<int>(ceil(width/mycam.resolution));
+    int res_y = static_cast<int>(ceil(height/mycam.resolution));
     int super_res_x = 10*res_x;
     int super_res_y = 10*res_y;
     ImagePlane mysim(super_res_x,super_res_y,width,height);
     
     
     // Get the psf in super-resolution, crop it, and create convolution kernel
-    std::string psf_path = in_path + "/input_files/psf_" + band_name + ".fits";
-    double psf_width  = band["psf"]["width"].asDouble();
-    double psf_height = band["psf"]["height"].asDouble();
-    int psf_Nx = band["psf"]["pix_x"].asInt();
-    int psf_Ny = band["psf"]["pix_y"].asInt();
-    PSF mypsf(psf_path,psf_Nx,psf_Ny,psf_width,psf_height,&mysim);
-    mypsf.cropPSF(0.99);
-    mypsf.createKernel(mysim.Ni,mysim.Nj);
+    mycam.interpolatePSF(&mysim);
+    mycam.cropPSF(0.99);
+    mycam.createKernel(mysim.Ni,mysim.Nj);
     
     
     // Create the fixed extended lensed light
     ImagePlane* extended = new ImagePlane(out_path+"output/lensed_image_super.fits",super_res_x,super_res_y,width,height);
-    mypsf.convolve(extended);
+    mycam.convolve(extended);
     //extended->writeImage(output+"psf_lensed_image_super.fits");
     
     // Create the fixed lens galaxy light
     ImagePlane* lens_light = new ImagePlane(out_path+"output/lens_light_super.fits",super_res_x,super_res_y,width,height);
-    mypsf.convolve(lens_light);
+    mycam.convolve(lens_light);
     //lens_light->writeImage(output+"psf_lens_light_super.fits");
     
     // Combined light of the observed base image (binned from 'super' to observed resolution)
@@ -97,7 +94,7 @@ int main(int argc,char* argv[]){
       for(int i=0;i<obs_base.Nm;i++){
 	obs_base.img[i] = -2.5*log10(obs_base.img[i]);
       }
-      obs_base.writeImage(out_path + "output/OBS_" + band_name + ".fits");
+      obs_base.writeImage(out_path + "output/OBS_" + instrument_name + ".fits");
       
     } else {
       //=============== CREATE THE TIME VARYING LIGHT ====================
@@ -122,8 +119,8 @@ int main(int argc,char* argv[]){
 
       // Get observed time vector
       std::vector<double> tobs;
-      for(int t=0;t<band["time"].size();t++){
-	tobs.push_back(band["time"][t].asDouble());
+      for(int t=0;t<instrument["time"].size();t++){
+	tobs.push_back(instrument["time"][t].asDouble());
       }
       double tobs_t0   = tobs[0];
       double tobs_tmax = tobs.back();
@@ -144,23 +141,21 @@ int main(int argc,char* argv[]){
       }
 
 
-
-      
       // Read intrinsic light curve(s) from JSON
       Json::Value intrinsic_lc;
       if( root["point_source"]["variability"]["intrinsic"]["type"].asString() == "custom" ){
-	fin.open(in_path+"/input_files/intrinsic_light_curves.json",std::ifstream::in);
+	fin.open(in_path+"/input_files/"+instrument_name+"_LC_intrinsic.json",std::ifstream::in);
       } else {
-	fin.open(out_path+"output/intrinsic_light_curves.json",std::ifstream::in);
+	fin.open(out_path+"output/"+instrument_name+"_LC_intrinsic.json",std::ifstream::in);
       }
       fin >> intrinsic_lc;
       fin.close();
-      int N_in = intrinsic_lc[band_name].size();
+      int N_in = intrinsic_lc.size();
 
       // Process the intrinsic light curves
       std::vector<LightCurve*> LC_intrinsic(N_in);
       for(int lc_in=0;lc_in<N_in;lc_in++){
-	LC_intrinsic[lc_in] = new LightCurve(intrinsic_lc[band_name][lc_in]);
+	LC_intrinsic[lc_in] = new LightCurve(intrinsic_lc[lc_in]);
 
 	// Convert from magnitudes to intensities
 	for(int i=0;i<LC_intrinsic[lc_in]->signal.size();i++){
@@ -190,10 +185,10 @@ int main(int argc,char* argv[]){
       std::vector<LightCurve*> LC_unmicro;
       if( unmicro ){
 	Json::Value unmicro_lc;
-	fin.open(in_path+"/input_files/unmicro_light_curves.json",std::ifstream::in);
+	fin.open(in_path+"/input_files/"+instrument_name+"_LC_unmicro.json",std::ifstream::in);
 	fin >> unmicro_lc;
 	fin.close();
-	int N_un = unmicro_lc[band_name].size();
+	int N_un = unmicro_lc[instrument_name].size();
 	
 	if( N_un != N_in ){
 	  fprintf(stderr,"Number of intrinsic (%d) and unmicrolensed (%d) light curves should be the same!\n",N_in,N_un);
@@ -203,7 +198,7 @@ int main(int argc,char* argv[]){
 	// Process the unmicrolensed light curves
 	LC_unmicro.resize(N_in);
 	for(int lc_in=0;lc_in<N_in;lc_in++){
-	  LC_unmicro[lc_in] = new LightCurve(unmicro_lc[band_name][lc_in]);
+	  LC_unmicro[lc_in] = new LightCurve(unmicro_lc[instrument_name][lc_in]);
 	  
 	  // Convert from magnitudes to intensities
 	  for(int i=0;i<LC_unmicro[lc_in]->signal.size();i++){
@@ -229,16 +224,16 @@ int main(int argc,char* argv[]){
       // Read extrinsic light curve(s) from JSON
       Json::Value extrinsic_lc;
       if( root["point_source"]["variability"]["extrinsic"]["type"].asString() == "custom" ){
-	fin.open(in_path+"/input_files/extrinsic_light_curves.json",std::ifstream::in);
+	fin.open(in_path+"/input_files/"+instrument_name+"_LC_extrinsic.json",std::ifstream::in);
       } else {
-	fin.open(out_path+"output/extrinsic_light_curves.json",std::ifstream::in);
+	fin.open(out_path+"output/"+instrument_name+"_LC_extrinsic.json",std::ifstream::in);
       }
       fin >> extrinsic_lc;
       fin.close();
       int N_ex;
       for(int q=0;q<extrinsic_lc.size();q++){
-	if( extrinsic_lc[q][band_name].size() > 0 ){
-	  N_ex = extrinsic_lc[q][band_name].size();
+	if( extrinsic_lc[q].size() > 0 ){
+	  N_ex = extrinsic_lc[q].size();
 	  break;
 	}
       }
@@ -250,8 +245,8 @@ int main(int argc,char* argv[]){
       }
       for(int q=0;q<images.size();q++){
 	for(int lc_ex=0;lc_ex<N_ex;lc_ex++){
-	  if( extrinsic_lc[q][band_name].size() > 0 ){
-	    LC_extrinsic[q][lc_ex] = new LightCurve(extrinsic_lc[q][band_name][lc_ex]);
+	  if( extrinsic_lc[q].size() > 0 ){
+	    LC_extrinsic[q][lc_ex] = new LightCurve(extrinsic_lc[q][lc_ex]);
 	    // Ex. light curves' time begins at 0, so I need to add t0 (of both tobs and tcont) so that the time vectors match
 	    for(int t=0;t<LC_extrinsic[q][lc_ex]->time.size();t++){
 	      LC_extrinsic[q][lc_ex]->time[t] += tobs_t0;
@@ -270,16 +265,16 @@ int main(int argc,char* argv[]){
       
       // Configure the PSF for the point source
       // Perturb the PSF at each image location
-      std::vector<PSF*> PSF_list(images.size());
+      std::vector<Instrument*> Instrument_list(images.size());
       for(int q=0;q<images.size();q++){
 	//TransformPSF* dum = new TransformPSF(images[q]["x"].asDouble(),images[q]["y"].asDouble(),0.0,false,false);
 	//transPSF[q] = dum;
-	PSF_list[q] = &mypsf; // just copy the same psf per image
+	Instrument_list[q] = &mycam; // just copy the same instrument pointer per image
       }
       // Set the PSF related offsets for each image
       std::vector<offsetPSF> PSFoffsets(images.size());
       for(int q=0;q<images.size();q++){
-	PSFoffsets[q] = PSF_list[q]->offsetPSFtoPosition(images[q]["x"].asDouble(),images[q]["y"].asDouble(),&mysim);
+	PSFoffsets[q] = Instrument_list[q]->offsetPSFtoPosition(images[q]["x"].asDouble(),images[q]["y"].asDouble(),&mysim);
       }
       // Calculate the appropriate PSF sums
       std::vector<double> psf_partial_sum(images.size());
@@ -287,8 +282,8 @@ int main(int argc,char* argv[]){
 	double sum = 0.0;
 	for(int i=0;i<PSFoffsets[q].ni;i++){
 	  for(int j=0;j<PSFoffsets[q].nj;j++){
-	    int index_psf = i*PSF_list[q]->cropped_psf->Nj + j;
-	    sum += PSF_list[q]->cropped_psf->img[index_psf];
+	    int index_psf = i*Instrument_list[q]->cropped_psf->Nj + j;
+	    sum += Instrument_list[q]->cropped_psf->img[index_psf];
 	  }
 	}
 	psf_partial_sum[q] = sum;
@@ -360,7 +355,7 @@ int main(int argc,char* argv[]){
 	  }
 
 	  // Write json light curves
-	  outputLightCurvesJson(cont_LC,out_path+mock+"/LCcont_"+band_name+".json");
+	  outputLightCurvesJson(cont_LC,out_path+mock+"/"+instrument_name+"_LC_continuous.json");
 
 	  // Clean up
 	  for(int q=0;q<images.size();q++){
@@ -417,7 +412,7 @@ int main(int argc,char* argv[]){
 	  }
 	  
 	  // Write json light curves
-	  outputLightCurvesJson(samp_LC,out_path+mock+"/LCsamp_"+band_name+".json");
+	  outputLightCurvesJson(samp_LC,out_path+mock+"/"+instrument_name+"_LC_sampled.json");
 	  // *********************** End of product **************************************************
 
 
@@ -436,9 +431,9 @@ int main(int argc,char* argv[]){
 		for(int i=0;i<PSFoffsets[q].ni;i++){
 		  for(int j=0;j<PSFoffsets[q].nj;j++){
 		    int index_img = pp_light.Nj*i + j;
-		    int index_psf = i*PSF_list[q]->cropped_psf->Nj + j;
+		    int index_psf = i*Instrument_list[q]->cropped_psf->Nj + j;
 		    //pp_light.img[PSFoffsets[q].offset_image + pp_light.Nj*i + j] += 1.0;
-		    double psf_pix = PSF_list[q]->cropped_psf->img[PSFoffsets[q].offset_cropped + index_psf];
+		    double psf_pix = Instrument_list[q]->cropped_psf->img[PSFoffsets[q].offset_cropped + index_psf];
 		    pp_light.img[PSFoffsets[q].offset_image + index_img] += samp_LC[q]->signal[t]*psf_pix/psf_partial_sum[q];
 		  }
 		}
@@ -475,7 +470,7 @@ int main(int argc,char* argv[]){
 	      char buf[4];
 	      sprintf(buf,"%03d",t);
 	      std::string timestep = buf;
-	      obs_img.writeImage(out_path+mock+"/OBS_"+band_name+"_"+timestep+".fits");
+	      obs_img.writeImage(out_path+mock+"/OBS_"+instrument_name+"_"+timestep+".fits");
 	    }
 	  }
 	  // *********************** End of product **************************************************	    
@@ -513,7 +508,7 @@ int main(int argc,char* argv[]){
 
 
   }
-  // Loop over the bands ends here
+  // Loop over the instruments ends here
   // ===================================================================================================================
   // ===================================================================================================================
 

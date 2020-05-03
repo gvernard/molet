@@ -11,6 +11,7 @@
 #include "pointImage.hpp"
 
 #include "vkllib.hpp"
+#include "instruments.hpp"
 
 
 
@@ -42,10 +43,9 @@ int main(int argc,char* argv[]){
 
   
   // Initialize image plane
-  const Json::Value jiplane = root["instrument"]["bands"][0];
-  double width  = jiplane["field-of-view_x"].asDouble();
-  double height = jiplane["field-of-view_y"].asDouble();
-  double res    = jiplane["resolution"].asDouble();
+  double width  = root["instruments"][0]["field-of-view_x"].asDouble();
+  double height = root["instruments"][0]["field-of-view_y"].asDouble();
+  double res    = Instrument::getResolution(root["instruments"][0]["name"].asString());
   //================= END:PARSE INPUT =======================
 
 
@@ -110,8 +110,8 @@ int main(int argc,char* argv[]){
   
 
   //=============== BEGIN:GET CRITICAL LINES AND CAUSTICS =======================
-  int super_res_x = 10*( static_cast<int>(ceil(width/jiplane["resolution"].asDouble())) );
-  int super_res_y = 10*( static_cast<int>(ceil(height/jiplane["resolution"].asDouble())) );
+  int super_res_x = 10*( static_cast<int>(ceil(width/res)) );
+  int super_res_y = 10*( static_cast<int>(ceil(height/res)) );
   ImagePlane detA(super_res_x,super_res_y,width,height);
 
   mycollection->detJacobian(&detA,&detA);

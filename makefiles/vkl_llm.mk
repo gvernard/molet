@@ -1,9 +1,15 @@
+.DEFAULT_GOAL := lens_light_mass
+
 GPP = g++
 
 
-############## START: VKL_LENS_LIGHT
+
 CPP_FLAGS = -std=c++11 -fPIC -g -frounding-math
 CPP_LIBS  = -ljsoncpp -lvkl -lgfortran -lCCfits -lcfitsio -lgmp -lCGAL
+EXT_LIBS  = -linstruments
+
+EXT_LIB_DIR = instrument_modules/lib
+EXT_INC_DIR = instrument_modules/include
 
 ROOT_DIR  = lens_light_mass/vkl_llm
 SRC_DIR = $(ROOT_DIR)/src
@@ -18,10 +24,9 @@ FULL_OBJ  = $(patsubst %,$(OBJ_DIR)/%,$(OBJ))  #Pad names with dir
 
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	$(GPP) $(CPP_FLAGS) -c -o $@ $<
+	$(GPP) $(CPP_FLAGS) -I $(EXT_INC_DIR) -c -o $@ $<
 
 lens_light_mass: $(FULL_OBJ)
-	$(GPP) $(CPP_FLAGS) -o $(BIN_DIR)/llm $(FULL_OBJ) $(CPP_LIBS)
-lens_light_mass_clean:
+	$(GPP) $(CPP_FLAGS) -I $(EXT_INC_DIR) -o $(BIN_DIR)/llm $(FULL_OBJ) $(CPP_LIBS) $(EXT_LIBS) -L $(EXT_LIB_DIR) -Wl,-rpath,$(EXT_LIB_DIR)
+clean:
 	$(RM) -r $(OBJ_DIR)/* $(BIN_DIR)/*
-############## END: VKL_LENS_LIGHT

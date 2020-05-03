@@ -1,3 +1,5 @@
+.DEFAULT_GOAL := get_map_path
+
 GPP = g++
 CPP_FLAGS = -std=c++11 -fPIC -g -frounding-math
 CPP_LIBS  = -lgerlumph
@@ -17,5 +19,5 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 
 get_map_path: $(FULL_OBJ)
 	$(GPP) $(CPP_FLAGS) -o $(BIN_DIR)/get_map_path $(FULL_OBJ) $(CPP_LIBS)
-get_map_path_clean:
+clean:
 	$(RM) -r $(OBJ_DIR)/* $(BIN_DIR)/*

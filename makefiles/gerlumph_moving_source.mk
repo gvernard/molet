@@ -1,3 +1,6 @@
+.DEFAULT_GOAL := gerlumph_moving_source
+
+
 GPP = g++
 
 
@@ -24,6 +27,6 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(FULL_DEPS)
 
 gerlumph_moving_source: $(FULL_OBJ)
 	$(GPP) $(CPP_FLAGS) -I $(INC_DIR) -o $(BIN_DIR)/moving_source $(FULL_OBJ) $(CPP_LIBS)
-gerlumph_moving_source_clean:
+clean:
 	$(RM) -r $(OBJ_DIR)/* $(BIN_DIR)/*
 

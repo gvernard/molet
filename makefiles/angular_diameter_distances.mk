@@ -1,3 +1,5 @@
+.DEFAULT_GOAL := angular_diameter_distances
+
 GPP = g++
 
 
@@ -24,6 +26,6 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(FULL_DEPS)
 
 angular_diameter_distances: $(FULL_OBJ)
 	$(GPP) $(CPP_FLAGS) -I $(INC_DIR) -o $(BIN_DIR)/angular_diameter_distances $(FULL_OBJ) $(CPP_LIBS)
-angular_diameter_distances_clean:
+clean:
 	$(RM) -r $(OBJ_DIR)/* $(BIN_DIR)/*
 

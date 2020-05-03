@@ -7,19 +7,18 @@ out_path=$3
 
 myinput=`grep -o '^[^//]*' $infile`
 
-band_name=`echo $myinput | jq '.instrument.bands[0].name'`
-
+instrument_name=`echo $myinput | jq '.instruments[0].name' | sed -e 's/^"//' -e 's/"$//'`
 
 
 #### Find and set number of intrinsic light curves (Nin)
 lc_in_type=`echo $myinput | jq '.point_source.variability.intrinsic.type' | sed -e 's/^"//' -e 's/"$//'`
 if [ $lc_in_type = "custom" ]
 then
-    lc_in_file=${in_path}"input_files/intrinsic_light_curves.json"
+    lc_in_file=${in_path}"input_files/"${instrument_name}"_LC_intrinsic.json"
 else
-    lc_in_file=${out_path}"output/intrinsic_light_curves.json"
+    lc_in_file=${out_path}"output/"${instrument_name}"_LC_intrinsic.json"
 fi
-Nin=`cat $lc_in_file | jq ".$band_name | length"`
+Nin=`cat $lc_in_file | jq ". | length"`
 
 
 
@@ -28,21 +27,20 @@ Nin=`cat $lc_in_file | jq ".$band_name | length"`
 lc_ex_type=`echo $myinput | jq '.point_source.variability.extrinsic.type' | sed -e 's/^"//' -e 's/"$//'`
 if [ $lc_ex_type = "custom" ]
 then
-    lc_ex_file=${in_path}"input_files/extrinsic_light_curves.json"
+    lc_ex_file=${in_path}"input_files/"${instrument_name}"_LC_extrinsic.json"
 else
-    lc_ex_file=${out_path}"output/extrinsic_light_curves.json"
+    lc_ex_file=${out_path}"output/"${instrument_name}"_LC_extrinsic.json"
 fi
 Nq=`cat $lc_ex_file | jq ". | length"`
 
 for (( q=0; q<$Nq; q++ ))
 do  
-    len=`cat $lc_ex_file | jq ".[$q].$band_name | length"`
+    len=`cat $lc_ex_file | jq ".[$q] | length"`
     if [ $len -gt 0 ]
     then
 	Nex=$len
     fi
 done
-
 
 
 #### Loop and create mock directories, remove beforehand if they exist

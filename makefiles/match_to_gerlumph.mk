@@ -1,3 +1,5 @@
+.DEFAULT_GOAL := match_to_gerlumph
+
 GPP = g++
 CPP_FLAGS = -std=c++11 -fPIC -g -frounding-math
 CPP_LIBS  = -lsqlite3 -ljsoncpp
@@ -21,5 +23,5 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 
 match_to_gerlumph: $(FULL_OBJ)
 	$(GPP) $(CPP_FLAGS) -I $(INC_DIR) -o $(BIN_DIR)/match_to_gerlumph $(FULL_OBJ) $(CPP_LIBS)
-match_to_gerlumph_clean:
+clean:
 	$(RM) -r $(OBJ_DIR)/* $(BIN_DIR)/*
