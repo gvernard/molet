@@ -2,8 +2,10 @@
 #define INSTRUMENT_HPP
 
 #include <string>
+#include "json/json.h"
 
 class ImagePlane;
+class BaseNoise;
 
 class offsetPSF {
 public:
@@ -12,8 +14,6 @@ public:
   int nj;
   int ni;
 };
-
-
 
 class Instrument {
 public:
@@ -26,14 +26,10 @@ public:
   ImagePlane* scaled_psf   = NULL;
   ImagePlane* cropped_psf  = NULL;
   double* kernel           = NULL;
+  BaseNoise* noise         = NULL;
   
-  Instrument(std::string name);
-  ~Instrument(){
-    delete(original_psf);
-    delete(scaled_psf);
-    delete(cropped_psf);
-    free(kernel);
-  }
+  Instrument(std::string name,Json::Value noise_pars);
+  ~Instrument();
 
   static double getResolution(std::string name);
   std::string getName();
@@ -43,4 +39,5 @@ public:
   void convolve(ImagePlane* image);
   offsetPSF offsetPSFtoPosition(double x,double y,ImagePlane* image);
 };
+
 #endif /* INSTRUMENT_HPP */

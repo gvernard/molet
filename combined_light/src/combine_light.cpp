@@ -10,6 +10,7 @@
 #include "auxiliary_functions.hpp"
 #include "mask_functions.hpp"
 #include "instruments.hpp"
+#include "noise.hpp"
 
 int main(int argc,char* argv[]){
 
@@ -34,7 +35,7 @@ int main(int argc,char* argv[]){
   for(int b=0;b<root["instruments"].size();b++){
     const Json::Value instrument = root["instruments"][b];
     std::string instrument_name = root["instruments"][b]["name"].asString();
-    Instrument mycam(instrument_name);
+    Instrument mycam(instrument_name,root["instruments"][b]["noise"]);
     
     // Set output image plane in super-resolution
     double width  = instrument["field-of-view_x"].asDouble();
@@ -89,11 +90,14 @@ int main(int argc,char* argv[]){
       //=============== CREATE A SINGLE STATIC IMAGE ====================
 
       // Adding noise here
-
-      // Output the observed base image
+      mycam.noise->addNoise(&obs_base);
+      
+      // Convert to magnitudes
       for(int i=0;i<obs_base.Nm;i++){
 	obs_base.img[i] = -2.5*log10(obs_base.img[i]);
       }
+
+      // Output the observed base image
       obs_base.writeImage(out_path + "output/OBS_" + instrument_name + ".fits");
       
     } else {
@@ -188,7 +192,7 @@ int main(int argc,char* argv[]){
 	fin.open(in_path+"/input_files/"+instrument_name+"_LC_unmicro.json",std::ifstream::in);
 	fin >> unmicro_lc;
 	fin.close();
-	int N_un = unmicro_lc[instrument_name].size();
+	int N_un = unmicro_lc.size();
 	
 	if( N_un != N_in ){
 	  fprintf(stderr,"Number of intrinsic (%d) and unmicrolensed (%d) light curves should be the same!\n",N_in,N_un);
@@ -198,7 +202,7 @@ int main(int argc,char* argv[]){
 	// Process the unmicrolensed light curves
 	LC_unmicro.resize(N_in);
 	for(int lc_in=0;lc_in<N_in;lc_in++){
-	  LC_unmicro[lc_in] = new LightCurve(unmicro_lc[instrument_name][lc_in]);
+	  LC_unmicro[lc_in] = new LightCurve(unmicro_lc[lc_in]);
 	  
 	  // Convert from magnitudes to intensities
 	  for(int i=0;i<LC_unmicro[lc_in]->signal.size();i++){
@@ -460,7 +464,7 @@ int main(int argc,char* argv[]){
 	      
 	      
 	      // Adding time-dependent noise here
-	      
+	      mycam.noise->addNoise(&obs_img);
 	      
 	      
 	      // Finalize output (e.g convert to magnitudes) and write

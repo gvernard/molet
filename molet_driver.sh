@@ -54,11 +54,61 @@ molet_home=`pwd`"/"
 # Check if input_files directory exists (it needs to contain at least the intrinsic variability file)
 if [ ! -d ${in_path}"input_files" ]
 then
-    printf "Input files must be in a directory named 'input_files', at the same path as the 'input_molet.json' file!\n"
+    printf "Input files must be in a directory named 'input_files', at the same path as the 'molet_input.json' file!\n"
     exit
 fi
 
-# Check if instruments match the intrinsic and extrinsic light curve files (one file per instrument)
+
+# Check instrument compatibility
+available=($(ls -d ${molet_home}instrument_modules/*))
+Ninstruments=`echo $injson | jq '.instruments | length'`
+instruments=()
+for (( b=0; b<$Ninstruments; b++ ))
+do
+    name=`echo $injson | jq ".instruments[$b].name" | sed -e 's/^"//' -e 's/"$//'`
+    instruments+=( $name )
+done
+# Check if instrument name exists in the modules
+for (( b=0; b<$Ninstruments; b++ ))
+do
+    check=false
+    for (( i=0; i<${#available[@]}; i++ ))
+    do  
+	avail=`basename ${available[$i]}`
+	if [ $avail == ${instruments[$b]} ]
+	then
+	    check=true
+	    break
+	fi
+    done
+    if [ "$check" = false ]
+    then
+	printf "Instrument named \"${instruments[$b]}\" does not exist!\n"
+	exit
+    fi
+done
+# Check if instruments match the INTRINSIC light curve files (one file per instrument)
+for (( b=0; b<$Ninstruments; b++ ))
+do  
+    if [ ! -f ${in_path}"input_files/"${instruments[$b]}"_LC_intrinsic.json" ]
+    then
+	printf "Input INTRINSIC light curves don't exist for instrument \"${instruments[$b]}\"!\n"
+	exit
+    fi
+done
+# Check if instruments match the EXTRINSIC light curve files (one file per instrument)
+extrinsic=`echo $injson | jq ".point_source.variability.extrinsic.type" | sed -e 's/^"//' -e 's/"$//'`
+if [ $extrinsic = custom ]
+then
+    for (( b=0; b<$Ninstruments; b++ ))
+    do  
+	if [ ! -f ${in_path}"input_files/"${instruments[$b]}"_LC_extrinsic.json" ]
+	then
+	    printf "Input EXTRINSIC light curves don't exist for instrument \"${instruments[$b]}\"!\n"
+	    exit
+	fi
+    done
+fi
 
 
 # Check if optional output path argument is present
@@ -78,6 +128,7 @@ then
     mkdir ${out_path}"output"
 fi
 log_file=${out_path}"output/log.txt"
+
 
 # Get map path
 map_path=`${molet_home}"variability/extrinsic/get_map_path/bin/get_map_path"`

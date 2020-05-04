@@ -7,11 +7,12 @@
 #include "json/json.h"
 
 #include "instruments.hpp"
+#include "noise.hpp"
 
 std::string Instrument::path = INSTRUMENT_PATH;
 
 // START:INSTRUMENT =================================================================================================
-Instrument::Instrument(std::string name):name(name){
+Instrument::Instrument(std::string name,Json::Value noise_pars):name(name){
   std::string full_path = this->path + this->name + "/";
 
   Json::Value specs;
@@ -28,6 +29,16 @@ Instrument::Instrument(std::string name):name(name){
   int width  = specs["psf"]["width"].asDouble();
   int height = specs["psf"]["height"].asDouble();
   this->original_psf = new ImagePlane(full_path+"psf.fits",pix_x,pix_y,width,height);
+
+  this->noise = FactoryNoiseModel::getInstance()->createNoiseModel(noise_pars);
+}
+
+Instrument::~Instrument(){
+  delete(original_psf);
+  delete(scaled_psf);
+  delete(cropped_psf);
+  free(kernel);
+  delete(noise);
 }
 
 double Instrument::getResolution(std::string name){

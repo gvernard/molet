@@ -45,7 +45,7 @@
 		]
 	    },
 
-	    "compact_mass_model": {
+	    "compact_mass_model": {		
 		"type": "analytic",
 		"pars": [
 		    {
@@ -62,7 +62,6 @@
 	    }
 	    
 	}
-	
     ],
 
 
@@ -100,30 +99,13 @@
     "point_source": {
 	"x0": 0.015,
 	"y0": -0.035,
-	"output_cutouts": false,
+	"output_cutouts": true,
 	"variability": {
 	    "intrinsic": {
 		"type": "custom"
 	    },
 	    "extrinsic": {
-		"microlens_mass": 1,
-		"type": "AGN",
-		"Nex": 20,
-		"pars": {
-		    "sigma_pec_l": 250,
-		    "sigma_pec_s": 250,
-		    "sigma_disp": 250,
-		    "ra": 340.2,
-		    "dec": 0.0
-		},
-		"profiles": [
-		    {
-			"type": "uniform",
-			"rhalf": 1.0, // in 10^14 cm
-			"incl": 0,
-			"orient": 0
-		    }
-		]
+		"type": "custom"
 	    }
 	}
     },
