@@ -457,6 +457,12 @@ int main(int argc,char* argv[]){
 		//}
 		//printf("True: %15.10f (%15.10f)  Numerical: %15.10f (%15.10f)\n",true_sum,-2.5*log10(true_sum),sum,-2.5*log10(sum));
 	      
+	      //char baf[4];
+	      //sprintf(baf,"%03d",t);
+	      //std::string timesteep = baf;
+	      //pp_light.writeImage(out_path+mock+"/PP_"+instrument_name+"_"+timesteep+".fits");
+
+	      
 	      // Bin image from 'super' to observed resolution
 	      ImagePlane obs_img = obs_base;
 	      pp_light.lowerResRebinAdditive(&obs_img);
