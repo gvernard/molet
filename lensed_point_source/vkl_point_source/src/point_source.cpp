@@ -60,12 +60,7 @@ int main(int argc,char* argv[]){
   
   std::vector<Nlpar*> ext_pars;
   for(int i=0;i<jmembers.size();i++){
-    double value = 0.0;
-    if( jmembers[i] == "phi" ){
-      value = jlens["external_shear"][jmembers[i]].asDouble() + 90.0;
-    } else {
-      value = jlens["external_shear"][jmembers[i]].asDouble();
-    }
+    double value = jlens["external_shear"][jmembers[i]].asDouble();
     ext_pars.push_back( new Nlpar(jmembers[i],0,0,value,0,0,0) );
   }
   CollectionMassModels* mycollection = new CollectionMassModels(ext_pars);
@@ -357,10 +352,10 @@ int main(int argc,char* argv[]){
     double x = multipleImages[i]->x;
     double y = multipleImages[i]->y;
     multipleImages[i]->k = mycollection->all_kappa(x,y);
-    double gamma_x,gamma_y;
-    mycollection->all_gamma(x,y,gamma_x,gamma_y);
-    multipleImages[i]->g    = hypot(gamma_x,gamma_y);
-    multipleImages[i]->phig = 0.5*atan2(gamma_y,gamma_x)/0.01745329251 - 90; // in degrees east-of-north;
+    double gamma_mag,gamma_phi;
+    mycollection->all_gamma(x,y,gamma_mag,gamma_phi);
+    multipleImages[i]->g    = gamma_mag;
+    multipleImages[i]->phig = gamma_phi/0.01745329251 - 90.0; // in degrees east-of-north;
     multipleImages[i]->mag  = 1.0/mycollection->detJacobian(x,y);
   }
     

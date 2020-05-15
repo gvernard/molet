@@ -53,12 +53,7 @@ int main(int argc,char* argv[]){
   
   std::vector<Nlpar*> ext_pars;
   for(int i=0;i<jmembers.size();i++){
-    double value = 0.0;
-    if( jmembers[i] == "phi" ){
-      value = jlens["external_shear"][jmembers[i]].asDouble() + 90.0;
-    } else {
-      value = jlens["external_shear"][jmembers[i]].asDouble();
-    }
+    double value = jlens["external_shear"][jmembers[i]].asDouble();
     ext_pars.push_back( new Nlpar(jmembers[i],0,0,value,0,0,0) );
   }
   CollectionMassModels* mycollection = new CollectionMassModels(ext_pars);
