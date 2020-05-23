@@ -109,6 +109,7 @@ int main(int argc,char* argv[]){
       fin >> images;
       fin.close();
 
+      
       // Get maximum image time delay
       double td_max = 0.0;
       for(int q=0;q<images.size();q++){
@@ -280,6 +281,11 @@ int main(int argc,char* argv[]){
       for(int q=0;q<images.size();q++){
 	PSFoffsets[q] = Instrument_list[q]->offsetPSFtoPosition(images[q]["x"].asDouble(),images[q]["y"].asDouble(),&mysim);
       }
+      FILE* fh = fopen((out_path+"output/psf_locations.dat").c_str(),"w");
+      for(int q=0;q<images.size();q++){
+	PSFoffsets[q].printFrame(fh,mysim.Ni,mysim.Nj,mysim.width,mysim.height);
+      }
+      fclose(fh);
       // Calculate the appropriate PSF sums
       std::vector<double> psf_partial_sum(images.size());
       for(int q=0;q<images.size();q++){
@@ -292,8 +298,6 @@ int main(int argc,char* argv[]){
 	}
 	psf_partial_sum[q] = sum;
       }
-      
-      
       
       
       
@@ -428,21 +432,19 @@ int main(int argc,char* argv[]){
 	  // *********************** Product: Observed sampled cut-outs (images) *****************************
 	  if( root["point_source"]["output_cutouts"].asBool() ){
 	    for(int t=0;t<tobs.size();t++){
-	      
+
 	      // Loop over the truncated PSF (through PSF_offsets) for each image, and add their light to the pp_light image that contains all the point source light.
 	      ImagePlane pp_light(super_res_x,super_res_y,width,height); // this has to be in intensity units in order to be able to add the different light components
 	      for(int q=0;q<images.size();q++){
 		for(int i=0;i<PSFoffsets[q].ni;i++){
 		  for(int j=0;j<PSFoffsets[q].nj;j++){
-		    int index_img = pp_light.Nj*i + j;
-		    int index_psf = i*Instrument_list[q]->cropped_psf->Nj + j;
-		    //pp_light.img[PSFoffsets[q].offset_image + pp_light.Nj*i + j] += 1.0;
-		    double psf_pix = Instrument_list[q]->cropped_psf->img[PSFoffsets[q].offset_cropped + index_psf];
-		    pp_light.img[PSFoffsets[q].offset_image + index_img] += samp_LC[q]->signal[t]*psf_pix/psf_partial_sum[q];
+		    int index_img = PSFoffsets[q].offset_image + i*pp_light.Nj + j;
+		    int index_psf = PSFoffsets[q].offset_cropped + i*Instrument_list[q]->cropped_psf->Nj + j;
+		    //pp_light.img[index_img] += 1.0;
+		    pp_light.img[index_img] += samp_LC[q]->signal[t]*Instrument_list[q]->cropped_psf->img[index_psf]/psf_partial_sum[q];
 		  }
 		}
 	      }
-	      
 	      
 	      // Check the expected brightness of the multiple images vs the image
 
@@ -466,8 +468,7 @@ int main(int argc,char* argv[]){
 	      // Bin image from 'super' to observed resolution
 	      ImagePlane obs_img = obs_base;
 	      pp_light.lowerResRebinAdditive(&obs_img);
-    
-	      
+
 	      
 	      // Adding time-dependent noise here
 	      mycam.noise->addNoise(&obs_img);
@@ -481,6 +482,7 @@ int main(int argc,char* argv[]){
 	      sprintf(buf,"%03d",t);
 	      std::string timestep = buf;
 	      obs_img.writeImage(out_path+mock+"/OBS_"+instrument_name+"_"+timestep+".fits");
+
 	    }
 	  }
 	  // *********************** End of product **************************************************	    
@@ -501,17 +503,19 @@ int main(int argc,char* argv[]){
       for(int lc_in=0;lc_in<N_in;lc_in++){
 	delete(LC_intrinsic[lc_in]);
       }
+
       if( unmicro ){
 	for(int lc_in=0;lc_in<N_in;lc_in++){
 	  delete(LC_unmicro[lc_in]);
 	}
       }
+
       for(int q=0;q<images.size();q++){
 	for(int lc_ex=0;lc_ex<N_ex;lc_ex++){
 	  delete(LC_extrinsic[q][lc_ex]);
 	}
       }
-      
+
     }
     //================= END:CREATE THE TIME VARYING LIGHT ====================
       

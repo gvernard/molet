@@ -11,6 +11,37 @@
 
 std::string Instrument::path = INSTRUMENT_PATH;
 
+// START:OFFSETPSF =================================================================================================
+void offsetPSF::print(){
+  printf("  %20s %d\n","Offset image:",this->offset_image);
+  printf("  %20s %d\n","Offset cropped:",this->offset_cropped);
+  printf("  %20s %d\n","nj:",this->nj);
+  printf("  %20s %d\n","ni:",this->ni);
+}
+void offsetPSF::printFrame(FILE* fh,int Ni,int Nj,double w,double h){
+  int* x = (int*) malloc(5*sizeof(int));
+  int* y = (int*) malloc(5*sizeof(int));
+
+  x[0] = this->offset_image % Nj;
+  y[0] = (int)this->offset_image/Nj;
+  x[1] = x[0] + this->nj;
+  y[1] = y[0];
+  x[2] = x[0] + this->nj;
+  y[2] = y[0] + this->ni;
+  x[3] = x[0];
+  y[3] = y[0] + this->ni;
+  x[4] = x[0];
+  y[4] = y[0];
+
+  for(int i=0;i<5;i++){
+    fprintf(fh,"%10.4f %10.4f\n",w*x[i]/Nj - w/2.0,-h*y[i]/Ni + h/2.0);
+  }
+  free(x);
+  free(y);
+}
+// END:OFFSETPSF ===================================================================================================
+
+
 // START:INSTRUMENT =================================================================================================
 Instrument::Instrument(std::string name,Json::Value noise_pars):name(name){
   std::string full_path = this->path + this->name + "/";
@@ -212,52 +243,91 @@ void Instrument::convolve(ImagePlane* image){
 }
 
 offsetPSF Instrument::offsetPSFtoPosition(double x,double y,ImagePlane* image){
-  double pix_size_x = image->width/image->Nj;
-  double pix_size_y = image->height/image->Ni;
+  int Ni_img   = image->Ni;
+  int Nj_img   = image->Nj;
+  double w_img = image->width;
+  double h_img = image->height;
+  int Ni_psf   = this->cropped_psf->Ni;
+  int Nj_psf   = this->cropped_psf->Nj;
+  double w_psf = this->cropped_psf->width;
+  double h_psf = this->cropped_psf->height;
 
-  double dum_x = x - image->xmin;
-  double dum_y = -(y - image->ymax);
-  int ix = static_cast<int>(floor( dum_x/pix_size_x ));
-  int iy = static_cast<int>(floor( dum_y/pix_size_y ));
-  
-  int j_img = ix - this->cropped_psf->Nj/2;
-  int i_img = iy - this->cropped_psf->Ni/2;
-  int offset_img = i_img*image->Nj + j_img;
-  
-  int offset_psf = 0;
-  if( offset_img < 0 ){
-    int j_psf = 0;
-    int i_psf = 0;
-    if( j_img < 0 ){
-      j_psf = abs(j_img);
-    }
-    if( i_img < 0 ){
-      i_psf = abs(i_img);
-    }
+  double dx = w_img/Nj_img;
+  double dy = h_img/Ni_img;
+
+  // Everything below is calculated in the reference frame centered on the multiple image position
+  // The top left corner of the image
+  double xz = -w_img/2.0 - x;
+  double yz = h_img/2.0 - y;
+  // x0,y0 is the bottom left corner of the PSF
+  double x0 = -w_psf/2.0;
+  double y0 = -h_psf/2.0;
+
+
+  int offset_img,offset_psf,ni,nj,ii,jj;
+  if( x0<xz and xz<(x0+w_psf) and y0<yz and yz<(y0+h_psf) ){
+    // case 1: the image top left corner is inside the PSF
     offset_img = 0;
-    offset_psf = i_psf*this->cropped_psf->Nj + j_psf;
-  }
-  
-  int nj,ni;
-  int dum_j = image->Nj - (j_img+this->cropped_psf->Nj);
-  if( dum_j < 0 ){
-    nj = this->cropped_psf->Nj + dum_j; // dum_j is already negative
+    ii = static_cast<int>(floor( (y0 + h_psf - yz)/dy ));
+    jj = static_cast<int>(floor( (xz - x0)/dx ));
+    offset_psf = ii*Nj_psf + jj;
+    nj = static_cast<int>(floor( (x0 + w_psf - xz)/dx ));
+    ni = static_cast<int>(floor( (yz - y0)/dy ));
+  } else if( xz<x0 and yz>(y0+h_psf) ){
+    // case 2: the PSF is entirely inside the image
+    offset_psf = 0;
+    ii = static_cast<int>(floor( (yz - (y0 + h_psf))/dy ));
+    jj = static_cast<int>(floor( (x0 - xz)/dx ));
+    offset_img = ii*Nj_img + jj;
+    if( (jj+Nj_psf) > Nj_img ){
+      nj = Nj_img - jj;
+    } else {
+      nj = Nj_psf;
+    }
+    if( (ii+Ni_psf) > Ni_img ){
+      ni = Ni_img - ii;
+    } else {
+      ni = Ni_psf;
+    }
+  } else if( x0<xz and xz<(x0+w_psf) and yz>(y0+h_psf) ){
+    // case 3: a part of the PSF is outside the left side of the image
+    ii = static_cast<int>(floor( (yz - (y0 + h_psf))/dy ));
+    jj = static_cast<int>(floor( (xz - x0)/dx ));
+    offset_psf = jj;
+    offset_img = ii*Nj_img;
+    nj = Nj_psf - jj;
+    if( (ii+Ni_psf) > Ni_img ){
+      ni = Ni_img - ii;
+    } else {
+      ni = Ni_psf;
+    }
+  } else if( xz<x0 and y0<yz and yz<(y0+h_psf) ){
+    // case 4: a part of the PSF is outside the top side of the image
+    ii = static_cast<int>(floor( ((y0 + h_psf) - yz)/dy ));
+    jj = static_cast<int>(floor( (x0 - xz)/dx ));
+    offset_img = jj;
+    offset_psf = ii*Nj_psf;
+    ni = Ni_psf - ii;
+    if( (jj+Nj_psf) > Nj_img ){
+      nj = Nj_img - jj;
+    } else {
+      nj = Nj_psf;
+    }
   } else {
-    nj = this->cropped_psf->Nj;
+    // the PSF is outside the image (the multiple image is entirely outside the simulated field of view)
+    offset_img = 0; //irrelevant
+    offset_psf = 0; //irrelevant
+    ni = 0;
+    nj = 0;
   }
-  int dum_i = image->Ni - (i_img+this->cropped_psf->Ni);
-  if( dum_i < 0 ){
-    ni = this->cropped_psf->Ni + dum_i; // dum_i is already negative
-  } else {
-    ni = this->cropped_psf->Ni;
-  }
-  
+
   offsetPSF PSFoffset;
   PSFoffset.offset_image = offset_img;
   PSFoffset.offset_cropped = offset_psf;
   PSFoffset.nj = nj;
   PSFoffset.ni = ni;
-  return PSFoffset;
+  return PSFoffset;  
 }
+
 // END:INSTRUMENT ===================================================================================================
 

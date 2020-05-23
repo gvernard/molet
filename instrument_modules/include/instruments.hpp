@@ -13,6 +13,9 @@ public:
   int offset_cropped;
   int nj;
   int ni;
+
+  void print();
+  void printFrame(FILE* fh,int Ni,int Nj,double w,double h);
 };
 
 class Instrument {
