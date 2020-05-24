@@ -458,11 +458,12 @@ int main(int argc,char* argv[]){
 		//true_sum += img_signal[q][t];
 		//}
 		//printf("True: %15.10f (%15.10f)  Numerical: %15.10f (%15.10f)\n",true_sum,-2.5*log10(true_sum),sum,-2.5*log10(sum));
-	      
+
+	      // Output Point Source image only
 	      //char baf[4];
 	      //sprintf(baf,"%03d",t);
 	      //std::string timesteep = baf;
-	      //pp_light.writeImage(out_path+mock+"/PP_"+instrument_name+"_"+timesteep+".fits");
+	      //pp_light.writeImage(out_path+mock+"/PS_"+instrument_name+"_"+timesteep+".fits");
 
 	      
 	      // Bin image from 'super' to observed resolution
@@ -482,7 +483,6 @@ int main(int argc,char* argv[]){
 	      sprintf(buf,"%03d",t);
 	      std::string timestep = buf;
 	      obs_img.writeImage(out_path+mock+"/OBS_"+instrument_name+"_"+timestep+".fits");
-
 	    }
 	  }
 	  // *********************** End of product **************************************************	    

@@ -83,7 +83,7 @@ int main(int argc,char* argv[]){
   double sigma_disp  = root["point_source"]["variability"]["extrinsic"]["pars"]["sigma_disp"].asDouble();
   double zl = root["lenses"][0]["redshift"].asDouble();
   double zs = root["source"]["redshift"].asDouble();
-  vel.createVelocitiesK04(321,ra,dec,sigma_pec_l,sigma_pec_s,sigma_disp,1.0,zl,zs,Dl,Ds,Dls);
+  vel.createVelocitiesK04(123,ra,dec,sigma_pec_l,sigma_pec_s,sigma_disp,1.0,zl,zs,Dl,Ds,Dls);
   for(int i=0;i<Nlc;i++){
     vtot[i]     = vel.tot[i].v;
     phi_vtot[i] = vel.tot[i].phi;
@@ -149,7 +149,7 @@ int main(int argc,char* argv[]){
 	
 	// Set light curves
 	mother.setEmap(&emap);
-	mother.createVelocityLocations(213,duration_max,vtot,phi_vtot,phig[m]); // Same in all filters. Will change only if duration_max is replaced by duration[k]
+	mother.createVelocityLocations(254,duration_max,vtot,phi_vtot,phig[m]); // Same in all filters. Will change only if duration_max is replaced by duration[k]
 
 	
 	kernel.setKernel(profiles[k]);

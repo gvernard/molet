@@ -54,7 +54,7 @@ then
     printf "ATTENTION: missing GERLUMPH maps from '%s' !\n" $map_path 1>&2
     printf "Click the following link to download them:" 1>&2
     printf "\n\n" 1>&2
-    printf "      %s" "http://gerlumph.swin.edu.au/inc/generic/put_to_cart.php?"$get_args 1>&2
+    printf "      %s" "https://gerlumph.swin.edu.au/inc/generic/put_to_cart.php?"$get_args 1>&2
     printf "\n\n" 1>&2
     printf "and place them at: %s " $map_path 1>&2
 fi
