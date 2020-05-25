@@ -1,3 +1,3 @@
-docker pull molet:production
-docker run -it --rm -v </path/to/gerlumph/maps/>:/home/gerlumph_maps:ro -v </path/to/molet/output/>:/home/molet_output/:rw molet:production
-python3 molet_driver.py tests/test_0/input_molet.json /home/molet_output/output_test_0
+docker pull gvernard/molet:production
+docker run -it --rm -v </path/to/gerlumph/maps/>:/home/gerlumph_maps:ro -v </path/to/molet/output/>:/home/molet_output/:rw gvernard/molet:production
+./molet_driver.sh tests/test_0/input_molet.json

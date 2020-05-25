@@ -115,7 +115,7 @@ ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDI
 
 
 ### Uncomment the line below to use cache up to here and update the libraries and code with their latest versions
-#ARG DUMMY=unknown
+RG DUMMY=unknown
 
 # Install 'gerlumphpp' and 'vkl_lib' libraries
 #########################################################################################################
