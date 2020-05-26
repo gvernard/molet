@@ -104,6 +104,6 @@ curves_ymin = ax.get_ylim()[0]
 curves_ymax = ax.get_ylim()[-1]
 
 
-plt.savefig('light_curves.pdf')
+plt.savefig('light_curves.png')
 
  
