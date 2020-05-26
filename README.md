@@ -85,4 +85,4 @@ python plot_light_curves.py /full/path/to/simulation/dir/ mock_<index_in>_<index
 
 to produce a plot similar to the following one:
 
-![Alt text](plottin/example_observed_lc.png?raw=true "Example observesd light curves")
+![Alt text](plotting/example_observed_lc.png?raw=true "Example observed light curves")
