@@ -23,8 +23,8 @@ HEADERS = $(shell find $(INC_DIR) -type f -name '*.hpp')
 OBJ  = mask_functions.o auxiliary_functions.o combine_light.o
 FULL_OBJ  = $(patsubst %,$(OBJ_DIR)/%,$(OBJ))  #Pad names with dir
 
-$(info $$OBJ is [${HEADERS}])
-$(info $$OBJ is [${FULL_OBJ}])
+#$(info $$OBJ is [${HEADERS}])
+#$(info $$OBJ is [${FULL_OBJ}])
 
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)

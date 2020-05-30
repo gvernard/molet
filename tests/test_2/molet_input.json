@@ -107,7 +107,7 @@
 	    },
 	    "extrinsic": {
 		"microlens_mass": 1,
-		"type": "AGN",
+		"type": "moving_disc",
 		"Nex": 100,
 		"pars": {
 		    "sigma_pec_l": 250,

@@ -194,10 +194,18 @@ then
 	msg="Checking if GERLUMPH maps exist locally..."
 	cmd=$molet_home"variability/extrinsic/match_to_gerlumph/check_map_files.sh "$map_path" "$out_path
 	myprocess "$msg" "$cmd" "$log_file"
-	
-	msg="Getting microlensing variability for each image..."
-	cmd=$molet_home"variability/extrinsic/gerlumph_moving_source/bin/moving_source "$infile" "$out_path
-	myprocess "$msg" "$cmd" "$log_file"	
+
+	if [ $ex_type = moving_disc ]
+	then
+	    msg="Getting 'moving_disc' microlensing variability for each image..."
+	    cmd=$molet_home"variability/extrinsic/moving_disc/bin/moving_disc "$infile" "$out_path
+	    myprocess "$msg" "$cmd" "$log_file"
+	elif [ $ex_type = expanding_supernova ]
+	then
+	    msg="Getting 'expanding_supernova' microlensing variability for each image..."
+	    cmd=$molet_home"variability/extrinsic/expanding_supernova/bin/expanding_supernova "$infile" "$out_path
+	    myprocess "$msg" "$cmd" "$log_file"
+	fi  
     fi    
 fi
 

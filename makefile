@@ -35,12 +35,19 @@ vkl_llm:
 vkl_llm_clean:
 	make -f makefiles/vkl_llm.mk clean
 
-# GERLUMPH_MOVING_SOURCE
+# MOVING_DISC
 #======================================================
-gerlumph_moving_source:
-	make -f makefiles/gerlumph_moving_source.mk gerlumph_moving_source
-gerlumph_moving_source_clean:
-	make -f makefiles/gerlumph_moving_source.mk clean
+moving_disc:
+	make -f makefiles/moving_disc.mk moving_disc
+moving_disc_clean:
+	make -f makefiles/moving_disc.mk clean
+
+# EXPANDING_SUPERNOVA
+#======================================================
+expanding_supernova:
+	make -f makefiles/expanding_supernova.mk expanding_supernova
+expanding_supernova_clean:
+	make -f makefiles/expanding_supernova.mk clean
 
 # MATCH TO GERLUMPH MAPS
 #======================================================
@@ -73,7 +80,8 @@ ALL_DEPS += vkl_point_source
 ALL_DEPS += vkl_llm
 ALL_DEPS += get_map_path
 ALL_DEPS += match_to_gerlumph
-ALL_DEPS += gerlumph_moving_source
+ALL_DEPS += moving_disc
+ALL_DEPS += expanding_supernova
 ALL_DEPS += combined
 
 CLEAN_DEPS = $(patsubst %,%_clean,$(ALL_DEPS))
