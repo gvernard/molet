@@ -12,6 +12,12 @@ The user is notified via email to download the compressed collection of map file
 One needs to simply extract the contents of the tarball in */path/to/gerlumph/maps/*.
 The maps are then organized in sub-directories named after the map ID in the gerlumph database, each containing a **map.bin** and **mapmeta.dat** file and ready to be used by MOLET.
 
+### Using custom maps
+
+A list of the ID,&kappa;,&gamma;, and s of the all GERLUMPH maps (last updated on 16/06/2020) is stored in the *data/gerlumph.db* file.
+This file is parsed to match the macromodel computed &kappa;,&gamma;,s to a GERLUMPH map ID, and then use this ID to find the actual map data in */path/to/gerlumph/maps/*.
+One can use custom maps as long as they update the *data/gerlumph.db* and use the same format as GERLUMPH.
+
 
 ## Install
 
