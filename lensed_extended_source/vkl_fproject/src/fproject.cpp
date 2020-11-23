@@ -24,8 +24,11 @@ int main(int argc,char* argv[]){
   fin >> root;
   fin.close();
 
-  std::string out_path = argv[2];
-  std::string output = out_path+"output/";
+  std::string in_path = argv[2];
+  std::string input   = in_path+"input_files/";
+  
+  std::string out_path = argv[3];
+  std::string output   = out_path+"output/";
   
   // Read the cosmological parameters
   Json::Value cosmo;
@@ -128,7 +131,7 @@ int main(int argc,char* argv[]){
 
   } else if( smodel == "custom" ){
 
-    std::string filename = jsource["pars"]["filename"].asString();
+    std::string filename = input + jsource["pars"]["filename"].asString();
     int Ni               = jsource["pars"]["Ni"].asInt();
     int Nj               = jsource["pars"]["Nj"].asInt();
     double height        = jsource["pars"]["height"].asDouble();
@@ -136,8 +139,8 @@ int main(int argc,char* argv[]){
     double x0            = jsource["pars"]["x0"].asDouble();
     double y0            = jsource["pars"]["y0"].asDouble();
     double Mtot          = jsource["pars"]["M_tot"].asDouble();
-    mysource = new fromFITS(filename,Ni,Nj,height,width,x0,y0,Mtot);
-
+    mysource = new fromFITS(filename,Ni,Nj,height,width,x0,y0,Mtot,"bilinear");
+    
   } else {
 
     std::cout << "Unknown source profile type" << std::endl;

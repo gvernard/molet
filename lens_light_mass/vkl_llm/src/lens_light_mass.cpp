@@ -86,7 +86,7 @@ int main(int argc,char* argv[]){
     double x0            = jll["pars"]["x0"].asDouble();
     double y0            = jll["pars"]["y0"].asDouble();
     double Mtot          = jll["pars"]["M_tot"].asDouble();
-    lens_light = new fromFITS(filename,Ni,Nj,height,width,x0,y0,Mtot);
+    lens_light = new fromFITS(filename,Ni,Nj,height,width,x0,y0,Mtot,"bilinear");
 
   } else {
 
@@ -170,7 +170,7 @@ int main(int argc,char* argv[]){
       double x0            = jlm["pars"]["x0"].asDouble();
       double y0            = jlm["pars"]["y0"].asDouble();
       double Mtot          = jlm["pars"]["M_tot"].asDouble();
-      lens_compact = new fromFITS(filename,Ni,Nj,height,width,x0,y0,Mtot);
+      lens_compact = new fromFITS(filename,Ni,Nj,height,width,x0,y0,Mtot,"bilinear");
       
     } else {
       

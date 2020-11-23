@@ -7,6 +7,10 @@ myprocess () {
     log_file=$3
 
     
+    echo "COMMAND: $cmd_list" >> $log_file
+    dum="=========================================="
+    echo $dum$dum$dum$dum$dum >> $log_file
+
     printf "%-100s" "$msg"
 
     error_file=$(mktemp)
@@ -28,11 +32,7 @@ myprocess () {
 	printf "\n===> Failed with unspecified error\n===> Use the following command on its own to debug:\n"
 	printf "$cmd_list\n"
     fi
-       
-    echo "COMMAND: $cmd_list" >> $log_file
-    dum="=========================================="
-    echo $dum$dum$dum$dum$dum >> $log_file
-    
+           
     if [ ! -z "$out" ]
     then
        echo "$out" >> $log_file
@@ -150,7 +150,7 @@ myprocess "$msg" "$cmd" "$log_file"
 # Get extended lensed images of the source
 ####################################################################################
 msg="Getting extended source lensed features..."
-cmd=$molet_home"lensed_extended_source/vkl_fproject/bin/fproject "$infile" "$out_path
+cmd=$molet_home"lensed_extended_source/vkl_fproject/bin/fproject "$infile" "$in_path" "$out_path
 myprocess "$msg" "$cmd" "$log_file"
 
 

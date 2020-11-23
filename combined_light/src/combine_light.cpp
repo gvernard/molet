@@ -27,8 +27,14 @@ int main(int argc,char* argv[]){
   std::string in_path = argv[2];
   std::string out_path = argv[3];
 
+  std::string cut_out_scale;
+  if( root.isMember("output_options") ){
+    cut_out_scale = root["output_options"]["cut_outs"]["scale"].asString();
+  } else {
+    cut_out_scale = "mag";
+  }
 
-
+  
   // Loop over the instruments
   // ===================================================================================================================
   // ===================================================================================================================
@@ -93,8 +99,10 @@ int main(int argc,char* argv[]){
       mycam.noise->addNoise(&obs_base);
       
       // Convert to magnitudes
-      for(int i=0;i<obs_base.Nm;i++){
-	obs_base.img[i] = -2.5*log10(obs_base.img[i]);
+      if( cut_out_scale == "mag" ){
+	for(int i=0;i<obs_base.Nm;i++){
+	  obs_base.img[i] = -2.5*log10(obs_base.img[i]);
+	}
       }
 
       // Output the observed base image
@@ -476,8 +484,10 @@ int main(int argc,char* argv[]){
 	      
 	      
 	      // Finalize output (e.g convert to magnitudes) and write
-	      for(int i=0;i<obs_img.Nm;i++){
-		obs_img.img[i] = -2.5*log10(obs_img.img[i]);
+	      if( cut_out_scale == "mag" ){
+		for(int i=0;i<obs_img.Nm;i++){
+		  obs_img.img[i] = -2.5*log10(obs_img.img[i]);
+		}
 	      }
 	      char buf[4];
 	      sprintf(buf,"%03d",t);
