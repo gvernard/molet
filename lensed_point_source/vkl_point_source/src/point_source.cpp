@@ -77,14 +77,33 @@ int main(int argc,char* argv[]){
 
     if( mmodel == "custom" ){
 
-      std::map<std::string,std::string> pars;
-      pars["filename"] = input + jlens["mass_model"][k]["pars"]["filename"].asString();
-      pars["Ni"]       = jlens["mass_model"][k]["pars"]["Ni"].asString();
-      pars["Nj"]       = jlens["mass_model"][k]["pars"]["Nj"].asString();
-      pars["height"]   = jlens["mass_model"][k]["pars"]["height"].asString();
-      pars["width"]    = jlens["mass_model"][k]["pars"]["width"].asString();
-      pars["reg"]      = "identity"; // dummy argument
-      mycollection->models[k] = FactoryMassModel::getInstance()->createMassModel("pert",pars);
+      std::string filename = input + jlens["mass_model"][k]["pars"]["filename"].asString();
+      int dpsi_Ni = jlens["mass_model"][k]["pars"]["Ni"].asInt();
+      int dpsi_Nj = jlens["mass_model"][k]["pars"]["Nj"].asInt();
+      double dpsi_width,dpsi_height;
+      if( jlens["mass_model"][k]["pars"].isMember("width") ){
+	dpsi_width = jlens["mass_model"][k]["pars"]["width"].asDouble();
+      } else {
+	dpsi_width = width;
+      }
+      if( jlens["mass_model"][k]["pars"].isMember("height") ){
+	dpsi_height = jlens["mass_model"][k]["pars"]["height"].asDouble();
+      } else {
+	dpsi_height = height;
+      }
+      std::string reg = "identity"; // dummy argument
+      
+      Pert* custom = new Pert(filename,dpsi_Ni,dpsi_Nj,dpsi_width,dpsi_height,reg);
+
+      if( jlens["mass_model"][k]["pars"].isMember("scale_factor") ){
+	double scale_factor = jlens["mass_model"][k]["pars"]["scale_factor"].asDouble();
+	for(int m=0;m<custom->dpsi->Sm;m++){
+	  custom->dpsi->src[m] *= scale_factor;
+	}
+	custom->updatePert();
+      }
+      
+      mycollection->models[k] = custom;
       
     } else if ( mmodel == "eagle" ){
       
