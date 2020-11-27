@@ -70,12 +70,14 @@ int main(int argc,char* argv[]){
 
     if( mmodel == "custom" ){
 
-      jmembers = jlens["mass_model"][k]["pars"].getMemberNames();
       std::map<std::string,std::string> pars;
-      for(int i=0;i<jmembers.size();i++){
-	pars[jmembers[i]] = jlens["mass_model"][k]["pars"][jmembers[i]].asString();
-      }
-      mycollection->models[k] = FactoryMassModel::getInstance()->createMassModel(mmodel,pars);
+      pars["filename"] = input + jlens["mass_model"][k]["pars"]["filename"].asString();
+      pars["Ni"]       = jlens["mass_model"][k]["pars"]["Ni"].asString();
+      pars["Nj"]       = jlens["mass_model"][k]["pars"]["Nj"].asString();
+      pars["height"]   = jlens["mass_model"][k]["pars"]["height"].asString();
+      pars["width"]    = jlens["mass_model"][k]["pars"]["width"].asString();
+      pars["reg"]      = "identity"; // dummy argument
+      mycollection->models[k] = FactoryMassModel::getInstance()->createMassModel("pert",pars);
 
     } else if ( mmodel == "eagle" ){
       
@@ -148,7 +150,6 @@ int main(int argc,char* argv[]){
 
   }
   //================= END:CREATE THE SOURCES =======================
-
 
 
 

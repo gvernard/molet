@@ -162,7 +162,7 @@ check=`echo $injson | jq '. | select(.point_source)'`
 if [ ! -z "${check}" ]
 then
     msg="Getting point-like source lensed images..."
-    cmd=$molet_home"lensed_point_source/vkl_point_source/bin/point_source "$infile" "$out_path
+    cmd=$molet_home"lensed_point_source/vkl_point_source/bin/point_source "$infile" "$in_path" "$out_path
     myprocess "$msg" "$cmd" "$log_file"
 fi
 
