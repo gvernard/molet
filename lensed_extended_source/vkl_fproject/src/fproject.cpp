@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <string>
+#include <map>
 
 #include "json/json.h"
 
@@ -37,12 +38,14 @@ int main(int argc,char* argv[]){
   fin.close();
 
   // Initialize image plane
-  double width  = root["instruments"][0]["field-of-view_x"].asDouble();
-  double height = root["instruments"][0]["field-of-view_y"].asDouble();
+  double xmin = root["instruments"][0]["field-of-view_xmin"].asDouble();
+  double xmax = root["instruments"][0]["field-of-view_xmax"].asDouble();
+  double ymin = root["instruments"][0]["field-of-view_ymin"].asDouble();
+  double ymax = root["instruments"][0]["field-of-view_ymax"].asDouble();
   double resolution = Instrument::getResolution(root["instruments"][0]["name"].asString());
-  int super_res_x = 10*( static_cast<int>(ceil(width/resolution)) );
-  int super_res_y = 10*( static_cast<int>(ceil(height/resolution)) );
-  ImagePlane mysim(super_res_x,super_res_y,width,height);
+  int super_res_x = 10*( static_cast<int>(ceil((xmax-xmin)/resolution)) );
+  int super_res_y = 10*( static_cast<int>(ceil((ymax-ymin)/resolution)) );
+  RectGrid mysim(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
   //================= END:PARSE INPUT =======================
 
 
@@ -52,16 +55,7 @@ int main(int argc,char* argv[]){
   const Json::Value jlens = root["lenses"][0];
 
   // Initialize mass model physical parameters
-  jmembers = jlens["external_shear"].getMemberNames();
-  
-  std::vector<Nlpar*> ext_pars;
-  for(int i=0;i<jmembers.size();i++){
-    double value = jlens["external_shear"][jmembers[i]].asDouble();
-    ext_pars.push_back( new Nlpar(jmembers[i],0,0,value,0,0,0) );
-  }
-  CollectionMassModels* mycollection = new CollectionMassModels(ext_pars);
-  for(int i=0;i<ext_pars.size();i++){ delete(ext_pars[i]); }
-  ext_pars.clear();
+  CollectionMassModels* mycollection = new CollectionMassModels();
 
   // Initialize main mass model
   mycollection->models.resize(jlens["mass_model"].size());
@@ -71,29 +65,16 @@ int main(int argc,char* argv[]){
     if( mmodel == "custom" ){
 
       std::string filename = input + jlens["mass_model"][k]["pars"]["filename"].asString();
-      int dpsi_Ni = jlens["mass_model"][k]["pars"]["Ni"].asInt();
-      int dpsi_Nj = jlens["mass_model"][k]["pars"]["Nj"].asInt();
-      double dpsi_width,dpsi_height;
-      if( jlens["mass_model"][k]["pars"].isMember("width") ){
-	dpsi_width = jlens["mass_model"][k]["pars"]["width"].asDouble();
-      } else {
-	dpsi_width = width;
-      }
-      if( jlens["mass_model"][k]["pars"].isMember("height") ){
-	dpsi_height = jlens["mass_model"][k]["pars"]["height"].asDouble();
-      } else {
-	dpsi_height = height;
-      }
-      std::string reg = "identity"; // dummy argument
-      
-      Pert* custom = new Pert(filename,dpsi_Ni,dpsi_Nj,dpsi_width,dpsi_height,reg);
+      int dpsi_Ny = jlens["mass_model"][k]["pars"]["Ny"].asInt();
+      int dpsi_Nx = jlens["mass_model"][k]["pars"]["Nx"].asInt();
+      Pert* custom = new Pert(dpsi_Nx,dpsi_Ny,mysim.xmin,mysim.xmax,mysim.ymin,mysim.ymax,filename);
 
       if( jlens["mass_model"][k]["pars"].isMember("scale_factor") ){
 	double scale_factor = jlens["mass_model"][k]["pars"]["scale_factor"].asDouble();
-	for(int m=0;m<custom->dpsi->Sm;m++){
-	  custom->dpsi->src[m] *= scale_factor;
+	for(int m=0;m<custom->Sm;m++){
+	  custom->z[m] *= scale_factor;
 	}
-	custom->updatePert();
+	custom->updateDerivatives();
       }
       
       mycollection->models[k] = custom;
@@ -103,19 +84,22 @@ int main(int argc,char* argv[]){
     } else {
       
       jmembers = jlens["mass_model"][k]["pars"].getMemberNames();
-      std::vector<Nlpar*> pars;
+      std::map<std::string,double> pars;
       for(int i=0;i<jmembers.size();i++){
-	pars.push_back( new Nlpar(jmembers[i],0,0,jlens["mass_model"][k]["pars"][jmembers[i]].asDouble(),0,0,0) ); // only nam and val have meaning in this call
+	pars.insert( std::pair<std::string,double>(jmembers[i],jlens["mass_model"][k]["pars"][jmembers[i]].asDouble()) );
       }
-      mycollection->models[k] = FactoryMassModel::getInstance()->createMassModel(mmodel,pars,cosmo[0]["Dls"].asDouble(),cosmo[0]["Ds"].asDouble());
+      mycollection->models[k] = FactoryParametricMassModel::getInstance()->createParametricMassModel(mmodel,pars);
     }
   }
+
+  
 
   //  for(int i=0;i<mycollection->models.size();i++){
   //    mycollection->models[i]->printMassPars();
   //  }
   //  mycollection->printPhysPars();
   //================= END:CREATE THE LENSES ====================
+
 
 
 
@@ -153,14 +137,14 @@ int main(int argc,char* argv[]){
   } else if( smodel == "custom" ){
 
     std::string filename = input + jsource["pars"]["filename"].asString();
-    int Ni               = jsource["pars"]["Ni"].asInt();
-    int Nj               = jsource["pars"]["Nj"].asInt();
-    double height        = jsource["pars"]["height"].asDouble();
-    double width         = jsource["pars"]["width"].asDouble();
-    double x0            = jsource["pars"]["x0"].asDouble();
-    double y0            = jsource["pars"]["y0"].asDouble();
+    int Nx               = jsource["pars"]["Nx"].asInt();
+    int Ny               = jsource["pars"]["Ny"].asInt();
+    double xmin          = jsource["pars"]["xmin"].asDouble();
+    double xmax          = jsource["pars"]["xmax"].asDouble();
+    double ymin          = jsource["pars"]["ymin"].asDouble();
+    double ymax          = jsource["pars"]["ymax"].asDouble();
     double Mtot          = jsource["pars"]["M_tot"].asDouble();
-    mysource = new fromFITS(filename,Ni,Nj,height,width,x0,y0,Mtot,"bilinear");
+    mysource = new Custom(filename,Nx,Ny,xmin,xmax,ymin,ymax,Mtot,"bilinear");
     
   } else {
 
@@ -173,25 +157,30 @@ int main(int argc,char* argv[]){
 
 
 
+
   
   //=============== BEGIN:PRODUCE IMAGE USING RAY-SHOOTING =======================
   double xdefl,ydefl;
-  for(int i=0;i<mysim.Nm;i++){
-    mycollection->all_defl(mysim.x[i],mysim.y[i],xdefl,ydefl);
-    mysim.img[i] = mysource->value(xdefl,ydefl);
+  for(int i=0;i<mysim.Ny;i++){
+    for(int j=0;j<mysim.Nx;j++){
+      mycollection->all_defl(mysim.center_x[j],mysim.center_y[i],xdefl,ydefl);
+      mysim.z[i*mysim.Nx+j] = mysource->value(xdefl,ydefl);
+    }
   }
   //================= END:PRODUCE IMAGE USING RAY-SHOOTING =======================
+  
+  
 
-
-
+  
   
   
   //=============== BEGIN:OUTPUT =======================
   // Super-resolved lensed image
-  mysim.writeImage(output + "lensed_image_super.fits");
+  FitsInterface::writeFits(mysim.Nx,mysim.Ny,mysim.z,output + "lensed_image_super.fits");
   // Super-resolved source image
   mysource->outputProfile(output + "source_super.fits");
   //================= END:OUTPUT =======================
+
 
 
 

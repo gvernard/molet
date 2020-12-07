@@ -7,20 +7,20 @@
 
 #include "json/json.h"
 
-class ImagePlane;
+class RectGrid;
 
 class BaseNoise {
 public:
   int seed = 123;
   BaseNoise(){};
   ~BaseNoise(){};
-  virtual void addNoise(ImagePlane* mydata) = 0;
+  virtual void addNoise(RectGrid* mydata) = 0;
 };
 
 class NoNoise: public BaseNoise {
 public:
   NoNoise();
-  void addNoise(ImagePlane* mydata);
+  void addNoise(RectGrid* mydata);
 };
 
 class UniformGaussian: public BaseNoise {
@@ -28,7 +28,7 @@ public:
   const double two_pi = 2.0*M_PI;
   double sn; // signal to noise ratio
   UniformGaussian(double sn);
-  void addNoise(ImagePlane* mydata);
+  void addNoise(RectGrid* mydata);
 };
 
 class FactoryNoiseModel{//This is a singleton class.

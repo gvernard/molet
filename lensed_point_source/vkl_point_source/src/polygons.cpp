@@ -5,26 +5,26 @@
 #include "imagePlane.hpp"
 
 
-std::vector<triangle> imagePlaneToTriangles(ImagePlane* image){
+std::vector<triangle> imagePlaneToTriangles(RectGrid* image){
   std::vector<triangle> triangles;
 
-  for(int i=0;i<image->Ni-1;i++){
-    for(int j=0;j<image->Nj-1;j++){
+  for(int i=0;i<image->Ny-1;i++){
+    for(int j=0;j<image->Nx-1;j++){
       triangle tri;
-      tri.a.x = image->x[i*image->Nj+j];
-      tri.a.y = image->y[i*image->Nj+j];
-      tri.b.x = image->x[i*image->Nj+j+1];
-      tri.b.y = image->y[i*image->Nj+j+1];
-      tri.c.x = image->x[(i+1)*image->Nj+j+1];
-      tri.c.y = image->y[(i+1)*image->Nj+j+1];
+      tri.a.x = image->center_x[i*image->Nx+j];
+      tri.a.y = image->center_y[i*image->Nx+j];
+      tri.b.x = image->center_x[i*image->Nx+j+1];
+      tri.b.y = image->center_y[i*image->Nx+j+1];
+      tri.c.x = image->center_x[(i+1)*image->Nx+j+1];
+      tri.c.y = image->center_y[(i+1)*image->Nx+j+1];
       triangles.push_back(tri);
 
-      tri.a.x = image->x[i*image->Nj+j];
-      tri.a.y = image->y[i*image->Nj+j];
-      tri.b.x = image->x[(i+1)*image->Nj+j+1];
-      tri.b.y = image->y[(i+1)*image->Nj+j+1];
-      tri.c.x = image->x[(i+1)*image->Nj+j];
-      tri.c.y = image->y[(i+1)*image->Nj+j];
+      tri.a.x = image->center_x[i*image->Nx+j];
+      tri.a.y = image->center_y[i*image->Nx+j];
+      tri.b.x = image->center_x[(i+1)*image->Nx+j+1];
+      tri.b.y = image->center_y[(i+1)*image->Nx+j+1];
+      tri.c.x = image->center_x[(i+1)*image->Nx+j];
+      tri.c.y = image->center_y[(i+1)*image->Nx+j];
       triangles.push_back(tri);
     }
   }
@@ -32,20 +32,20 @@ std::vector<triangle> imagePlaneToTriangles(ImagePlane* image){
   return triangles;
 }
 
-std::vector<itriangle> imagePlaneToTriangleIndices(ImagePlane* image){
+std::vector<itriangle> imagePlaneToTriangleIndices(RectGrid* image){
   std::vector<itriangle> itriangles;
 
-  for(int i=0;i<image->Ni-1;i++){
-    for(int j=0;j<image->Nj-1;j++){
+  for(int i=0;i<image->Ny-1;i++){
+    for(int j=0;j<image->Nx-1;j++){
       itriangle tri;
-      tri.ia = i*image->Nj+j;
-      tri.ib = i*image->Nj+j+1;
-      tri.ic = (i+1)*image->Nj+j+1;
+      tri.ia = i*image->Nx+j;
+      tri.ib = i*image->Nx+j+1;
+      tri.ic = (i+1)*image->Nx+j+1;
       itriangles.push_back(tri);
 
-      tri.ia = i*image->Nj+j;
-      tri.ib = (i+1)*image->Nj+j+1;
-      tri.ic = (i+1)*image->Nj+j;
+      tri.ia = i*image->Nx+j;
+      tri.ib = (i+1)*image->Nx+j+1;
+      tri.ic = (i+1)*image->Nx+j;
       itriangles.push_back(tri);
     }
   }

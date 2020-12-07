@@ -46,29 +46,22 @@ int main(int argc,char* argv[]){
 
   
   // Initialize image plane
-  double width  = root["instruments"][0]["field-of-view_x"].asDouble();
-  double height = root["instruments"][0]["field-of-view_y"].asDouble();
+  double xmin  = root["instruments"][0]["field-of-view_xmin"].asDouble();
+  double xmax  = root["instruments"][0]["field-of-view_xmax"].asDouble();
+  double ymin  = root["instruments"][0]["field-of-view_ymin"].asDouble();
+  double ymax  = root["instruments"][0]["field-of-view_ymax"].asDouble();
   double res    = Instrument::getResolution(root["instruments"][0]["name"].asString());
   //================= END:PARSE INPUT =======================
 
 
-  
+  std::cout << "A" << std::endl;  
 
 
   //=============== BEGIN:CREATE THE LENSES ====================
   const Json::Value jlens = root["lenses"][0];
 
   // Initialize mass model physical parameters
-  jmembers = jlens["external_shear"].getMemberNames();
-  
-  std::vector<Nlpar*> ext_pars;
-  for(int i=0;i<jmembers.size();i++){
-    double value = jlens["external_shear"][jmembers[i]].asDouble();
-    ext_pars.push_back( new Nlpar(jmembers[i],0,0,value,0,0,0) );
-  }
-  CollectionMassModels* mycollection = new CollectionMassModels(ext_pars);
-  for(int i=0;i<ext_pars.size();i++){ delete(ext_pars[i]); }
-  ext_pars.clear();
+  CollectionMassModels* mycollection = new CollectionMassModels();
 
   // Initialize main mass model
   mycollection->models.resize(jlens["mass_model"].size());
@@ -78,29 +71,16 @@ int main(int argc,char* argv[]){
     if( mmodel == "custom" ){
 
       std::string filename = input + jlens["mass_model"][k]["pars"]["filename"].asString();
-      int dpsi_Ni = jlens["mass_model"][k]["pars"]["Ni"].asInt();
-      int dpsi_Nj = jlens["mass_model"][k]["pars"]["Nj"].asInt();
-      double dpsi_width,dpsi_height;
-      if( jlens["mass_model"][k]["pars"].isMember("width") ){
-	dpsi_width = jlens["mass_model"][k]["pars"]["width"].asDouble();
-      } else {
-	dpsi_width = width;
-      }
-      if( jlens["mass_model"][k]["pars"].isMember("height") ){
-	dpsi_height = jlens["mass_model"][k]["pars"]["height"].asDouble();
-      } else {
-	dpsi_height = height;
-      }
-      std::string reg = "identity"; // dummy argument
-      
-      Pert* custom = new Pert(filename,dpsi_Ni,dpsi_Nj,dpsi_width,dpsi_height,reg);
+      int dpsi_Nx = jlens["mass_model"][k]["pars"]["Nx"].asInt();
+      int dpsi_Ny = jlens["mass_model"][k]["pars"]["Ny"].asInt();
+      Pert* custom = new Pert(dpsi_Nx,dpsi_Ny,xmin,xmax,ymin,ymax,filename);
 
       if( jlens["mass_model"][k]["pars"].isMember("scale_factor") ){
 	double scale_factor = jlens["mass_model"][k]["pars"]["scale_factor"].asDouble();
-	for(int m=0;m<custom->dpsi->Sm;m++){
-	  custom->dpsi->src[m] *= scale_factor;
+	for(int m=0;m<custom->Sm;m++){
+	  custom->z[m] *= scale_factor;
 	}
-	custom->updatePert();
+	custom->updateDerivatives();
       }
       
       mycollection->models[k] = custom;
@@ -110,11 +90,11 @@ int main(int argc,char* argv[]){
     } else {
       
       jmembers = jlens["mass_model"][k]["pars"].getMemberNames();
-      std::vector<Nlpar*> pars;
+      std::map<std::string,double> pars;
       for(int i=0;i<jmembers.size();i++){
-	pars.push_back( new Nlpar(jmembers[i],0,0,jlens["mass_model"][k]["pars"][jmembers[i]].asDouble(),0,0,0) ); // only nam and val have meaning in this call
+	pars.insert( std::pair<std::string,double>(jmembers[i],jlens["mass_model"][k]["pars"][jmembers[i]].asDouble()) );
       }
-      mycollection->models[k] = FactoryMassModel::getInstance()->createMassModel(mmodel,pars,cosmo[0]["Dls"].asDouble(),cosmo[0]["Ds"].asDouble());
+      mycollection->models[k] = FactoryParametricMassModel::getInstance()->createParametricMassModel(mmodel,pars);
     }
   }
 
@@ -125,20 +105,23 @@ int main(int argc,char* argv[]){
   //================= END:CREATE THE LENSES ====================
 
 
+  std::cout << "B" << std::endl;  
   
   
 
   //=============== BEGIN:GET CRITICAL LINES AND CAUSTICS =======================
-  int super_res_x = 10*( static_cast<int>(ceil(width/res)) );
-  int super_res_y = 10*( static_cast<int>(ceil(height/res)) );
-  ImagePlane detA(super_res_x,super_res_y,width,height);
+  int super_res_x = 10*( static_cast<int>(ceil((xmax-xmin)/res)) );
+  int super_res_y = 10*( static_cast<int>(ceil((ymax-ymin)/res)) );
+  RectGrid detA(super_res_x,super_res_y,xmin,xmax,xmin,xmax);
 
-  mycollection->detJacobian(&detA,&detA);
-  for(int i=0;i<detA.Nm;i++){
-    if( detA.img[i] > 0 ){
-      detA.img[i] = 0;
-    } else {
-      detA.img[i] = 1;
+  for(int i=0;i<detA.Ny;i++){
+    for(int j=0;j<detA.Nx;j++){
+      double mydet = mycollection->detJacobian(detA.center_x[j],detA.center_y[i]);
+      if( mydet > 0 ){
+	detA.z[i*detA.Nx+j] = 0;
+      } else {
+	detA.z[i*detA.Nx+j] = 1;
+      }
     }
   }
 
@@ -248,6 +231,7 @@ int main(int argc,char* argv[]){
   
 
 
+  std::cout << "C" << std::endl;  
 
 
 
@@ -256,8 +240,8 @@ int main(int argc,char* argv[]){
   point point_source = {root["point_source"]["x0"].asDouble(),root["point_source"]["y0"].asDouble()};
 
   // Create and deflect image plane
-  std::vector<ImagePlane*> planes;
-  ImagePlane* img = new ImagePlane(10,10,width,height);
+  std::vector<RectGrid*> planes;
+  RectGrid* img = new RectGrid(10,10,xmin,xmax,xmin,xmax);
   planes.push_back(img);
   std::vector<double> xc;
   std::vector<double> yc;
@@ -272,8 +256,13 @@ int main(int argc,char* argv[]){
 
     for(int p=0;p<planes.size();p++){
       // Deflect image plane
-      for(int i=0;i<planes[p]->Nm;i++){
-	mycollection->all_defl(planes[p]->x[i],planes[p]->y[i],planes[p]->defl_x[i],planes[p]->defl_y[i]);
+      double* tmp_defl_x = (double*) malloc(planes[p]->Nz*sizeof(double));
+      double* tmp_defl_y = (double*) malloc(planes[p]->Nz*sizeof(double));
+      
+      for(int i=0;i<planes[p]->Ny;i++){
+	for(int j=0;j<planes[p]->Nx;j++){
+	  mycollection->all_defl(planes[p]->center_x[i],planes[p]->center_y[i],tmp_defl_x[i*planes[p]->Nx+j],tmp_defl_y[i*planes[p]->Nx+j]);
+	}
       }
       
       // Create triangle indices based on the image plane pixel indices
@@ -282,21 +271,23 @@ int main(int argc,char* argv[]){
       // Find which deflected triangles contain the point source
       std::vector<int> match;
       for(int i=0;i<triangles.size();i++){
-	point p1 = {planes[p]->defl_x[triangles[i].ia],planes[p]->defl_y[triangles[i].ia]};
-	point p2 = {planes[p]->defl_x[triangles[i].ib],planes[p]->defl_y[triangles[i].ib]};
-	point p3 = {planes[p]->defl_x[triangles[i].ic],planes[p]->defl_y[triangles[i].ic]};
+	point p1 = {tmp_defl_x[triangles[i].ia],tmp_defl_y[triangles[i].ia]};
+	point p2 = {tmp_defl_x[triangles[i].ib],tmp_defl_y[triangles[i].ib]};
+	point p3 = {tmp_defl_x[triangles[i].ic],tmp_defl_y[triangles[i].ic]};
 	
 	if( pointInTriangle(point_source,p1,p2,p3) ){
 	  match.push_back(i);
 	}
       }
+      free(tmp_defl_x);
+      free(tmp_defl_y);
       
       // Get the center and radius of the circumcircle of each image triangle
       double xdum,ydum,rdum;
       for(int i=0;i<match.size();i++){
-	point A = {planes[p]->x[triangles[match[i]].ia],planes[p]->y[triangles[match[i]].ia]};
-	point B = {planes[p]->x[triangles[match[i]].ib],planes[p]->y[triangles[match[i]].ib]};
-	point C = {planes[p]->x[triangles[match[i]].ic],planes[p]->y[triangles[match[i]].ic]};
+	point A = {planes[p]->center_x[triangles[match[i]].ia],planes[p]->center_y[triangles[match[i]].ia]};
+	point B = {planes[p]->center_x[triangles[match[i]].ib],planes[p]->center_y[triangles[match[i]].ib]};
+	point C = {planes[p]->center_x[triangles[match[i]].ic],planes[p]->center_y[triangles[match[i]].ic]};
 	circumcircle(A,B,C,xdum,ydum,rdum);
 	xc_tmp.push_back(xdum);
 	yc_tmp.push_back(ydum);
@@ -321,7 +312,7 @@ int main(int argc,char* argv[]){
       }
       planes.resize(xc_tmp.size());
       for(int p=0;p<planes.size();p++){
-	ImagePlane* img = new ImagePlane(10,10,2*rc_tmp[p],2*rc_tmp[p],xc_tmp[p],yc_tmp[p]);
+	RectGrid* img = new RectGrid(10,10,xc_tmp[p]-rc_tmp[p],xc_tmp[p]+rc_tmp[p],yc_tmp[p]-rc_tmp[p],yc_tmp[p]+rc_tmp[p]);
 	planes[p] = img;
       }
       //      std::cout << "Zooming in... (planes " << planes.size() << ")" <<  std::endl;
@@ -370,6 +361,9 @@ int main(int argc,char* argv[]){
 
 
 
+  std::cout << "D" << std::endl;  
+
+  
   
   //=============== BEGIN:CORRESPONDING KAPPA, GAMMA, AND TIME DELAY =======================
   for(int i=0;i<multipleImages.size();i++){
@@ -409,11 +403,12 @@ int main(int argc,char* argv[]){
   //================= END:CORRESPONDING KAPPA, GAMMA, AND TIME DELAY =======================
 
 
+  std::cout << "E" << std::endl;  
 
 
   //=============== BEGIN:OUTPUT =======================
   // Image plane magnification (0:positive, 1:negative)
-  detA.writeImage(output + "detA.fits");
+  FitsInterface::writeFits(detA.Nx,detA.Ny,detA.z,output + "detA.fits");
 
   // Caustics
   std::ofstream file_caustics(output+"caustics.json");
@@ -453,6 +448,7 @@ int main(int argc,char* argv[]){
   }
   //================= END:OUTPUT =======================
 
+  std::cout << "F" << std::endl;  
   
   
   return 0;

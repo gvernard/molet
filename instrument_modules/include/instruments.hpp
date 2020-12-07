@@ -4,7 +4,7 @@
 #include <string>
 #include "json/json.h"
 
-class ImagePlane;
+class RectGrid;
 class BaseNoise;
 
 class offsetPSF {
@@ -15,7 +15,7 @@ public:
   int ni;
 
   void print();
-  void printFrame(FILE* fh,int Ni,int Nj,double w,double h);
+  void printFrame(FILE* fh,int Nx,int Ny,double w,double h);
 };
 
 class Instrument {
@@ -25,9 +25,9 @@ public:
   double lambda_min; // in nm
   double lambda_max; // in nm
   double resolution; // in arcsec
-  ImagePlane* original_psf = NULL;
-  ImagePlane* scaled_psf   = NULL;
-  ImagePlane* cropped_psf  = NULL;
+  RectGrid* original_psf = NULL;
+  RectGrid* scaled_psf   = NULL;
+  RectGrid* cropped_psf  = NULL;
   double* kernel           = NULL;
   BaseNoise* noise         = NULL;
   
@@ -36,11 +36,11 @@ public:
 
   static double getResolution(std::string name);
   std::string getName();
-  void interpolatePSF(ImagePlane* image);
+  void interpolatePSF(RectGrid* grid);
   void cropPSF(double threshold);
-  void createKernel(int Ni,int Nj);
-  void convolve(ImagePlane* image);
-  offsetPSF offsetPSFtoPosition(double x,double y,ImagePlane* image);
+  void createKernel(int Nx,int Ny);
+  void convolve(RectGrid* grid);
+  offsetPSF offsetPSFtoPosition(double x,double y,RectGrid* grid);
 };
 
 #endif /* INSTRUMENT_HPP */

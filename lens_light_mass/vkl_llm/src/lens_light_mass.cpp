@@ -36,11 +36,13 @@ int main(int argc,char* argv[]){
   fin.close();
 
   // Initialize image plane
-  double width  = root["instruments"][0]["field-of-view_x"].asDouble();
-  double height = root["instruments"][0]["field-of-view_y"].asDouble();
+  double xmin = root["instruments"][0]["field-of-view_xmin"].asDouble();
+  double xmax = root["instruments"][0]["field-of-view_xmax"].asDouble();
+  double ymin = root["instruments"][0]["field-of-view_ymin"].asDouble();
+  double ymax = root["instruments"][0]["field-of-view_ymax"].asDouble();
   double res    = Instrument::getResolution(root["instruments"][0]["name"].asString());
-  int super_res_x = 10*( static_cast<int>(ceil(width/res)) );
-  int super_res_y = 10*( static_cast<int>(ceil(height/res)) );
+  int super_res_x = 10*( static_cast<int>(ceil((xmax-xmin)/res)) );
+  int super_res_y = 10*( static_cast<int>(ceil((ymax-ymin)/res)) );
   //================= END:PARSE INPUT =======================
 
 
@@ -79,14 +81,14 @@ int main(int argc,char* argv[]){
   } else if( light_model == "custom" ){
 
     std::string filename = jll["pars"]["filename"].asString();
-    int Ni               = jll["pars"]["Ni"].asInt();
-    int Nj               = jll["pars"]["Nj"].asInt();
-    double height        = jll["pars"]["height"].asDouble();
-    double width         = jll["pars"]["width"].asDouble();
-    double x0            = jll["pars"]["x0"].asDouble();
-    double y0            = jll["pars"]["y0"].asDouble();
+    int Nx               = jll["pars"]["Nx"].asInt();
+    int Ny               = jll["pars"]["Ny"].asInt();
+    double xmin          = jll["pars"]["xmin"].asDouble();
+    double xmax          = jll["pars"]["xmax"].asDouble();
+    double ymin          = jll["pars"]["ymin"].asDouble();
+    double ymax          = jll["pars"]["ymax"].asDouble();
     double Mtot          = jll["pars"]["M_tot"].asDouble();
-    lens_light = new fromFITS(filename,Ni,Nj,height,width,x0,y0,Mtot,"bilinear");
+    lens_light = new Custom(filename,Nx,Ny,xmin,xmax,ymin,ymax,Mtot,"bilinear");
 
   } else {
 
@@ -95,13 +97,15 @@ int main(int argc,char* argv[]){
 
   }
 
-  ImagePlane mylight(super_res_x,super_res_y,width,height);
-  for(int i=0;i<mylight.Nm;i++){
-    mylight.img[i] = lens_light->value(mylight.x[i],mylight.y[i]);
+  RectGrid mylight(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
+  for(int i=0;i<mylight.Ny;i++){
+    for(int j=0;j<mylight.Nx;j++){
+      mylight.z[i*mylight.Nx+j] = lens_light->value(mylight.center_x[j],mylight.center_y[i]);
+    }
   }
 
   // Super-resolved lens light profile image
-  mylight.writeImage(output + "lens_light_super.fits");
+  FitsInterface::writeFits(mylight.Nx,mylight.Ny,mylight.z,output + "lens_light_super.fits");
 
 
   // Confirm that the total brightness is conserved (by numerical integration)
@@ -163,14 +167,14 @@ int main(int argc,char* argv[]){
     } else if( compact_model == "custom" ){
       
       std::string filename = jlm["pars"]["filename"].asString();
-      int Ni               = jlm["pars"]["Ni"].asInt();
-      int Nj               = jlm["pars"]["Nj"].asInt();
-      double height        = jlm["pars"]["height"].asDouble();
-      double width         = jlm["pars"]["width"].asDouble();
-      double x0            = jlm["pars"]["x0"].asDouble();
-      double y0            = jlm["pars"]["y0"].asDouble();
+      int Nx               = jlm["pars"]["Nx"].asInt();
+      int Ny               = jlm["pars"]["Ny"].asInt();
+      double xmin          = jlm["pars"]["xmin"].asDouble();
+      double xmax          = jlm["pars"]["xmax"].asDouble();
+      double ymin          = jlm["pars"]["ymin"].asDouble();
+      double ymax          = jlm["pars"]["ymax"].asDouble();
       double Mtot          = jlm["pars"]["M_tot"].asDouble();
-      lens_compact = new fromFITS(filename,Ni,Nj,height,width,x0,y0,Mtot,"bilinear");
+      lens_compact = new Custom(filename,Nx,Ny,xmin,xmax,ymin,ymax,Mtot,"bilinear");
       
     } else {
       
@@ -181,12 +185,14 @@ int main(int argc,char* argv[]){
 
 
     // Write overall kappa_star field
-    ImagePlane kappa_star(super_res_x,super_res_y,width,height);
-    for(int i=0;i<kappa_star.Nm;i++){
-      kappa_star.img[i] = lens_compact->value(kappa_star.x[i],kappa_star.y[i])/sigma_crit;
+    RectGrid kappa_star(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
+    for(int i=0;i<kappa_star.Ny;i++){
+      for(int j=0;j<kappa_star.Nx;j++){
+	kappa_star.z[i*kappa_star.Nx+j] = lens_compact->value(kappa_star.center_x[j],kappa_star.center_y[i])/sigma_crit;
+      }
     }
     // Super-resolved lens compact mass profile image
-    kappa_star.writeImage(output + "lens_kappa_star_super.fits");
+    FitsInterface::writeFits(kappa_star.Nx,kappa_star.Ny,kappa_star.z,output + "lens_kappa_star_super.fits");
 
 
 

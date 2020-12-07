@@ -44,40 +44,43 @@ int main(int argc,char* argv[]){
     Instrument mycam(instrument_name,root["instruments"][b]["noise"]);
     
     // Set output image plane in super-resolution
-    double width  = instrument["field-of-view_x"].asDouble();
-    double height = instrument["field-of-view_y"].asDouble();
-    int res_x = static_cast<int>(ceil(width/mycam.resolution));
-    int res_y = static_cast<int>(ceil(height/mycam.resolution));
+    double xmin = root["instruments"][b]["field-of-view_xmin"].asDouble();
+    double xmax = root["instruments"][b]["field-of-view_xmax"].asDouble();
+    double ymin = root["instruments"][b]["field-of-view_ymin"].asDouble();
+    double ymax = root["instruments"][b]["field-of-view_ymax"].asDouble();
+    int res_x = static_cast<int>(ceil((xmax-xmin)/mycam.resolution));
+    int res_y = static_cast<int>(ceil((ymax-ymin)/mycam.resolution));
     int super_res_x = 10*res_x;
     int super_res_y = 10*res_y;
-    ImagePlane mysim(super_res_x,super_res_y,width,height);
+    RectGrid mysim(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
     
+
     
     // Get the psf in super-resolution, crop it, and create convolution kernel
     mycam.interpolatePSF(&mysim);
     mycam.cropPSF(0.99);
-    mycam.createKernel(mysim.Ni,mysim.Nj);
+    mycam.createKernel(mysim.Nx,mysim.Ny);
     
     
     // Create the fixed extended lensed light
-    ImagePlane* extended = new ImagePlane(out_path+"output/lensed_image_super.fits",super_res_x,super_res_y,width,height);
+    RectGrid* extended = new RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/lensed_image_super.fits");
     mycam.convolve(extended);
     //extended->writeImage(output+"psf_lensed_image_super.fits");
     
     // Create the fixed lens galaxy light
-    ImagePlane* lens_light = new ImagePlane(out_path+"output/lens_light_super.fits",super_res_x,super_res_y,width,height);
+    RectGrid* lens_light = new RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/lens_light_super.fits");
     mycam.convolve(lens_light);
     //lens_light->writeImage(output+"psf_lens_light_super.fits");
     
+
     // Combined light of the observed base image (binned from 'super' to observed resolution)
-    ImagePlane* base = new ImagePlane(super_res_x,super_res_y,width,height); 
-    for(int i=0;i<base->Nm;i++){
-      base->img[i] = lens_light->img[i] + extended->img[i];
+    RectGrid* base = new RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax); 
+    for(int i=0;i<base->Nz;i++){
+      base->z[i] = lens_light->z[i] + extended->z[i];
     }
     delete(extended);
     delete(lens_light);
-    ImagePlane obs_base(res_x,res_y,width,height); // obs_base.img array is initialized to zero
-    base->lowerResRebinIntegrate(&obs_base);
+    RectGrid* obs_base = base->embeddedNewGrid_integrate(res_x,res_y);
     delete(base);
 
 
@@ -96,17 +99,18 @@ int main(int argc,char* argv[]){
       //=============== CREATE A SINGLE STATIC IMAGE ====================
 
       // Adding noise here
-      mycam.noise->addNoise(&obs_base);
+      mycam.noise->addNoise(obs_base);
       
       // Convert to magnitudes
       if( cut_out_scale == "mag" ){
-	for(int i=0;i<obs_base.Nm;i++){
-	  obs_base.img[i] = -2.5*log10(obs_base.img[i]);
+	for(int i=0;i<obs_base->Nz;i++){
+	  obs_base->z[i] = -2.5*log10(obs_base->z[i]);
 	}
       }
 
       // Output the observed base image
-      obs_base.writeImage(out_path + "output/OBS_" + instrument_name + ".fits");
+      FitsInterface::writeFits(obs_base->Nx,obs_base->Ny,obs_base->z,out_path + "output/OBS_" + instrument_name + ".fits");
+      delete(obs_base);
       
     } else {
       //=============== CREATE THE TIME VARYING LIGHT ====================
@@ -128,7 +132,6 @@ int main(int argc,char* argv[]){
       }
 
       
-
 
       // Get observed time vector
       std::vector<double> tobs;
@@ -269,10 +272,7 @@ int main(int argc,char* argv[]){
 	  }
 	}
       }
-      
-      
-      
-      
+
 
 
       
@@ -291,7 +291,7 @@ int main(int argc,char* argv[]){
       }
       FILE* fh = fopen((out_path+"output/psf_locations.dat").c_str(),"w");
       for(int q=0;q<images.size();q++){
-	PSFoffsets[q].printFrame(fh,mysim.Ni,mysim.Nj,mysim.width,mysim.height);
+	PSFoffsets[q].printFrame(fh,mysim.Nx,mysim.Ny,mysim.width,mysim.height);
       }
       fclose(fh);
       // Calculate the appropriate PSF sums
@@ -300,8 +300,8 @@ int main(int argc,char* argv[]){
 	double sum = 0.0;
 	for(int i=0;i<PSFoffsets[q].ni;i++){
 	  for(int j=0;j<PSFoffsets[q].nj;j++){
-	    int index_psf = i*Instrument_list[q]->cropped_psf->Nj + j;
-	    sum += Instrument_list[q]->cropped_psf->img[index_psf];
+	    int index_psf = i*Instrument_list[q]->cropped_psf->Nx + j;
+	    sum += Instrument_list[q]->cropped_psf->z[index_psf];
 	  }
 	}
 	psf_partial_sum[q] = sum;
@@ -442,14 +442,14 @@ int main(int argc,char* argv[]){
 	    for(int t=0;t<tobs.size();t++){
 
 	      // Loop over the truncated PSF (through PSF_offsets) for each image, and add their light to the pp_light image that contains all the point source light.
-	      ImagePlane pp_light(super_res_x,super_res_y,width,height); // this has to be in intensity units in order to be able to add the different light components
+	      RectGrid pp_light(super_res_x,super_res_y,xmin,xmax,ymin,ymax); // this has to be in intensity units in order to be able to add the different light components
 	      for(int q=0;q<images.size();q++){
 		for(int i=0;i<PSFoffsets[q].ni;i++){
 		  for(int j=0;j<PSFoffsets[q].nj;j++){
-		    int index_img = PSFoffsets[q].offset_image + i*pp_light.Nj + j;
-		    int index_psf = PSFoffsets[q].offset_cropped + i*Instrument_list[q]->cropped_psf->Nj + j;
+		    int index_img = PSFoffsets[q].offset_image + i*pp_light.Nx + j;
+		    int index_psf = PSFoffsets[q].offset_cropped + i*Instrument_list[q]->cropped_psf->Nx + j;
 		    //pp_light.img[index_img] += 1.0;
-		    pp_light.img[index_img] += samp_LC[q]->signal[t]*Instrument_list[q]->cropped_psf->img[index_psf]/psf_partial_sum[q];
+		    pp_light.z[index_img] += samp_LC[q]->signal[t]*Instrument_list[q]->cropped_psf->z[index_psf]/psf_partial_sum[q];
 		  }
 		}
 	      }
@@ -475,24 +475,24 @@ int main(int argc,char* argv[]){
 
 	      
 	      // Bin image from 'super' to observed resolution
-	      ImagePlane obs_img = obs_base;
-	      pp_light.lowerResRebinAdditive(&obs_img);
+	      RectGrid* obs_img = pp_light.embeddedNewGrid_additive(res_x,res_y);
 
 	      
 	      // Adding time-dependent noise here
-	      mycam.noise->addNoise(&obs_img);
+	      mycam.noise->addNoise(obs_img);
 	      
 	      
 	      // Finalize output (e.g convert to magnitudes) and write
 	      if( cut_out_scale == "mag" ){
-		for(int i=0;i<obs_img.Nm;i++){
-		  obs_img.img[i] = -2.5*log10(obs_img.img[i]);
+		for(int i=0;i<obs_img->Nz;i++){
+		  obs_img->z[i] = -2.5*log10(obs_img->z[i]);
 		}
 	      }
 	      char buf[4];
 	      sprintf(buf,"%03d",t);
 	      std::string timestep = buf;
-	      obs_img.writeImage(out_path+mock+"/OBS_"+instrument_name+"_"+timestep+".fits");
+	      FitsInterface::writeFits(obs_img->Nx,obs_img->Ny,obs_img->z,out_path+mock+"/OBS_"+instrument_name+"_"+timestep+".fits");
+	      delete(obs_img);
 	    }
 	  }
 	  // *********************** End of product **************************************************	    
@@ -528,9 +528,9 @@ int main(int argc,char* argv[]){
 
     }
     //================= END:CREATE THE TIME VARYING LIGHT ====================
-      
-
-
+    
+    
+    
   }
   // Loop over the instruments ends here
   // ===================================================================================================================

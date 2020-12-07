@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-class ImagePlane;
+class RectGrid;
 class point;
 
 class Contour {
@@ -17,7 +17,7 @@ public:
   ~Contour(){};
 };
 
-void mooreNeighborTracing(ImagePlane* image,std::vector<Contour*>& contours);
-void padImage(ImagePlane* image,ImagePlane* paddedImage,double paddingColor);
+void mooreNeighborTracing(RectGrid* image,std::vector<Contour*>& contours);
+void padImage(RectGrid* image,RectGrid* paddedImage,double paddingColor);
 
 #endif /* CONTOURTRACING_HPP */

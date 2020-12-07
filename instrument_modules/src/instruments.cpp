@@ -18,12 +18,12 @@ void offsetPSF::print(){
   printf("  %20s %d\n","nj:",this->nj);
   printf("  %20s %d\n","ni:",this->ni);
 }
-void offsetPSF::printFrame(FILE* fh,int Ni,int Nj,double w,double h){
+void offsetPSF::printFrame(FILE* fh,int Nx,int Ny,double w,double h){
   int* x = (int*) malloc(5*sizeof(int));
   int* y = (int*) malloc(5*sizeof(int));
 
-  x[0] = this->offset_image % Nj;
-  y[0] = (int)this->offset_image/Nj;
+  x[0] = this->offset_image % Nx;
+  y[0] = (int)this->offset_image/Nx;
   x[1] = x[0] + this->nj;
   y[1] = y[0];
   x[2] = x[0] + this->nj;
@@ -34,7 +34,7 @@ void offsetPSF::printFrame(FILE* fh,int Ni,int Nj,double w,double h){
   y[4] = y[0];
 
   for(int i=0;i<5;i++){
-    fprintf(fh,"%10.4f %10.4f\n",w*x[i]/Nj - w/2.0,-h*y[i]/Ni + h/2.0);
+    fprintf(fh,"%10.4f %10.4f\n",w*x[i]/Nx - w/2.0,-h*y[i]/Ny + h/2.0);
   }
   free(x);
   free(y);
@@ -59,7 +59,7 @@ Instrument::Instrument(std::string name,Json::Value noise_pars):name(name){
   int pix_y  = specs["psf"]["pix_y"].asInt();
   int width  = specs["psf"]["width"].asDouble();
   int height = specs["psf"]["height"].asDouble();
-  this->original_psf = new ImagePlane(full_path+"psf.fits",pix_x,pix_y,width,height);
+  this->original_psf = new RectGrid(pix_x,pix_y,0,width,0,height,full_path+"psf.fits");
 
   this->noise = FactoryNoiseModel::getInstance()->createNoiseModel(noise_pars);
 }
@@ -87,40 +87,40 @@ std::string Instrument::getName(){
   return this->name;
 }
 
-void Instrument::interpolatePSF(ImagePlane* mydata){
+void Instrument::interpolatePSF(RectGrid* grid){
   //    double newPixSize  = (mydata->xmax - mydata->xmin)/mydata->Nj;
-  double newPixSize  = (mydata->width)/(mydata->Nj);
-  double origPixSize = this->original_psf->width/this->original_psf->Nj;
+  double newPixSize  = (grid->width)/(grid->Nx);
+  double origPixSize = this->original_psf->width/this->original_psf->Nx;
   
   // Decide on the profile width and height in pixels based on the input profile
-  int newNj,newNi;
-  if( mydata->width < this->original_psf->width ){
-    newNj = mydata->Nj;
-    newNi = mydata->Ni;
+  int newNx,newNy;
+  if( grid->width < this->original_psf->width ){
+    newNx = grid->Nx;
+    newNy = grid->Ny;
   } else {
-    newNj = floor( mydata->Nj*(0.901*this->original_psf->width)/mydata->width );
-    newNi = floor( mydata->Ni*(0.901*this->original_psf->height)/mydata->height );
+    newNx = floor( grid->Nx*(0.901*this->original_psf->width)/grid->width );
+    newNy = floor( grid->Ny*(0.901*this->original_psf->height)/grid->height );
   }
   
-  double neww    = newNj*newPixSize;
+  double neww    = newNx*newPixSize;
   double xoffset = (this->original_psf->width - neww)/2.0;
-  double newh    = newNi*newPixSize;
+  double newh    = newNy*newPixSize;
   double yoffset = (this->original_psf->height - newh)/2.0;
   
-  this->scaled_psf = new ImagePlane(newNi,newNj,newh,neww);
+  this->scaled_psf = new RectGrid(newNx,newNy,0,neww,0,newh);
  
   double sum = 0.0;
   double x,y,xp,yp,dx,dy,ddx,ddy,w00,w10,w01,w11,f00,f10,f01,f11;
   int ii,jj;
   
-  for(int i=0;i<this->scaled_psf->Ni;i++){
+  for(int i=0;i<this->scaled_psf->Ny;i++){
     y  = yoffset+i*newPixSize;
     ii = floor( y/origPixSize );
     yp = ii*origPixSize;
     dy = (y - yp)/origPixSize;
     ddy = (1.0 - dy);
     
-    for(int j=0;j<this->scaled_psf->Nj;j++){
+    for(int j=0;j<this->scaled_psf->Nx;j++){
       x  = xoffset+j*newPixSize;
       jj = floor( x/origPixSize );
       xp = jj*origPixSize;
@@ -133,18 +133,18 @@ void Instrument::interpolatePSF(ImagePlane* mydata){
       w10 = dy*ddx;
       w11 = dx*dy;
       
-      f00 = this->original_psf->img[ii*this->original_psf->Nj+jj];
-      f01 = this->original_psf->img[ii*this->original_psf->Nj+jj+1];
-      f10 = this->original_psf->img[(ii+1)*this->original_psf->Nj+jj];
-      f11 = this->original_psf->img[(ii+1)*this->original_psf->Nj+jj+1];
+      f00 = this->original_psf->z[ii*this->original_psf->Nx+jj];
+      f01 = this->original_psf->z[ii*this->original_psf->Nx+jj+1];
+      f10 = this->original_psf->z[(ii+1)*this->original_psf->Nx+jj];
+      f11 = this->original_psf->z[(ii+1)*this->original_psf->Nx+jj+1];
       
-      this->scaled_psf->img[i*this->scaled_psf->Nj+j] = f00*w00 + f10*w10 + f01*w01 + f11*w11;
-      sum += this->scaled_psf->img[i*this->scaled_psf->Nj+j];
+      this->scaled_psf->z[i*this->scaled_psf->Nx+j] = f00*w00 + f10*w10 + f01*w01 + f11*w11;
+      sum += this->scaled_psf->z[i*this->scaled_psf->Nx+j];
     }
   }
   
-  for(int i=0;i<this->scaled_psf->Nm;i++){
-    this->scaled_psf->img[i] /= sum;
+  for(int i=0;i<this->scaled_psf->Nz;i++){
+    this->scaled_psf->z[i] /= sum;
   }
   
 }
@@ -160,10 +160,10 @@ void Instrument::cropPSF(double threshold){
     int toffy = floor(Ncropy/2.0);
     double sum = 0.0;
     blur = (double*) calloc(Ncropx*Ncropy,sizeof(double));
-    int offset = (floor(this->scaled_psf->Ni/2.0)-toffy)*this->scaled_psf->Ni + (floor(this->scaled_psf->Nj/2.0)-loffx);
+    int offset = (floor(this->scaled_psf->Ny/2.0)-toffy)*this->scaled_psf->Ny + (floor(this->scaled_psf->Nx/2.0)-loffx);
     for(int i=0;i<Ncropy;i++){
       for(int j=0;j<Ncropx;j++){
-	blur[i*Ncropx+j] = this->scaled_psf->img[offset+i*this->scaled_psf->Ni+j];
+	blur[i*Ncropx+j] = this->scaled_psf->z[offset+i*this->scaled_psf->Ny+j];
 	sum += blur[i*Ncropx+j];
       }
     }
@@ -179,57 +179,57 @@ void Instrument::cropPSF(double threshold){
   }
 
 
-  double psf_pix_size_x = this->scaled_psf->width/this->scaled_psf->Nj;
-  double psf_pix_size_y = this->scaled_psf->height/this->scaled_psf->Ni;
-  this->cropped_psf = new ImagePlane(Ncropy,Ncropx,Ncropy*psf_pix_size_y,Ncropx*psf_pix_size_x);
-  for(int i=0;i<this->cropped_psf->Nm;i++){
-    this->cropped_psf->img[i] = blur[i];
+  double psf_pix_size_x = this->scaled_psf->width/this->scaled_psf->Nx;
+  double psf_pix_size_y = this->scaled_psf->height/this->scaled_psf->Ny;
+  this->cropped_psf = new RectGrid(Ncropx,Ncropy,0,Ncropx*psf_pix_size_x,0,Ncropy*psf_pix_size_y);
+  for(int i=0;i<this->cropped_psf->Nz;i++){
+    this->cropped_psf->z[i] = blur[i];
   }
   free(blur);
 }
 
-void Instrument::createKernel(int Ni,int Nj){
-  int bNx = this->cropped_psf->Nj/2.0;
-  int bNy = this->cropped_psf->Ni/2.0;
-  this->kernel = (double*) calloc(Ni*Nj,sizeof(double));
+void Instrument::createKernel(int Nx,int Ny){
+  int bNx = this->cropped_psf->Nx/2.0;
+  int bNy = this->cropped_psf->Ny/2.0;
+  this->kernel = (double*) calloc(Nx*Ny,sizeof(double));
   for(int j=0;j<bNy;j++){
     for(int i=0;i<bNx;i++){
-      this->kernel[j*Ni+i]                    = this->cropped_psf->img[bNy*2*bNx+bNx+j*2*bNx+i];
-      this->kernel[Ni-bNx+j*Ni+i]             = this->cropped_psf->img[bNy*2*bNx+j*2*bNx+i];
-      this->kernel[Ni*(Nj-bNy)+j*Ni+i]        = this->cropped_psf->img[bNx+2*bNx*j+i];
-      this->kernel[Ni*(Nj-bNy)+Ni-bNx+j*Ni+i] = this->cropped_psf->img[2*bNx*j+i];
+      this->kernel[j*Ny+i]                    = this->cropped_psf->z[bNy*2*bNx+bNx+j*2*bNx+i];
+      this->kernel[Ny-bNx+j*Ny+i]             = this->cropped_psf->z[bNy*2*bNx+j*2*bNx+i];
+      this->kernel[Ny*(Nx-bNy)+j*Ny+i]        = this->cropped_psf->z[bNx+2*bNx*j+i];
+      this->kernel[Ny*(Nx-bNy)+Ny-bNx+j*Ny+i] = this->cropped_psf->z[2*bNx*j+i];
     }
   }
 }
 
 
-void Instrument::convolve(ImagePlane* image){
-  int Ni = image->Ni;
-  int Nj = image->Nj;
+void Instrument::convolve(RectGrid* grid){
+  int Nx = grid->Nx;
+  int Ny = grid->Ny;
 
-  fftw_complex* f_image  = (fftw_complex*) fftw_malloc(Ni*Nj*sizeof(fftw_complex));
-  fftw_complex* f_kernel = (fftw_complex*) fftw_malloc(Ni*Nj*sizeof(fftw_complex));
+  fftw_complex* f_image  = (fftw_complex*) fftw_malloc(Nx*Ny*sizeof(fftw_complex));
+  fftw_complex* f_kernel = (fftw_complex*) fftw_malloc(Nx*Ny*sizeof(fftw_complex));
   
   fftw_plan p1;
-  p1 = fftw_plan_dft_r2c_2d(Ni,Nj,this->kernel,f_kernel,FFTW_ESTIMATE);
+  p1 = fftw_plan_dft_r2c_2d(Nx,Ny,this->kernel,f_kernel,FFTW_ESTIMATE);
   fftw_execute(p1);
   fftw_destroy_plan(p1);
   
-  p1 = fftw_plan_dft_r2c_2d(Ni,Nj,image->img,f_image,FFTW_ESTIMATE);
+  p1 = fftw_plan_dft_r2c_2d(Nx,Ny,grid->z,f_image,FFTW_ESTIMATE);
   fftw_execute(p1);
   fftw_destroy_plan(p1);
   
   double dum1,dum2;
-  for(int i=0;i<Ni;i++) {
-    for(int j=0;j<Nj;j++) {
-      dum1 = f_image[i*Nj+j][0]*f_kernel[i*Nj+j][0] - f_image[i*Nj+j][1]*f_kernel[i*Nj+j][1];
-      dum2 = f_image[i*Nj+j][0]*f_kernel[i*Nj+j][1] + f_image[i*Nj+j][1]*f_kernel[i*Nj+j][0];
-      f_image[i*Nj+j][0] = dum1;
-      f_image[i*Nj+j][1] = dum2;
+  for(int i=0;i<Ny;i++) {
+    for(int j=0;j<Nx;j++) {
+      dum1 = f_image[i*Nx+j][0]*f_kernel[i*Nx+j][0] - f_image[i*Nx+j][1]*f_kernel[i*Nx+j][1];
+      dum2 = f_image[i*Nx+j][0]*f_kernel[i*Nx+j][1] + f_image[i*Nx+j][1]*f_kernel[i*Nx+j][0];
+      f_image[i*Nx+j][0] = dum1;
+      f_image[i*Nx+j][1] = dum2;
     }
   }
   
-  p1 = fftw_plan_dft_c2r_2d(Ni,Nj,f_image,image->img,FFTW_ESTIMATE);
+  p1 = fftw_plan_dft_c2r_2d(Nx,Ny,f_image,grid->z,FFTW_ESTIMATE);
   fftw_execute(p1);
   fftw_destroy_plan(p1);
   
@@ -237,23 +237,23 @@ void Instrument::convolve(ImagePlane* image){
   fftw_free(f_kernel);
   
   // Normalize output
-  for(int i=0;i<Ni*Nj;i++){
-    image->img[i] /= (Ni*Nj);
+  for(int i=0;i<Nx*Ny;i++){
+    grid->z[i] /= (Nx*Ny);
   }
 }
 
-offsetPSF Instrument::offsetPSFtoPosition(double x,double y,ImagePlane* image){
-  int Ni_img   = image->Ni;
-  int Nj_img   = image->Nj;
-  double w_img = image->width;
-  double h_img = image->height;
-  int Ni_psf   = this->cropped_psf->Ni;
-  int Nj_psf   = this->cropped_psf->Nj;
+offsetPSF Instrument::offsetPSFtoPosition(double x,double y,RectGrid* grid){
+  int Nx_img   = grid->Nx;
+  int Ny_img   = grid->Ny;
+  double w_img = grid->width;
+  double h_img = grid->height;
+  int Nx_psf   = this->cropped_psf->Nx;
+  int Ny_psf   = this->cropped_psf->Ny;
   double w_psf = this->cropped_psf->width;
   double h_psf = this->cropped_psf->height;
 
-  double dx = w_img/Nj_img;
-  double dy = h_img/Ni_img;
+  double dx = grid->step_x;
+  double dy = grid->step_y;
 
   // Everything below is calculated in the reference frame centered on the multiple image position
   // The top left corner of the image
@@ -270,7 +270,7 @@ offsetPSF Instrument::offsetPSFtoPosition(double x,double y,ImagePlane* image){
     offset_img = 0;
     ii = static_cast<int>(floor( (y0 + h_psf - yz)/dy ));
     jj = static_cast<int>(floor( (xz - x0)/dx ));
-    offset_psf = ii*Nj_psf + jj;
+    offset_psf = ii*Nx_psf + jj;
     nj = static_cast<int>(floor( (x0 + w_psf - xz)/dx ));
     ni = static_cast<int>(floor( (yz - y0)/dy ));
   } else if( xz<x0 and yz>(y0+h_psf) ){
@@ -278,40 +278,40 @@ offsetPSF Instrument::offsetPSFtoPosition(double x,double y,ImagePlane* image){
     offset_psf = 0;
     ii = static_cast<int>(floor( (yz - (y0 + h_psf))/dy ));
     jj = static_cast<int>(floor( (x0 - xz)/dx ));
-    offset_img = ii*Nj_img + jj;
-    if( (jj+Nj_psf) > Nj_img ){
-      nj = Nj_img - jj;
+    offset_img = ii*Nx_img + jj;
+    if( (jj+Nx_psf) > Nx_img ){
+      nj = Nx_img - jj;
     } else {
-      nj = Nj_psf;
+      nj = Nx_psf;
     }
-    if( (ii+Ni_psf) > Ni_img ){
-      ni = Ni_img - ii;
+    if( (ii+Ny_psf) > Ny_img ){
+      ni = Ny_img - ii;
     } else {
-      ni = Ni_psf;
+      ni = Ny_psf;
     }
   } else if( x0<xz and xz<(x0+w_psf) and yz>(y0+h_psf) ){
     // case 3: a part of the PSF is outside the left side of the image
     ii = static_cast<int>(floor( (yz - (y0 + h_psf))/dy ));
     jj = static_cast<int>(floor( (xz - x0)/dx ));
     offset_psf = jj;
-    offset_img = ii*Nj_img;
-    nj = Nj_psf - jj;
-    if( (ii+Ni_psf) > Ni_img ){
-      ni = Ni_img - ii;
+    offset_img = ii*Nx_img;
+    nj = Nx_psf - jj;
+    if( (ii+Ny_psf) > Ny_img ){
+      ni = Ny_img - ii;
     } else {
-      ni = Ni_psf;
+      ni = Ny_psf;
     }
   } else if( xz<x0 and y0<yz and yz<(y0+h_psf) ){
     // case 4: a part of the PSF is outside the top side of the image
     ii = static_cast<int>(floor( ((y0 + h_psf) - yz)/dy ));
     jj = static_cast<int>(floor( (x0 - xz)/dx ));
     offset_img = jj;
-    offset_psf = ii*Nj_psf;
-    ni = Ni_psf - ii;
-    if( (jj+Nj_psf) > Nj_img ){
-      nj = Nj_img - jj;
+    offset_psf = ii*Nx_psf;
+    ni = Ny_psf - ii;
+    if( (jj+Nx_psf) > Nx_img ){
+      nj = Nx_img - jj;
     } else {
-      nj = Nj_psf;
+      nj = Nx_psf;
     }
   } else {
     // the PSF is outside the image (the multiple image is entirely outside the simulated field of view)
