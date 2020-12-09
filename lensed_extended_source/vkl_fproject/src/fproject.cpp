@@ -49,147 +49,49 @@ int main(int argc,char* argv[]){
   //================= END:PARSE INPUT =======================
 
 
-
-
   //=============== BEGIN:CREATE THE LENSES ====================
-  const Json::Value jlens = root["lenses"][0];
+  Json::Value jlens = root["lenses"][0];
 
-  // Initialize mass model physical parameters
-  CollectionMassModels* mycollection = new CollectionMassModels();
 
-  // Initialize main mass model
-  mycollection->models.resize(jlens["mass_model"].size());
+  // Initialize mass model collection
+  CollectionMassModels mass_collection = JsonParsers::parse_mass_model(jlens["mass_model"]);
+  
+  // Scale dpsi mass models if necessary
   for(int k=0;k<jlens["mass_model"].size();k++){
-    std::string mmodel = jlens["mass_model"][k]["type"].asString();
-
-    if( mmodel == "custom" ){
-
-      std::string filename = input + jlens["mass_model"][k]["pars"]["filename"].asString();
-      int dpsi_Ny = jlens["mass_model"][k]["pars"]["Ny"].asInt();
-      int dpsi_Nx = jlens["mass_model"][k]["pars"]["Nx"].asInt();
-      Pert* custom = new Pert(dpsi_Nx,dpsi_Ny,mysim.xmin,mysim.xmax,mysim.ymin,mysim.ymax,filename);
-
-      if( jlens["mass_model"][k]["pars"].isMember("scale_factor") ){
-	double scale_factor = jlens["mass_model"][k]["pars"]["scale_factor"].asDouble();
-	for(int m=0;m<custom->Sm;m++){
-	  custom->z[m] *= scale_factor;
-	}
-	custom->updateDerivatives();
+    if( jlens["mass_model"][k]["pars"].isMember("scale_factor") ){
+      double scale_factor = jlens["mass_model"][k]["pars"]["scale_factor"].asDouble();
+      Pert* pert = static_cast<Pert*> (mass_collection.models[k]);
+      for(int m=0;m<pert->Sm;m++){
+	pert->z[m] *= scale_factor;
       }
-      
-      mycollection->models[k] = custom;
-      
-    } else if ( mmodel == "eagle" ){
-      
-    } else {
-      
-      jmembers = jlens["mass_model"][k]["pars"].getMemberNames();
-      std::map<std::string,double> pars;
-      for(int i=0;i<jmembers.size();i++){
-	pars.insert( std::pair<std::string,double>(jmembers[i],jlens["mass_model"][k]["pars"][jmembers[i]].asDouble()) );
-      }
-      mycollection->models[k] = FactoryParametricMassModel::getInstance()->createParametricMassModel(mmodel,pars);
+      pert->updateDerivatives();
     }
   }
-
-  
-
-  //  for(int i=0;i<mycollection->models.size();i++){
-  //    mycollection->models[i]->printMassPars();
-  //  }
-  //  mycollection->printPhysPars();
   //================= END:CREATE THE LENSES ====================
 
 
-
-
-
-
   //=============== BEGIN:CREATE THE SOURCES =======================
-  const Json::Value jsource = root["source"]["light_profile"];
-  BaseProfile* mysource = NULL;
-
-  std::string smodel = jsource["type"].asString();
-  if( smodel == "analytic" ){
-
-    std::vector<std::string> names;
-    std::vector<std::map<std::string,double> > all_pars;
-    for(int i=0;i<jsource["pars"].size();i++){
-      std::string name = jsource["pars"][i]["type"].asString();
-      names.push_back(name);
-
-      std::map<std::string,double> pars;
-      const Json::Value::Members jpars = jsource["pars"][i].getMemberNames();
-      for(int j=0;j<jpars.size();j++){
-	if( jpars[j] != "type" ){
-	  pars[jpars[j]] = jsource["pars"][i][jpars[j]].asDouble();
-	}
-      }
-      all_pars.push_back(pars);
-    }
-    mysource = new Analytic(names,all_pars);
-
-  } else if( smodel == "delaunay" ){
-
-    std::string filename = jsource["pars"]["filename"].asString();
-    mysource = new myDelaunay(filename);
-
-  } else if( smodel == "custom" ){
-
-    std::string filename = input + jsource["pars"]["filename"].asString();
-    int Nx               = jsource["pars"]["Nx"].asInt();
-    int Ny               = jsource["pars"]["Ny"].asInt();
-    double xmin          = jsource["pars"]["xmin"].asDouble();
-    double xmax          = jsource["pars"]["xmax"].asDouble();
-    double ymin          = jsource["pars"]["ymin"].asDouble();
-    double ymax          = jsource["pars"]["ymax"].asDouble();
-    double Mtot          = jsource["pars"]["M_tot"].asDouble();
-    mysource = new Custom(filename,Nx,Ny,xmin,xmax,ymin,ymax,Mtot,"bilinear");
-    
-  } else {
-
-    std::cout << "Unknown source profile type" << std::endl;
-    return 1;
-
-  }
+  CollectionProfiles profile_collection = JsonParsers::parse_profile(root["source"]["light_profile"]);
   //================= END:CREATE THE SOURCES =======================
-
-
-
-
 
   
   //=============== BEGIN:PRODUCE IMAGE USING RAY-SHOOTING =======================
   double xdefl,ydefl;
   for(int i=0;i<mysim.Ny;i++){
     for(int j=0;j<mysim.Nx;j++){
-      mycollection->all_defl(mysim.center_x[j],mysim.center_y[i],xdefl,ydefl);
-      mysim.z[i*mysim.Nx+j] = mysource->value(xdefl,ydefl);
+      mass_collection.all_defl(mysim.center_x[j],mysim.center_y[i],xdefl,ydefl);
+      mysim.z[i*mysim.Nx+j] = profile_collection.all_values(xdefl,ydefl);
     }
   }
   //================= END:PRODUCE IMAGE USING RAY-SHOOTING =======================
-  
-  
-
-  
   
   
   //=============== BEGIN:OUTPUT =======================
   // Super-resolved lensed image
   FitsInterface::writeFits(mysim.Nx,mysim.Ny,mysim.z,output + "lensed_image_super.fits");
   // Super-resolved source image
-  mysource->outputProfile(output + "source_super.fits");
+  //mysource->outputProfile(output + "source_super.fits");
   //================= END:OUTPUT =======================
-
-
-
-
-
-
-  //=============== BEGIN:CLEAN UP =======================
-  delete(mycollection);
-  delete(mysource);
-  //================= END:CLEAN UP =======================
 
 
   return 0;

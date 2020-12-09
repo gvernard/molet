@@ -60,48 +60,20 @@ int main(int argc,char* argv[]){
   //=============== BEGIN:CREATE THE LENSES ====================
   const Json::Value jlens = root["lenses"][0];
 
-  // Initialize mass model physical parameters
-  CollectionMassModels* mycollection = new CollectionMassModels();
+  // Initialize mass model collection
+  CollectionMassModels mass_collection = JsonParsers::parse_mass_model(jlens["mass_model"]);
 
-  // Initialize main mass model
-  mycollection->models.resize(jlens["mass_model"].size());
+  // Scale dpsi mass models if necessary
   for(int k=0;k<jlens["mass_model"].size();k++){
-    std::string mmodel = jlens["mass_model"][k]["type"].asString();
-
-    if( mmodel == "custom" ){
-
-      std::string filename = input + jlens["mass_model"][k]["pars"]["filename"].asString();
-      int dpsi_Nx = jlens["mass_model"][k]["pars"]["Nx"].asInt();
-      int dpsi_Ny = jlens["mass_model"][k]["pars"]["Ny"].asInt();
-      Pert* custom = new Pert(dpsi_Nx,dpsi_Ny,xmin,xmax,ymin,ymax,filename);
-
-      if( jlens["mass_model"][k]["pars"].isMember("scale_factor") ){
-	double scale_factor = jlens["mass_model"][k]["pars"]["scale_factor"].asDouble();
-	for(int m=0;m<custom->Sm;m++){
-	  custom->z[m] *= scale_factor;
-	}
-	custom->updateDerivatives();
+    if( jlens["mass_model"][k]["pars"].isMember("scale_factor") ){
+      double scale_factor = jlens["mass_model"][k]["pars"]["scale_factor"].asDouble();
+      Pert* pert = static_cast<Pert*> (mass_collection.models[k]);
+      for(int m=0;m<pert->Sm;m++){
+	pert->z[m] *= scale_factor;
       }
-      
-      mycollection->models[k] = custom;
-      
-    } else if ( mmodel == "eagle" ){
-      
-    } else {
-      
-      jmembers = jlens["mass_model"][k]["pars"].getMemberNames();
-      std::map<std::string,double> pars;
-      for(int i=0;i<jmembers.size();i++){
-	pars.insert( std::pair<std::string,double>(jmembers[i],jlens["mass_model"][k]["pars"][jmembers[i]].asDouble()) );
-      }
-      mycollection->models[k] = FactoryParametricMassModel::getInstance()->createParametricMassModel(mmodel,pars);
+      pert->updateDerivatives();
     }
   }
-
-  //  for(int i=0;i<mycollection->models.size();i++){
-  //    mycollection->models[i]->printMassPars();
-  //  }
-  //  mycollection->printPhysPars();
   //================= END:CREATE THE LENSES ====================
 
 
@@ -116,7 +88,7 @@ int main(int argc,char* argv[]){
 
   for(int i=0;i<detA.Ny;i++){
     for(int j=0;j<detA.Nx;j++){
-      double mydet = mycollection->detJacobian(detA.center_x[j],detA.center_y[i]);
+      double mydet = mass_collection.detJacobian(detA.center_x[j],detA.center_y[i]);
       if( mydet > 0 ){
 	detA.z[i*detA.Nx+j] = 0;
       } else {
@@ -165,7 +137,7 @@ int main(int argc,char* argv[]){
   double xdefl,ydefl;
   for(int i=0;i<contours.size();i++){
     for(int j=0;j<contours[i]->x.size();j++){
-      mycollection->all_defl(contours[i]->x[j],contours[i]->y[j],xdefl,ydefl);
+      mass_collection.all_defl(contours[i]->x[j],contours[i]->y[j],xdefl,ydefl);
       caustics[i]->x[j] = xdefl;
       caustics[i]->y[j] = ydefl;
     }
@@ -261,7 +233,7 @@ int main(int argc,char* argv[]){
       
       for(int i=0;i<planes[p]->Ny;i++){
 	for(int j=0;j<planes[p]->Nx;j++){
-	  mycollection->all_defl(planes[p]->center_x[i],planes[p]->center_y[i],tmp_defl_x[i*planes[p]->Nx+j],tmp_defl_y[i*planes[p]->Nx+j]);
+	  mass_collection.all_defl(planes[p]->center_x[i],planes[p]->center_y[i],tmp_defl_x[i*planes[p]->Nx+j],tmp_defl_y[i*planes[p]->Nx+j]);
 	}
       }
       
@@ -369,12 +341,12 @@ int main(int argc,char* argv[]){
   for(int i=0;i<multipleImages.size();i++){
     double x = multipleImages[i]->x;
     double y = multipleImages[i]->y;
-    multipleImages[i]->k = mycollection->all_kappa(x,y);
+    multipleImages[i]->k = mass_collection.all_kappa(x,y);
     double gamma_mag,gamma_phi;
-    mycollection->all_gamma(x,y,gamma_mag,gamma_phi);
+    mass_collection.all_gamma(x,y,gamma_mag,gamma_phi);
     multipleImages[i]->g    = gamma_mag;
     multipleImages[i]->phig = gamma_phi/0.01745329251 - 90.0; // in degrees east-of-north;
-    multipleImages[i]->mag  = 1.0/mycollection->detJacobian(x,y);
+    multipleImages[i]->mag  = 1.0/mass_collection.detJacobian(x,y);
   }
     
   // Calculate time delays
@@ -382,7 +354,7 @@ int main(int argc,char* argv[]){
   for(int i=0;i<multipleImages.size();i++){
     double x = multipleImages[i]->x;
     double y = multipleImages[i]->y;
-    double psi_tot = mycollection->all_psi(x,y);
+    double psi_tot = mass_collection.all_psi(x,y);
     double time = 0.5*(pow(point_source.x-x,2) + pow(point_source.y-y,2)) - psi_tot;
     //double time = 0.5*(pow(point_source.x-x,2) + pow(point_source.y-y,2));
     delays[i] = time;
