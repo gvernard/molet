@@ -90,7 +90,7 @@ int main(int argc,char* argv[]){
   // Super-resolved lensed image
   FitsInterface::writeFits(mysim.Nx,mysim.Ny,mysim.z,output + "lensed_image_super.fits");
   // Super-resolved source image
-  //mysource->outputProfile(output + "source_super.fits");
+  profile_collection.write_all_profiles(output + "source_super.fits");
   //================= END:OUTPUT =======================
 
 

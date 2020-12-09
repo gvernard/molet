@@ -80,7 +80,7 @@ int main(int argc,char* argv[]){
     }
     delete(extended);
     delete(lens_light);
-    RectGrid* obs_base = base->embeddedNewGrid_integrate(res_x,res_y);
+    RectGrid* obs_base = base->embeddedNewGrid(res_x,res_y,"integrate");
     delete(base);
 
 
@@ -475,7 +475,7 @@ int main(int argc,char* argv[]){
 
 	      
 	      // Bin image from 'super' to observed resolution
-	      RectGrid* obs_img = pp_light.embeddedNewGrid_additive(res_x,res_y);
+	      RectGrid* obs_img = pp_light.embeddedNewGrid(res_x,res_y,"additive");
 
 	      
 	      // Adding time-dependent noise here
