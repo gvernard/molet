@@ -61,7 +61,7 @@ int main(int argc,char* argv[]){
   const Json::Value jlens = root["lenses"][0];
 
   // Initialize mass model collection
-  CollectionMassModels mass_collection = JsonParsers::parse_mass_model(jlens["mass_model"]);
+  CollectionMassModels mass_collection = JsonParsers::parse_mass_model(jlens["mass_model"],input);
 
   // Scale dpsi mass models if necessary
   for(int k=0;k<jlens["mass_model"].size();k++){

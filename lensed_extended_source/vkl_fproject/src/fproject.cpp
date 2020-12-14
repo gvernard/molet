@@ -1,4 +1,3 @@
-#include <iostream>
 #include <cstdlib>
 #include <fstream>
 #include <string>
@@ -52,9 +51,8 @@ int main(int argc,char* argv[]){
   //=============== BEGIN:CREATE THE LENSES ====================
   Json::Value jlens = root["lenses"][0];
 
-
   // Initialize mass model collection
-  CollectionMassModels mass_collection = JsonParsers::parse_mass_model(jlens["mass_model"]);
+  CollectionMassModels mass_collection = JsonParsers::parse_mass_model(jlens["mass_model"],input);
   
   // Scale dpsi mass models if necessary
   for(int k=0;k<jlens["mass_model"].size();k++){
@@ -71,10 +69,11 @@ int main(int argc,char* argv[]){
 
 
   //=============== BEGIN:CREATE THE SOURCES =======================
-  CollectionProfiles profile_collection = JsonParsers::parse_profile(root["source"]["light_profile"]);
+  CollectionProfiles profile_collection = JsonParsers::parse_profile(root["source"]["light_profile"],input);
   //================= END:CREATE THE SOURCES =======================
 
-  
+
+
   //=============== BEGIN:PRODUCE IMAGE USING RAY-SHOOTING =======================
   double xdefl,ydefl;
   for(int i=0;i<mysim.Ny;i++){
@@ -84,11 +83,15 @@ int main(int argc,char* argv[]){
     }
   }
   //================= END:PRODUCE IMAGE USING RAY-SHOOTING =======================
+
   
   
   //=============== BEGIN:OUTPUT =======================
   // Super-resolved lensed image
-  FitsInterface::writeFits(mysim.Nx,mysim.Ny,mysim.z,output + "lensed_image_super.fits");
+  std::vector<std::string> keys{"xmin","xmax","ymin","ymax"};
+  std::vector<std::string> values{std::to_string(mysim.xmin),std::to_string(mysim.xmax),std::to_string(mysim.ymin),std::to_string(mysim.ymax)};
+  std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
+  FitsInterface::writeFits(mysim.Nx,mysim.Ny,mysim.z,keys,values,descriptions,output + "lensed_image_super.fits");
   // Super-resolved source image
   profile_collection.write_all_profiles(output + "source_super.fits");
   //================= END:OUTPUT =======================

@@ -172,7 +172,7 @@ fi
 # Get light profile of the lens (and compact matter if required)
 ####################################################################################
 msg="Getting light profile of the lens..."
-cmd=$molet_home"lens_light_mass/vkl_llm/bin/llm "$infile" "$out_path
+cmd=$molet_home"lens_light_mass/vkl_llm/bin/llm "$infile" "$in_path" "$out_path
 myprocess "$msg" "$cmd" "$log_file"
 
 

@@ -26,7 +26,10 @@ int main(int argc,char* argv[]){
   fin >> root;
   fin.close();
 
-  std::string out_path = argv[2];
+  std::string in_path = argv[2];
+  std::string input   = in_path+"input_files/";
+
+  std::string out_path = argv[3];
   std::string output = out_path+"output/";
   
   // Read the cosmological parameters
@@ -58,7 +61,7 @@ int main(int argc,char* argv[]){
       all_lenses.append(root["lenses"][k]["light_profile"][m]);
     }
   }
-  CollectionProfiles light_collection = JsonParsers::parse_profile(all_lenses);
+  CollectionProfiles light_collection = JsonParsers::parse_profile(all_lenses,input);
 
   RectGrid mylight(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
   for(int i=0;i<mylight.Ny;i++){
