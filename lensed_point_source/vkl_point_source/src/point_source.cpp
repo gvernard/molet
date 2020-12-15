@@ -5,9 +5,7 @@
 
 #include "json/json.h"
 
-#include "contour-tracing.hpp"
 #include "polygons.hpp"
-#include "simplify_caustics.hpp"
 #include "pointImage.hpp"
 
 #include "vkllib.hpp"
@@ -77,133 +75,8 @@ int main(int argc,char* argv[]){
   //================= END:CREATE THE LENSES ====================
 
 
+
   std::cout << "B" << std::endl;  
-  
-  
-
-  //=============== BEGIN:GET CRITICAL LINES AND CAUSTICS =======================
-  int super_res_x = 10*( static_cast<int>(ceil((xmax-xmin)/res)) );
-  int super_res_y = 10*( static_cast<int>(ceil((ymax-ymin)/res)) );
-  RectGrid detA(super_res_x,super_res_y,xmin,xmax,xmin,xmax);
-
-  for(int i=0;i<detA.Ny;i++){
-    for(int j=0;j<detA.Nx;j++){
-      double mydet = mass_collection.detJacobian(detA.center_x[j],detA.center_y[i]);
-      if( mydet > 0 ){
-	detA.z[i*detA.Nx+j] = 0;
-      } else {
-	detA.z[i*detA.Nx+j] = 1;
-      }
-    }
-  }
-
-  // Get detA contours on the image plane
-  std::vector<Contour*> contours;
-  mooreNeighborTracing(&detA,contours);
-
-  /*
-  // Remove every second point from the contours to make them smoother
-  for(int i=0;i<contours.size();i++){
-    bool toggle = false;
-    std::vector<double> used;
-    std::vector<double> unused;
-    used.resize(0);
-    unused.resize(0);
-    std::partition_copy(contours[i]->x.begin(),contours[i]->x.end(),std::back_inserter(used),std::back_inserter(unused),[&toggle](int) { return toggle = !toggle; });
-    contours[i]->x.swap(used);
-    used.resize(0);
-    unused.resize(0);
-    std::partition_copy(contours[i]->y.begin(),contours[i]->y.end(),std::back_inserter(used),std::back_inserter(unused),[&toggle](int) { return toggle = !toggle; });
-    contours[i]->y.swap(used);
-  }
-  */
-  
-  // Add first point as last and close the polygon
-  for(int i=0;i<contours.size();i++){
-    contours[i]->x.push_back( contours[i]->x[0] );
-    contours[i]->y.push_back( contours[i]->y[0] );
-  }
-
-  // Create caustic contours, but don't fill them yet
-  std::vector<Contour*> caustics(contours.size());
-  for(int i=0;i<contours.size();i++){
-    Contour* mycontour = new Contour();
-    mycontour->x.resize(contours[i]->x.size());
-    mycontour->y.resize(contours[i]->y.size());
-    caustics[i] = mycontour;
-  } 
-
-  // Deflect the contours to create the caustics
-  double xdefl,ydefl;
-  for(int i=0;i<contours.size();i++){
-    for(int j=0;j<contours[i]->x.size();j++){
-      mass_collection.all_defl(contours[i]->x[j],contours[i]->y[j],xdefl,ydefl);
-      caustics[i]->x[j] = xdefl;
-      caustics[i]->y[j] = ydefl;
-    }
-  }
-
-  /*
-  // Simplify the caustics (purely for visual purposes)
-  std::vector<Contour*> simplified(contours.size());
-  for(int i=0;i<simplified.size();i++){
-    Contour* mycontour = new Contour();
-    simplified[i] = mycontour;
-  }
-  simplifyPolygon(caustics,simplified);
-
-  Json::Value json_simple;
-  for(int i=0;i<simplified.size();i++){
-    Json::Value simp_x;
-    Json::Value simp_y;
-    for(int j=0;j<simplified[i]->x.size();j++){
-      simp_x.append(simplified[i]->x[j]);
-      simp_y.append(simplified[i]->y[j]);
-    }
-    Json::Value simple;
-    simple["x"] = simp_x;
-    simple["y"] = simp_y;
-    json_simple.append(simple);
-  }
-  for(int i=0;i<simplified.size();i++){
-    delete(simplified[i]);
-  }
-  */
-  
-  // Create the json output object
-  Json::Value json_caustics;
-  Json::Value json_criticals;
-  for(int i=0;i<contours.size();i++){
-    Json::Value crit_x;
-    Json::Value crit_y;
-    Json::Value cau_x;
-    Json::Value cau_y;
-    for(int j=0;j<contours[i]->x.size();j++){
-      crit_x.append(contours[i]->x[j]);
-      crit_y.append(contours[i]->y[j]);
-      cau_x.append(caustics[i]->x[j]);
-      cau_y.append(caustics[i]->y[j]);
-    }
-
-    Json::Value caustic;
-    caustic["x"] = cau_x;
-    caustic["y"] = cau_y;
-    json_caustics.append(caustic);
-    Json::Value critical;
-    critical["x"] = crit_x;
-    critical["y"] = crit_y;
-    json_criticals.append(critical);
-  }
-  
-  for(int i=0;i<contours.size();i++){
-    delete(contours[i]);
-    delete(caustics[i]);
-  }
-  //================= END:GET CRITICAL LINES AND CAUSTICS =======================
-  
-
-
-  std::cout << "C" << std::endl;  
 
 
 
@@ -333,7 +206,7 @@ int main(int argc,char* argv[]){
 
 
 
-  std::cout << "D" << std::endl;  
+  std::cout << "C" << std::endl;  
 
   
   
@@ -375,26 +248,10 @@ int main(int argc,char* argv[]){
   //================= END:CORRESPONDING KAPPA, GAMMA, AND TIME DELAY =======================
 
 
-  std::cout << "E" << std::endl;  
+  std::cout << "D" << std::endl;  
 
 
   //=============== BEGIN:OUTPUT =======================
-  // Image plane magnification (0:positive, 1:negative)
-  FitsInterface::writeFits(detA.Nx,detA.Ny,detA.z,output + "detA.fits");
-
-  // Caustics
-  std::ofstream file_caustics(output+"caustics.json");
-  file_caustics << json_caustics;
-  file_caustics.close();
-  //std::ofstream file_caustics(output+"caustics.json");
-  //file_caustics << json_simple;
-  //file_caustics.close();
-
-  // Critical curves
-  std::ofstream file_criticals(output+"criticals.json");
-  file_criticals << json_criticals;
-  file_criticals.close();
-
   // Multiple images
   Json::Value json_images;
   for(int i=0;i<multipleImages.size();i++){
@@ -420,7 +277,7 @@ int main(int argc,char* argv[]){
   }
   //================= END:OUTPUT =======================
 
-  std::cout << "F" << std::endl;  
+  std::cout << "E" << std::endl;  
   
   
   return 0;

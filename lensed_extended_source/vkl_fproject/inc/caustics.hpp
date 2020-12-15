@@ -1,12 +1,11 @@
-#ifndef CONTOURTRACING_HPP
-#define CONTOURTRACING_HPP
+#ifndef CAUSTICS_HPP
+#define CAUSTICS_HPP
 
 #include <cstdlib>
 #include <string>
 #include <vector>
 
 class RectGrid;
-class point;
 
 class Contour {
 public:
@@ -14,10 +13,13 @@ public:
   std::vector<double> y;
 
   Contour(){};
+  Contour(const Contour& other);
   ~Contour(){};
 };
 
-void mooreNeighborTracing(RectGrid* image,std::vector<Contour*>& contours);
+void outputContours(std::vector<Contour> contours,std::string filepath);
+std::vector<Contour> mooreNeighborTracing(RectGrid* image);
 void padImage(RectGrid* image,RectGrid* paddedImage,double paddingColor);
 
-#endif /* CONTOURTRACING_HPP */
+
+#endif /* CAUSTICS_HPP */

@@ -1,29 +1,58 @@
-//=========================================================================================================
-/**
- * This algorithm is called Moore Neighbor Tracing
- * An explanation of the algorithm can be found here:
- * http://www.thebigblob.com/moore-neighbor-tracing-algorithm-in-c/
- * http://www.imageprocessingplace.com/downloads_V3/root_downloads/tutorials/contour_tracing_Abeer_George_Ghuneim/moore.html
- *
- * @author Erik Smistad <smistad@idi.ntnu.no>
- */
-#include <iostream>
+#include <fstream>
 #include <cstdlib>
 #include <string>
 #include <vector>
 
-#include "polygons.hpp"
-#include "contour-tracing.hpp"
+#include "json/json.h"
+
+#include "caustics.hpp"
 #include "vkllib.hpp"
 
-void mooreNeighborTracing(RectGrid* image,std::vector<Contour*>& contours){
+Contour::Contour(const Contour& other){
+  this->x = other.x;
+  this->y = other.y;
+}
+
+void outputContours(std::vector<Contour> contours,std::string filepath){
+  // Create the json output object
+  Json::Value json_contours;
+  for(int i=0;i<contours.size();i++){
+    Json::Value con_x;
+    Json::Value con_y;
+    for(int j=0;j<contours[i].x.size();j++){
+      con_x.append(contours[i].x[j]);
+      con_y.append(contours[i].y[j]);
+    }
+
+    Json::Value contour;
+    contour["x"] = con_x;
+    contour["y"] = con_y;
+    json_contours.append(contour);
+  }
+  
+  std::ofstream file_contours(filepath);
+  file_contours << json_contours;
+  file_contours.close();
+}
+
+std::vector<Contour> mooreNeighborTracing(RectGrid* image){
+  /*
+   * This algorithm is called Moore Neighbor Tracing
+   * An explanation of the algorithm can be found here:
+   * http://www.thebigblob.com/moore-neighbor-tracing-algorithm-in-c/
+   * http://www.imageprocessingplace.com/downloads_V3/root_downloads/tutorials/contour_tracing_Abeer_George_Ghuneim/moore.html
+   *
+   * @author Erik Smistad <smistad@idi.ntnu.no>
+   */
+  std::vector<Contour> contours;
+
   const double EMPTY = 0;
   const double FILLED = 1;
 
   bool inside = false;
   int pos = 0;
   int Nx  = image->Nx;
-  int Ny = image->Ny;
+  int Ny  = image->Ny;
   
   // Need to start by padding the image by 1 pixel
   RectGrid paddedImage(Nx+2,Ny+2,image->xmin-image->step_x,image->xmax+image->step_x,image->ymin-image->step_y,image->ymax+image->step_y);
@@ -31,18 +60,18 @@ void mooreNeighborTracing(RectGrid* image,std::vector<Contour*>& contours){
   
   // Allocate a new image as a 1D array
   RectGrid borderImage = paddedImage;
-
   
   // Set entire image to EMPTY
   for(int y=0;y<(Ny+2);y++){
     for(int x=0;x<(Nx+2);x++){
-      borderImage.z[x + y*(Nx+2)] = EMPTY;
+      borderImage.z[y*(Nx+2) + x] = EMPTY;
     }
   }
 
   for(int y=0;y<(Ny+2);y++){
     for(int x=0;x<(Nx+2);x++){
-      pos = x + y*(Nx+2);
+      pos = y*(Nx+2) + x;
+      //std::cout << pos << std::endl;
       
       // Scan for FILLED pixel
       if( borderImage.z[pos] == FILLED && !inside ){	      // Entering an already discovered border
@@ -55,6 +84,8 @@ void mooreNeighborTracing(RectGrid* image,std::vector<Contour*>& contours){
 	borderImage.z[pos] = FILLED; // Mark the start pixel
 	int checkLocationNr = 1;	// The neighbor number of the location we want to check for a new border point
 	int checkPosition;		// The corresponding absolute array address of checkLocationNr
+	int checkPosition_x;		
+	int checkPosition_y;		
 	int newCheckLocationNr; 	// Variable that holds the neighborhood position we want to check if we find a new border at checkLocationNr
 	int startPos = pos;		// Set start position
 	int counter = 0; 		// Counter is used for the jacobi stop criterion
@@ -73,14 +104,16 @@ void mooreNeighborTracing(RectGrid* image,std::vector<Contour*>& contours){
 	  {1+Nx,5}
 	};
 	// Trace around the neighborhood
-	Contour* mycontour = new Contour();
+	Contour mycontour;
 	while( true ){
-	  checkPosition = pos + neighborhood[checkLocationNr-1][0];
+	  checkPosition   = pos + neighborhood[checkLocationNr-1][0];
+	  checkPosition_x = (int) pos % (Nx+2); 
+	  checkPosition_y = (int) pos/(Nx+2); 
 	  newCheckLocationNr = neighborhood[checkLocationNr-1][1];
 	  
 	  if( paddedImage.z[checkPosition] == FILLED ){ // Next border point found
 	    if( checkPosition == startPos ){
-	      counter ++;
+	      counter++;
 	      
 	      // Stopping criterion (jacob)
 	      if( newCheckLocationNr == 1 || counter >= 3 ){
@@ -94,8 +127,8 @@ void mooreNeighborTracing(RectGrid* image,std::vector<Contour*>& contours){
 	    pos = checkPosition;
 	    counter2 = 0; 			       // Reset the counter that keeps track of how many neighbors we have visited
 	    borderImage.z[checkPosition] = FILLED;   // Set the border pixel
-	    mycontour->x.push_back( borderImage.center_x[checkPosition] );
-	    mycontour->y.push_back( borderImage.center_y[checkPosition] );
+	    mycontour.x.push_back( borderImage.center_x[checkPosition_x] );
+	    mycontour.y.push_back( borderImage.center_y[checkPosition_y] );
 	  } else {
 	    // Rotate clockwise in the neighborhood
 	    checkLocationNr = 1 + (checkLocationNr % 8);
@@ -113,7 +146,7 @@ void mooreNeighborTracing(RectGrid* image,std::vector<Contour*>& contours){
       }
     }
   }
-
+  return contours;
 }
 
 /**
@@ -131,5 +164,3 @@ void padImage(RectGrid* image,RectGrid* paddedImage,double paddingColor){
     }
   }
 }
-//=========================================================================================================
-

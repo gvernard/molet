@@ -20,7 +20,7 @@ $(shell mkdir -p $(BIN_DIR))
 
 
 HEADERS = $(shell find $(INC_DIR) -type f -name '*.hpp')
-OBJ  = polygons.o   contour-tracing.o   simplify_caustics.o   point_source.o
+OBJ  = polygons.o   point_source.o
 FULL_OBJ  = $(patsubst %,$(OBJ_DIR)/%,$(OBJ))  #Pad names with dir
 #$(info $$OBJ is [${FULL_DEPS}])
 
