@@ -30,19 +30,18 @@ int main(int argc,char* argv[]){
   fin >> root;
   fin.close();
 
-  std::string in_path = argv[2];
+  std::string in_path = argv[1];
   std::string input   = in_path+"input_files/";
 
-  std::string out_path = argv[3];
+  std::string out_path = argv[2];
   std::string output = out_path+"output/";
-  
+
   // Read the cosmological parameters
   Json::Value cosmo;
   fin.open(output+"angular_diameter_distances.json",std::ifstream::in);
   fin >> cosmo;
   fin.close();
 
-  
   // Initialize image plane
   double xmin  = root["instruments"][0]["field-of-view_xmin"].asDouble();
   double xmax  = root["instruments"][0]["field-of-view_xmax"].asDouble();
@@ -52,7 +51,7 @@ int main(int argc,char* argv[]){
   //================= END:PARSE INPUT =======================
 
 
-  std::cout << "A" << std::endl;  
+
 
 
   //=============== BEGIN:CREATE THE LENSES ====================
@@ -76,8 +75,6 @@ int main(int argc,char* argv[]){
 
 
 
-  std::cout << "B" << std::endl;  
-
 
 
 
@@ -86,14 +83,14 @@ int main(int argc,char* argv[]){
 
   // Create and deflect image plane
   std::vector<RectGrid*> planes;
-  RectGrid* img = new RectGrid(10,10,xmin,xmax,xmin,xmax);
+  RectGrid* img = new RectGrid(10,10,xmin,xmax,ymin,ymax);
   planes.push_back(img);
   std::vector<double> xc;
   std::vector<double> yc;
   std::vector<double> rc;
   double final_scale = res/100.0;
   bool condition = true;
-    
+
   while( condition ){
     std::vector<double> xc_tmp;
     std::vector<double> yc_tmp;
@@ -106,7 +103,7 @@ int main(int argc,char* argv[]){
       
       for(int i=0;i<planes[p]->Ny;i++){
 	for(int j=0;j<planes[p]->Nx;j++){
-	  mass_collection.all_defl(planes[p]->center_x[i],planes[p]->center_y[i],tmp_defl_x[i*planes[p]->Nx+j],tmp_defl_y[i*planes[p]->Nx+j]);
+	  mass_collection.all_defl(planes[p]->center_x[j],planes[p]->center_y[i],tmp_defl_x[i*planes[p]->Nx+j],tmp_defl_y[i*planes[p]->Nx+j]);
 	}
       }
       
@@ -115,13 +112,16 @@ int main(int argc,char* argv[]){
       
       // Find which deflected triangles contain the point source
       std::vector<int> match;
-      for(int i=0;i<triangles.size();i++){
-	point p1 = {tmp_defl_x[triangles[i].ia],tmp_defl_y[triangles[i].ia]};
-	point p2 = {tmp_defl_x[triangles[i].ib],tmp_defl_y[triangles[i].ib]};
-	point p3 = {tmp_defl_x[triangles[i].ic],tmp_defl_y[triangles[i].ic]};
+      for(int k=0;k<triangles.size();k++){
+	int indA = triangles[k].ya*planes[p]->Nx+triangles[k].xa;
+	int indB = triangles[k].yb*planes[p]->Nx+triangles[k].xb;
+	int indC = triangles[k].yc*planes[p]->Nx+triangles[k].xc;
+	point p1 = {tmp_defl_x[indA],tmp_defl_y[indA]};
+	point p2 = {tmp_defl_x[indB],tmp_defl_y[indB]};
+	point p3 = {tmp_defl_x[indC],tmp_defl_y[indC]};
 	
 	if( pointInTriangle(point_source,p1,p2,p3) ){
-	  match.push_back(i);
+	  match.push_back(k);
 	}
       }
       free(tmp_defl_x);
@@ -130,9 +130,9 @@ int main(int argc,char* argv[]){
       // Get the center and radius of the circumcircle of each image triangle
       double xdum,ydum,rdum;
       for(int i=0;i<match.size();i++){
-	point A = {planes[p]->center_x[triangles[match[i]].ia],planes[p]->center_y[triangles[match[i]].ia]};
-	point B = {planes[p]->center_x[triangles[match[i]].ib],planes[p]->center_y[triangles[match[i]].ib]};
-	point C = {planes[p]->center_x[triangles[match[i]].ic],planes[p]->center_y[triangles[match[i]].ic]};
+	point A = {planes[p]->center_x[triangles[match[i]].xa],planes[p]->center_y[triangles[match[i]].ya]};
+	point B = {planes[p]->center_x[triangles[match[i]].xb],planes[p]->center_y[triangles[match[i]].yb]};
+	point C = {planes[p]->center_x[triangles[match[i]].xc],planes[p]->center_y[triangles[match[i]].yc]};
 	circumcircle(A,B,C,xdum,ydum,rdum);
 	xc_tmp.push_back(xdum);
 	yc_tmp.push_back(ydum);
@@ -160,7 +160,7 @@ int main(int argc,char* argv[]){
 	RectGrid* img = new RectGrid(10,10,xc_tmp[p]-rc_tmp[p],xc_tmp[p]+rc_tmp[p],yc_tmp[p]-rc_tmp[p],yc_tmp[p]+rc_tmp[p]);
 	planes[p] = img;
       }
-      //      std::cout << "Zooming in... (planes " << planes.size() << ")" <<  std::endl;
+      //std::cout << "Zooming in... (planes " << planes.size() << ")" <<  std::endl;
     } else {
       // Exit loop and write multiple image positions
       copy(xc_tmp.begin(),xc_tmp.end(),back_inserter(xc)); 
@@ -173,8 +173,7 @@ int main(int argc,char* argv[]){
     }   
 
   }
-
-
+  
   // Filter images by location
   std::vector<double> xc_final;
   std::vector<double> yc_final;
@@ -206,7 +205,6 @@ int main(int argc,char* argv[]){
 
 
 
-  std::cout << "C" << std::endl;  
 
   
   
@@ -248,7 +246,7 @@ int main(int argc,char* argv[]){
   //================= END:CORRESPONDING KAPPA, GAMMA, AND TIME DELAY =======================
 
 
-  std::cout << "D" << std::endl;  
+
 
 
   //=============== BEGIN:OUTPUT =======================
@@ -277,7 +275,7 @@ int main(int argc,char* argv[]){
   }
   //================= END:OUTPUT =======================
 
-  std::cout << "E" << std::endl;  
+
   
   
   return 0;

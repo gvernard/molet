@@ -131,8 +131,6 @@ int main(int argc,char* argv[]){
 	}
       }
 
-      
-
       // Get observed time vector
       std::vector<double> tobs;
       for(int t=0;t<instrument["time"].size();t++){
@@ -155,7 +153,6 @@ int main(int argc,char* argv[]){
 	printf("Increase the observing time period!!!\n");
 	return 1;
       }
-
 
       // Read intrinsic light curve(s) from JSON
       Json::Value intrinsic_lc;
@@ -190,7 +187,6 @@ int main(int argc,char* argv[]){
 	  printf("Observing period is truncated to %f days!!!\n",tobs_tmax);
 	}
       }
-
 
       // Check for unmicrolensed variability and read unmicrolensed light curves from JSON
       bool unmicro = false;
@@ -235,8 +231,6 @@ int main(int argc,char* argv[]){
 	}
       }
       
-
-      
       // Read extrinsic light curve(s) from JSON
       Json::Value extrinsic_lc;
       if( root["point_source"]["variability"]["extrinsic"]["type"].asString() == "custom" ){
@@ -253,7 +247,7 @@ int main(int argc,char* argv[]){
 	  break;
 	}
       }
-      
+
       // Process the extrinsic light curves
       std::vector< std::vector<LightCurve*> > LC_extrinsic(images.size());
       for(int q=0;q<images.size();q++){
@@ -272,8 +266,6 @@ int main(int argc,char* argv[]){
 	  }
 	}
       }
-
-
 
       
       // Configure the PSF for the point source
@@ -308,8 +300,6 @@ int main(int argc,char* argv[]){
       }
       
       
-      
-      
       // Loop over intrinsic light curves
       //0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=
       for(int lc_in=0;lc_in<N_in;lc_in++){
@@ -322,7 +312,6 @@ int main(int argc,char* argv[]){
 	  sprintf(buffer,"mock_%04d_%04d",lc_in,lc_ex);
 	  std::string mock = buffer;
 	  //std::cout << mock << std::endl;
-
 
 	  // *********************** Product: Observed continuous light curves ***********************
 	  std::vector<LightCurve*> cont_LC(images.size());
@@ -386,7 +375,7 @@ int main(int argc,char* argv[]){
 	  for(int q=0;q<images.size();q++){
 	    samp_LC[q] = new LightCurve(tobs);
 	  }
-
+	  
 	  // Calculate the combined light curve for each image
 	  for(int q=0;q<images.size();q++){
 	    double macro_mag = abs(images[q]["mag"].asDouble());
@@ -432,9 +421,6 @@ int main(int argc,char* argv[]){
 	  // *********************** End of product **************************************************
 
 
-
-
-
 	  
 	  
 	  // *********************** Product: Observed sampled cut-outs (images) *****************************
@@ -448,11 +434,18 @@ int main(int argc,char* argv[]){
 		  for(int j=0;j<PSFoffsets[q].nj;j++){
 		    int index_img = PSFoffsets[q].offset_image + i*pp_light.Nx + j;
 		    int index_psf = PSFoffsets[q].offset_cropped + i*Instrument_list[q]->cropped_psf->Nx + j;
-		    //pp_light.img[index_img] += 1.0;
+		    //pp_light.z[index_img] += 1.0;
 		    pp_light.z[index_img] += samp_LC[q]->signal[t]*Instrument_list[q]->cropped_psf->z[index_psf]/psf_partial_sum[q];
 		  }
 		}
 	      }
+
+	      /*
+	      char buffer[4];
+	      sprintf(buffer,"%03d",t);
+	      std::string timestep = buffer;
+	      FitsInterface::writeFits(pp_light.Nx,pp_light.Ny,pp_light.z,out_path+mock+"/OBS_"+instrument_name+"_"+timestep+".fits");
+	      */
 	      
 	      // Check the expected brightness of the multiple images vs the image
 
@@ -473,14 +466,12 @@ int main(int argc,char* argv[]){
 	      //std::string timesteep = baf;
 	      //pp_light.writeImage(out_path+mock+"/PS_"+instrument_name+"_"+timesteep+".fits");
 
-	      
+
 	      // Bin image from 'super' to observed resolution
 	      RectGrid* obs_img = pp_light.embeddedNewGrid(res_x,res_y,"additive");
-
 	      
 	      // Adding time-dependent noise here
 	      mycam.noise->addNoise(obs_img);
-	      
 	      
 	      // Finalize output (e.g convert to magnitudes) and write
 	      if( cut_out_scale == "mag" ){
@@ -488,11 +479,12 @@ int main(int argc,char* argv[]){
 		  obs_img->z[i] = -2.5*log10(obs_img->z[i]);
 		}
 	      }
-	      char buf[4];
-	      sprintf(buf,"%03d",t);
-	      std::string timestep = buf;
+	      char buffer[4];
+	      sprintf(buffer,"%03d",t);
+	      std::string timestep = buffer;
 	      FitsInterface::writeFits(obs_img->Nx,obs_img->Ny,obs_img->z,out_path+mock+"/OBS_"+instrument_name+"_"+timestep+".fits");
 	      delete(obs_img);
+
 	    }
 	  }
 	  // *********************** End of product **************************************************	    
@@ -501,7 +493,7 @@ int main(int argc,char* argv[]){
 	  for(int q=0;q<images.size();q++){
 	    delete(samp_LC[q]);
 	  }
-	  
+
 	  //std::cout << "done" << std::endl;
 	}
 	// Loop over extrinsic light curves ends here
@@ -510,6 +502,7 @@ int main(int argc,char* argv[]){
       // Loop over intrinsic light curves ends here
       //0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=
 
+      
       for(int lc_in=0;lc_in<N_in;lc_in++){
 	delete(LC_intrinsic[lc_in]);
       }

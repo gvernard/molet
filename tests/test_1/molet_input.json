@@ -15,25 +15,26 @@
 		{
 		    "type": "sie",
 		    "pars": {
-			"sigma": 250.0,
+			"b": 1.1,
 			"q": 0.8,
 			"pa": -145.0,
 			"x0": 0.0,
 			"y0": 0.0
 		    }
+		},
+		{
+		    "type": "external_shear",
+		    "pars": {
+			"g": 0.032,
+			"phi": -40.0
+		    }
 		}
             ],
 
-	    "external_shear": {
-		"g": 0.032,
-		"phi": -40.0
-            },
-
-	    "light_profile": {
-		"type": "analytic",
-		"pars": [
-		    {
-			"type": "sersic",
+	    "light_profile": [
+		{
+		    "type": "sersic",
+		    "pars": {
 			"x0": 0.0,
 			"y0": 0.0,
 			"pa": -145.0,
@@ -42,14 +43,13 @@
 			"r_eff": 1.0,
 			"n": 4
 		    }
-		]
-	    },
+		}
+	    ],
 
-	    "compact_mass_model": {
-		"type": "analytic",
-		"pars": [
-		    {
-			"type": "sersic",
+	    "compact_mass_model": [
+		{
+		    "type": "sersic",
+		    "pars": {
 			"x0": 0.0,
 			"y0": 0.0,
 			"pa": -145.0,
@@ -58,11 +58,10 @@
 			"r_eff": 1.0,
 			"n": 4
 		    }
-		]
-	    }
-	    
+		}
+	    ]
+
 	}
-	
     ],
 
 
@@ -70,20 +69,21 @@
     "source": {
 	"redshift": 2.03,
 
-	"light_profile": {
-	    "type": "analytic",
-	    "pars": [
-		{
-		    "type": "gauss",
+	"light_profile": [
+	    {
+		"type": "gauss",
+		"pars": {
 		    "x0": -0.05,
 		    "y0": 0.05,
 		    "pa": 23.0,
 		    "q": 0.64,
 		    "M_tot": 22.0,
 		    "r_eff": 0.06
-		},
-		{
-		    "type": "gauss",
+		}
+	    },
+	    {
+		"type": "gauss",
+		"pars": {
 		    "x0": -0.2,
 		    "y0": 0.125,
 		    "pa": 0.0,
@@ -91,34 +91,37 @@
 		    "M_tot": 22.0,
 		    "r_eff": 0.08
 		}
-	    ]
-	}
+	    }
+	]
     },
-    
+
 
 
     "point_source": {
-	"x0": -0.05,
-	"y0": 0.05,
-	"variability": {
-	    "intrinsic": {
-		"type": "custom"
-	    },
-	    "extrinsic": {
-		"type": "custom"
-	    },
-	    "unmicro": {
-		"type": "custom"
-	    }
-	}
+    	"x0": -0.05,
+    	"y0": 0.05,
+    	"output_cutouts": false,
+    	"variability": {
+    	    "intrinsic": {
+    		"type": "custom"
+    	    },
+    	    "extrinsic": {
+    		"type": "custom"
+    	    },
+    	    "unmicro": {
+    		"type": "custom"
+    	    }
+    	}
     },
     
     
     "instruments": [
 	{
 	    "name": "test_CAM",
-	    "field-of-view_x": 3.5,
-	    "field-of-view_y": 3.5,
+	    "field-of-view_xmin": -1.75,
+	    "field-of-view_xmax": 1.75,
+	    "field-of-view_ymin": -1.75,
+	    "field-of-view_ymax": 1.75,
 	    "noise":{
 		"type": "UniformGaussian",
 		"sn": 50

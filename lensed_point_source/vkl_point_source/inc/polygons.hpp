@@ -18,9 +18,12 @@ struct triangle {
 };
 
 struct itriangle {
-  int ia;
-  int ib;
-  int ic;
+  int xa;
+  int xb;
+  int xc;
+  int ya;
+  int yb;
+  int yc;
 };
 
 

@@ -38,14 +38,20 @@ std::vector<itriangle> imagePlaneToTriangleIndices(RectGrid* image){
   for(int i=0;i<image->Ny-1;i++){
     for(int j=0;j<image->Nx-1;j++){
       itriangle tri;
-      tri.ia = i*image->Nx+j;
-      tri.ib = i*image->Nx+j+1;
-      tri.ic = (i+1)*image->Nx+j+1;
+      tri.xa = j;
+      tri.ya = i;
+      tri.xb = j;
+      tri.yb = i+1;
+      tri.xc = j+1;
+      tri.yc = i;
       itriangles.push_back(tri);
 
-      tri.ia = i*image->Nx+j;
-      tri.ib = (i+1)*image->Nx+j+1;
-      tri.ic = (i+1)*image->Nx+j;
+      tri.xa = j+1;
+      tri.ya = i+1;
+      tri.xb = j;
+      tri.yb = i+1;
+      tri.xc = j+1;
+      tri.yc = i;
       itriangles.push_back(tri);
     }
   }
