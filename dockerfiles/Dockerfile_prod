@@ -1,4 +1,4 @@
-FROM gvernard/molet:development AS dev
+FROM molet:development AS dev
 FROM gcc:7.5
 
 ARG LIBDIR=/home/libraries
