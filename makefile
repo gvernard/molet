@@ -1,3 +1,6 @@
+.DEFAULT_GOAL := all
+
+
 # LIBRARY: VKL_INSTRUMENTS
 #======================================================
 mkfile_path := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
