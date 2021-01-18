@@ -9,6 +9,8 @@
 
 #include "gerlumph.hpp"
 #include "auxiliary_functions.hpp"
+#include "instruments.hpp"
+#include "noise.hpp"
 
 int main(int argc,char* argv[]){
 
@@ -21,7 +23,6 @@ int main(int argc,char* argv[]){
   
   //=============== BEGIN:INITIALIZE =======================
   std::ifstream fin;
-  Json::Value::Members jmembers;
   
   // Read the main parameters
   Json::Value root;
@@ -107,6 +108,28 @@ int main(int argc,char* argv[]){
 
   // Create light curve collection
   LightCurveCollection mother(Nlc);
+
+  // Get rest wavelength at the middle of each instrument's range
+  std::vector<double> lrest(Nfilters);
+  for(int k=0;k<Nfilters;k++){
+    Instrument mycam(root["instruments"][k]["name"].asString(),root["instruments"][k]["noise"]);
+    double lobs  = (mycam.lambda_min + mycam.lambda_max)/2.0;
+    lrest[k] = lobs/(1.0+zs);
+  }
+  
+  // Create profile parameter maps
+  Json::Value::Members json_members = root["point_source"]["variability"]["extrinsic"]["profiles"].getMemberNames();
+  std::map<std::string,std::string> main_map; // size should be json_members.size()+2
+  for(int k=0;k<json_members.size();k++){
+    main_map.insert( std::pair<std::string,std::string>(json_members[k],root["point_source"]["variability"]["extrinsic"]["profiles"][json_members[k]].asString()) );
+  }
+  main_map.insert( std::pair<std::string,std::string>("pixSizePhys","") );
+  main_map.insert( std::pair<std::string,std::string>("lrest","") );
+  std::vector< std::map<std::string,std::string> > profile_parameter_map(Nfilters);
+  for(int k=0;k<Nfilters;k++){
+    main_map["lrest"] = std::to_string(lrest[k]);
+    profile_parameter_map[k] = main_map;
+  }
   //================= END:INITIALIZE =======================
 
 
@@ -132,12 +155,12 @@ int main(int argc,char* argv[]){
     } else {
       MagnificationMap map(maps[m]["id"].asString(),Rein);
       map_res = map.Nx;
-      
+
+      // Read profiles. Has to be done separately for each map because of the possibly different map.pixSizePhys
       std::vector<BaseProfile*> profiles(Nfilters);
       for(int k=0;k<Nfilters;k++){
-	Json::Value json_profile = root["point_source"]["variability"]["extrinsic"]["profiles"][k];
-	BaseProfile* profile = createProfileFromJson(json_profile,map.pixSizePhys);
-	profiles[k] = profile;
+	profile_parameter_map[k]["pixSizePhys"] = std::to_string(map.pixSizePhys);
+	profiles[k] = FactoryProfile::getInstance()->createProfileFromMap(profile_parameter_map[k]);
       }
       
       Json::Value image;

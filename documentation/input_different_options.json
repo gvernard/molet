@@ -256,7 +256,7 @@
     "variability_extrinsic": {
 	"types": [
 	    {
-		"name": "AGN",
+		"name": "moving_disc",
 		"description": "A moving AGN profile across a magnification map"
 	    },
 	    {
@@ -264,8 +264,8 @@
 		"description": "A reverberating and moving AGN profile on a magnification map"
 	    },
 	    {
-		"name": "SN",
-		"description": "An expanding supernova profile on a magnification map"
+		"name": "expanding_supernova",
+		"description": "An expanding, but not moving, supernova profile on a magnification map"
 	    },
 	    {
 		"name": "moving_SN",
@@ -277,7 +277,7 @@
 	    }
 	],
 
-	"AGN": [
+	"moving_disc": [
 	    {
 		"name": "sigma_pec_l",
 		"description": "Sets the dispersion of a Gaussian distribution from which the magnitude of the lens galaxy peculiar velocity vector is drawn",
@@ -318,5 +318,100 @@
 	]
     }
     
+
+
+    "profiles": {
+	"types": [
+	    {
+		"name": "parametric"
+		"description": "The half-light radius of the disc, r, as a function of rest wavelength, $\lambda$, which follows the parametric equation: $r=r_0\left( \frac{\lambda}{\lambda_0} \right)^{\nu}$"
+	    },
+	    {
+		"name": "ss_disc",
+		"description": "The half-light radius of the disc, r, as a function of rest wavelength, $\lambda$, based on the thin disc model by Shakura & Shunyaev: $r=3.75 \times M_{BH}^2/3 \left( \frac{f_{Edd}}{\eta}\right)^{1/3} \lambda^{4/3}$ in light days."
+	    }
+	],
+
+	"parametric": [
+	    {
+		"name": "r0",
+		"description": "The half-light radius of the profile at $\lambda_0$",
+		"units": "$10^{14}$ cm"
+	    },
+	    {
+		"name": "l0",
+		"description": "The reference wavelength",
+		"units": "nm"
+	    },
+	    {
+		"name": "nu",
+		"description": "Exponent of the power law",
+		"units": "-"
+	    },
+	    {
+		"name": "lambda",
+		"description": "Rest wavelength",
+		"units": "nm"
+	    }
+	],
+
+	"ss_disc": [
+	    {
+		"name": "mbh",
+		"description": "Mass of the central supermassive black hole",
+		"units": "$10^9 M_{\odot}$"
+	    },
+	    {
+		"name": "fedd",
+		"description": "Eddington luminosity of the accretion disc - black hole system",
+		"units": "-"
+	    },
+	    {
+		"name": "eta",
+		"description": "Efficiency of the accretion",
+		"units": "-"
+	    },
+	    {
+		"name": "lambda",
+		"description": "Rest wavelength",
+		"units": "$\mu$m"
+	    }
+	]
+    },
+
+
+    "profile_shapes": {
+	"types": [
+	    {
+		"name": "uniform",
+		"description": "Uniform disc"
+	    },
+	    {
+		"name": "gaussian",
+		"description": "Normal two-dimensional"
+	    },
+	    {
+		"name": "exponential",
+		"description": "Exponential two-dimensional"
+	    }
+	],
+
+	"uniform": [
+	    {
+		"name": "rhalf",
+		"description": "Half-light radius",
+		"units": "$10^{14}$ cm"
+	    }
+	],
+
+	"gaussian": [
+
+	],
+
+	"exponential": [
+
+	]
+
+    }
     
 }
