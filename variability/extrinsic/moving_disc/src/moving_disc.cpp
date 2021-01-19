@@ -116,6 +116,28 @@ int main(int argc,char* argv[]){
     double lobs  = (mycam.lambda_min + mycam.lambda_max)/2.0;
     lrest[k] = lobs/(1.0+zs);
   }
+
+  // Get half-light radii
+  std::vector<double> rhalfs(Nfilters);
+  if( root["point_source"]["variability"]["extrinsic"]["profiles"]["type"].asString() == "parametric" ){
+    double r0 = root["point_source"]["variability"]["extrinsic"]["profiles"]["r0"].asDouble();
+    double l0 = root["point_source"]["variability"]["extrinsic"]["profiles"]["l0"].asDouble();
+    double nu = root["point_source"]["variability"]["extrinsic"]["profiles"]["nu"].asDouble();
+    for(int k=0;k<Nfilters;k++){
+      rhalfs[k] = BaseProfile::sizeParametric(r0,l0,nu,lrest[k]);
+    }
+  } else if( root["point_source"]["variability"]["extrinsic"]["profiles"]["type"].asString() == "ss_disc" ){
+    double mbh  = root["point_source"]["variability"]["extrinsic"]["profiles"]["mbh"].asDouble();
+    double fedd = root["point_source"]["variability"]["extrinsic"]["profiles"]["fedd"].asDouble();
+    double eta  = root["point_source"]["variability"]["extrinsic"]["profiles"]["eta"].asDouble();
+    for(int k=0;k<Nfilters;k++){
+      rhalfs[k] = BaseProfile::sizeSS(mbh,fedd,eta,lrest[k]);
+    }
+  } else if( root["point_source"]["variability"]["extrinsic"]["profiles"]["type"].asString() == "vector" ){
+    for(int k=0;k<Nfilters;k++){
+      rhalfs[k] = root["point_source"]["variability"]["extrinsic"]["profiles"]["rhalf"][k].asDouble();
+    }    
+  }
   
   // Create profile parameter maps
   Json::Value::Members json_members = root["point_source"]["variability"]["extrinsic"]["profiles"].getMemberNames();
@@ -124,10 +146,10 @@ int main(int argc,char* argv[]){
     main_map.insert( std::pair<std::string,std::string>(json_members[k],root["point_source"]["variability"]["extrinsic"]["profiles"][json_members[k]].asString()) );
   }
   main_map.insert( std::pair<std::string,std::string>("pixSizePhys","") );
-  main_map.insert( std::pair<std::string,std::string>("lrest","") );
+  main_map.insert( std::pair<std::string,std::string>("rhalf","") );
   std::vector< std::map<std::string,std::string> > profile_parameter_map(Nfilters);
   for(int k=0;k<Nfilters;k++){
-    main_map["lrest"] = std::to_string(lrest[k]);
+    main_map["rhalf"] = std::to_string(rhalfs[k]);
     profile_parameter_map[k] = main_map;
   }
   //================= END:INITIALIZE =======================
@@ -160,7 +182,7 @@ int main(int argc,char* argv[]){
       std::vector<BaseProfile*> profiles(Nfilters);
       for(int k=0;k<Nfilters;k++){
 	profile_parameter_map[k]["pixSizePhys"] = std::to_string(map.pixSizePhys);
-	profiles[k] = FactoryProfile::getInstance()->createProfileFromMap(profile_parameter_map[k]);
+	profiles[k] = FactoryProfile::getInstance()->createProfileFromHalfRadius(profile_parameter_map[k]);
       }
       
       Json::Value image;
