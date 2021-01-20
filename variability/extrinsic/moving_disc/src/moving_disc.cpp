@@ -276,6 +276,24 @@ int main(int argc,char* argv[]){
   file_maps_locs << maps_locs;
   file_maps_locs.close();
 
+  // Write accretion disc parameters
+  Json::Value json_lobs;
+  Json::Value json_lrest;
+  Json::Value json_rhalf;
+  for(int k=0;k<Nfilters;k++){
+    json_lobs.append((1.0+zs)*lrest[k]);
+    json_lrest.append(lrest[k]);
+    json_rhalf.append(rhalfs[k]);
+  }
+  Json::Value out;
+  out["Rein"] = Rein;
+  out["lambda_obs"] = json_lobs;
+  out["lambda_rest"] = json_lrest;
+  out["half-light"] = json_rhalf;
+  std::ofstream file_disc_prop(output+"accretion_disc_properties.json");
+  file_disc_prop << out;
+  file_disc_prop.close();
+
   
   return 0;
 }
