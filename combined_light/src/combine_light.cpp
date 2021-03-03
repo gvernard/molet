@@ -100,17 +100,14 @@ int main(int argc,char* argv[]){
 
       // Adding noise here
       mycam.noise->addNoise(obs_base);
-      
       // Convert to magnitudes
       if( cut_out_scale == "mag" ){
 	for(int i=0;i<obs_base->Nz;i++){
 	  obs_base->z[i] = -2.5*log10(obs_base->z[i]);
 	}
       }
-
       // Output the observed base image
       FitsInterface::writeFits(obs_base->Nx,obs_base->Ny,obs_base->z,out_path + "output/OBS_" + instrument_name + ".fits");
-      delete(obs_base);
       
     } else {
       //=============== CREATE THE TIME VARYING LIGHT ====================
@@ -171,8 +168,9 @@ int main(int argc,char* argv[]){
 	LC_intrinsic[lc_in] = new LightCurve(intrinsic_lc[lc_in]);
 
 	// Convert from magnitudes to intensities
+	double scale_intrinsic = 0.1;
 	for(int i=0;i<LC_intrinsic[lc_in]->signal.size();i++){
-	  LC_intrinsic[lc_in]->signal[i] = pow(10.0,-0.4*LC_intrinsic[lc_in]->signal[i]);
+	  LC_intrinsic[lc_in]->signal[i] = scale_intrinsic*pow(10.0,-0.4*LC_intrinsic[lc_in]->signal[i]);
 	}
 	
 	// Check time limitations
@@ -283,7 +281,7 @@ int main(int argc,char* argv[]){
       }
       FILE* fh = fopen((out_path+"output/psf_locations.dat").c_str(),"w");
       for(int q=0;q<images.size();q++){
-	PSFoffsets[q].printFrame(fh,mysim.Nx,mysim.Ny,mysim.width,mysim.height);
+	PSFoffsets[q].printFrame(fh,mysim.Nx,mysim.Ny,mysim.xmin,mysim.xmax,mysim.ymin,mysim.ymax);
       }
       fclose(fh);
       // Calculate the appropriate PSF sums
@@ -446,27 +444,28 @@ int main(int argc,char* argv[]){
 	      std::string timestep = buffer;
 	      FitsInterface::writeFits(pp_light.Nx,pp_light.Ny,pp_light.z,out_path+mock+"/OBS_"+instrument_name+"_"+timestep+".fits");
 	      */
+
 	      
 	      // Check the expected brightness of the multiple images vs the image
 
-		//double sum = 0.0;
-		//for(int i=0;i<pp_light.Nm;i++){
-		//sum += pp_light.img[i];
-		//}
-		//double fac = inf_dx*inf_dy;
-		//double true_sum = 0.0;
-		//for(int q=0;q<images.size();q++){
-		//true_sum += img_signal[q][t];
-		//}
-		//printf("True: %15.10f (%15.10f)  Numerical: %15.10f (%15.10f)\n",true_sum,-2.5*log10(true_sum),sum,-2.5*log10(sum));
+	      //double sum = 0.0;
+	      //for(int i=0;i<pp_light.Nm;i++){
+	      //sum += pp_light.img[i];
+	      //}
+	      //double fac = inf_dx*inf_dy;
+	      //double true_sum = 0.0;
+	      //for(int q=0;q<images.size();q++){
+	      //true_sum += img_signal[q][t];
+	      //}
+	      //printf("True: %15.10f (%15.10f)  Numerical: %15.10f (%15.10f)\n",true_sum,-2.5*log10(true_sum),sum,-2.5*log10(sum));
 
 	      // Output Point Source image only
 	      //char baf[4];
 	      //sprintf(baf,"%03d",t);
 	      //std::string timesteep = baf;
-	      //pp_light.writeImage(out_path+mock+"/PS_"+instrument_name+"_"+timesteep+".fits");
+	      //pp_light.writeImage(out_path+mock+"/PS_"+instrument_name+"_"+timestep+".fits");
 
-
+	      
 	      // Bin image from 'super' to observed resolution
 	      RectGrid* obs_img = pp_light.embeddedNewGrid(res_x,res_y,"additive");
 	      
@@ -476,7 +475,7 @@ int main(int argc,char* argv[]){
 	      // Finalize output (e.g convert to magnitudes) and write
 	      if( cut_out_scale == "mag" ){
 		for(int i=0;i<obs_img->Nz;i++){
-		  obs_img->z[i] = -2.5*log10(obs_img->z[i]);
+		  obs_img->z[i] = -2.5*log10(obs_img->z[i] + obs_base->z[i]);
 		}
 	      }
 	      char buffer[4];
@@ -520,6 +519,7 @@ int main(int argc,char* argv[]){
       }
 
     }
+    delete(obs_base);
     //================= END:CREATE THE TIME VARYING LIGHT ====================
     
     

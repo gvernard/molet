@@ -15,7 +15,7 @@ public:
   int ni;
 
   void print();
-  void printFrame(FILE* fh,int Nx,int Ny,double w,double h);
+  void printFrame(FILE* fh,int Nx,int Ny,double xmin,double xmax,double ymin,double ymax);
 };
 
 class Instrument {

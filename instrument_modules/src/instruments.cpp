@@ -18,7 +18,7 @@ void offsetPSF::print(){
   printf("  %20s %d\n","nj:",this->nj);
   printf("  %20s %d\n","ni:",this->ni);
 }
-void offsetPSF::printFrame(FILE* fh,int Nx,int Ny,double w,double h){
+void offsetPSF::printFrame(FILE* fh,int Nx,int Ny,double xmin,double xmax,double ymin,double ymax){
   int* x = (int*) malloc(5*sizeof(int));
   int* y = (int*) malloc(5*sizeof(int));
 
@@ -33,8 +33,10 @@ void offsetPSF::printFrame(FILE* fh,int Nx,int Ny,double w,double h){
   x[4] = x[0];
   y[4] = y[0];
 
+  double w = xmax - xmin;
+  double h = ymax - ymin;
   for(int i=0;i<5;i++){
-    fprintf(fh,"%10.4f %10.4f\n",w*x[i]/Nx - w/2.0,-h*y[i]/Ny + h/2.0);
+    fprintf(fh,"%10.4f %10.4f\n",xmin + w*x[i]/Nx,ymin + h*y[i]/Ny);
   }
   free(x);
   free(y);
@@ -245,8 +247,6 @@ void Instrument::convolve(RectGrid* grid){
 offsetPSF Instrument::offsetPSFtoPosition(double x,double y,RectGrid* grid){
   int Nx_img   = grid->Nx;
   int Ny_img   = grid->Ny;
-  double w_img = grid->width;
-  double h_img = grid->height;
   int Nx_psf   = this->cropped_psf->Nx;
   int Ny_psf   = this->cropped_psf->Ny;
   double w_psf = this->cropped_psf->width;
@@ -256,9 +256,9 @@ offsetPSF Instrument::offsetPSFtoPosition(double x,double y,RectGrid* grid){
   double dy = grid->step_y;
 
   // Everything below is calculated in the reference frame centered on the multiple image position
-  // The top left corner of the image
-  double xz = -w_img/2.0 - x;
-  double yz = h_img/2.0 - y;
+  // The bottom left corner of the image
+  double xz = grid->xmin - x;
+  double yz = y;//grid->ymax - y;
   // x0,y0 is the bottom left corner of the PSF
   double x0 = -w_psf/2.0;
   double y0 = -h_psf/2.0;

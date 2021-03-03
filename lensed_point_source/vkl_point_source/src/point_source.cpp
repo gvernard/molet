@@ -83,7 +83,7 @@ int main(int argc,char* argv[]){
 
   // Create and deflect image plane
   std::vector<RectGrid*> planes;
-  RectGrid* img = new RectGrid(10,10,xmin,xmax,ymin,ymax);
+  RectGrid* img = new RectGrid(20,20,xmin,xmax,ymin,ymax);
   planes.push_back(img);
   std::vector<double> xc;
   std::vector<double> yc;

@@ -73,9 +73,8 @@ int main(int argc,char* argv[]){
   // Super-resolved lens light profile image
   FitsInterface::writeFits(mylight.Nx,mylight.Ny,mylight.z,output + "lens_light_super.fits");
 
-
-  // Confirm that the total brightness is conserved (by numerical integration)
   /*
+  // Confirm that the total brightness is conserved (by numerical integration)
   double sum = 0.0;
   for(int i=0;i<mylight.Nm;i++){
     sum += mylight.img[i];
