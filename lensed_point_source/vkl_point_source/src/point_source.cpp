@@ -151,7 +151,7 @@ int main(int argc,char* argv[]){
       }
     }
     if( counter > 0 ){
-      // Set new smalle image planes around xc,yc
+      // Set new smaller image planes around xc,yc
       for(int p=0;p<planes.size();p++){
 	delete(planes[p]);
       }

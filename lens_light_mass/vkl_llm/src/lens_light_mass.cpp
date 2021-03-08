@@ -97,40 +97,62 @@ int main(int argc,char* argv[]){
     double Ds  = cosmo[0]["Ds"].asDouble();
     double Dls = cosmo[0]["Dls"].asDouble();
     double sigma_crit = 3472.8*Ds/(Dl*Dls); // the critical density: c^2/(4pi G)  Ds/(Dl*Dls), in units of kg/m^2
-    
+
     Json::Value all_compact;
+    std::vector<double> ML_ratio;
     for(int k=0;k<root["lenses"].size();k++){
-      for(int m=0;m<root["lenses"][k]["compact_mass_model"].size();m++){
-	all_compact.append(root["lenses"][k]["compact_mass_model"][m]);
+      if( root["lenses"][k]["compact_mass_model"].isArray() ){
+	for(int m=0;m<root["lenses"][k]["compact_mass_model"].size();m++){
+	  ML_ratio.push_back(1.0);
+	  all_compact.append(root["lenses"][k]["compact_mass_model"][m]);
+	}
+      } else {
+	for(int m=0;m<root["lenses"][k]["light_profile"].size();m++){
+	  ML_ratio.push_back( root["lenses"][k]["compact_mass_model"]["mass_to_light_ratio"].asDouble() );
+	  all_compact.append(root["lenses"][k]["light_profile"][m]);
+	}
       }
     }
-    CollectionProfiles compact_collection = JsonParsers::parse_profile(all_compact);
+    CollectionProfiles compact_collection = JsonParsers::parse_profile(all_compact,input);
 
-    // Write overall kappa_star field
+    // Create overall kappa_star field
     RectGrid kappa_star(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
     for(int i=0;i<kappa_star.Ny;i++){
       for(int j=0;j<kappa_star.Nx;j++){
-	kappa_star.z[i*kappa_star.Nx+j] = compact_collection.all_values(kappa_star.center_x[j],kappa_star.center_y[i])/sigma_crit;
+	double value = 0.0;
+	for(int m=0;m<compact_collection.profiles.size();m++){
+	  value += ML_ratio[m]*compact_collection.profiles[m]->value(kappa_star.center_x[j],kappa_star.center_y[i]);
+	}
+	kappa_star.z[i*kappa_star.Nx+j] = value/sigma_crit;
       }
     }
     // Super-resolved lens compact mass profile image
-    FitsInterface::writeFits(kappa_star.Nx,kappa_star.Ny,kappa_star.z,output + "lens_kappa_star_super.fits");
-
+    FitsInterface::writeFits(kappa_star.Nx,kappa_star.Ny,kappa_star.z,output + "lens_kappa_star_super.fits");      
     
+
     // Read the image parameters
     Json::Value images;
     fin.open(output+"multiple_images.json",std::ifstream::in);
     fin >> images;
     fin.close();
-      
+
     // Find the kappa_star at the multiple images
     for(int j=0;j<images.size();j++){
       double x = images[j]["x"].asDouble();
       double y = images[j]["y"].asDouble();
-      double kappa_star = compact_collection.all_values(x,y)/sigma_crit;
-      images[j]["s"] = 1.0 - kappa_star/images[j]["k"].asDouble();
+      double value = 0.0;
+      for(int m=0;m<compact_collection.profiles.size();m++){
+	value += ML_ratio[m]*compact_collection.profiles[m]->value(x,y);
+      }
+      double k_star = value/sigma_crit;
+      double s =  1.0 - k_star/images[j]["k"].asDouble();
+      if( s < 0 ){
+	images[j]["s"] = 0.0;
+      } else {
+	images[j]["s"] = s;	
+      }
     }
-
+        
     // Overwrite multiple images file with values of s
     std::ofstream file_images(output+"multiple_images.json");
     file_images << images;
