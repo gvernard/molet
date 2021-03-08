@@ -249,8 +249,8 @@ offsetPSF Instrument::offsetPSFtoPosition(double x,double y,RectGrid* grid){
   int Ny_img   = grid->Ny;
   int Nx_psf   = this->cropped_psf->Nx;
   int Ny_psf   = this->cropped_psf->Ny;
-  double w_psf = this->cropped_psf->width;
-  double h_psf = this->cropped_psf->height;
+  double w_psf = this->cropped_psf->width;  // xmin of the cropped psf is always 0
+  double h_psf = this->cropped_psf->height; // ymin of the cropped psf is always 0
 
   double dx = grid->step_x;
   double dy = grid->step_y;
@@ -258,7 +258,7 @@ offsetPSF Instrument::offsetPSFtoPosition(double x,double y,RectGrid* grid){
   // Everything below is calculated in the reference frame centered on the multiple image position
   // The bottom left corner of the image
   double xz = grid->xmin - x;
-  double yz = y;//grid->ymax - y;
+  double yz = grid->ymin - y;
   // x0,y0 is the bottom left corner of the PSF
   double x0 = -w_psf/2.0;
   double y0 = -h_psf/2.0;
@@ -266,17 +266,17 @@ offsetPSF Instrument::offsetPSFtoPosition(double x,double y,RectGrid* grid){
 
   int offset_img,offset_psf,ni,nj,ii,jj;
   if( x0<xz and xz<(x0+w_psf) and y0<yz and yz<(y0+h_psf) ){
-    // case 1: the image top left corner is inside the PSF
+    // case 1: the image bottom left corner is inside the PSF
     offset_img = 0;
-    ii = static_cast<int>(floor( (y0 + h_psf - yz)/dy ));
+    ii = static_cast<int>(floor( (yz - y0)/dy ));
     jj = static_cast<int>(floor( (xz - x0)/dx ));
     offset_psf = ii*Nx_psf + jj;
     nj = static_cast<int>(floor( (x0 + w_psf - xz)/dx ));
-    ni = static_cast<int>(floor( (yz - y0)/dy ));
-  } else if( xz<x0 and yz>(y0+h_psf) ){
+    ni = static_cast<int>(floor( (y0 + h_psf - yz)/dy ));
+  } else if( xz<x0 and yz<y0 ){
     // case 2: the PSF is entirely inside the image
     offset_psf = 0;
-    ii = static_cast<int>(floor( (yz - (y0 + h_psf))/dy ));
+    ii = static_cast<int>(floor( (y0 - yz)/dy ));
     jj = static_cast<int>(floor( (x0 - xz)/dx ));
     offset_img = ii*Nx_img + jj;
     if( (jj+Nx_psf) > Nx_img ){
@@ -289,9 +289,9 @@ offsetPSF Instrument::offsetPSFtoPosition(double x,double y,RectGrid* grid){
     } else {
       ni = Ny_psf;
     }
-  } else if( x0<xz and xz<(x0+w_psf) and yz>(y0+h_psf) ){
+  } else if( x0<xz and xz<(x0+w_psf) and yz<y0 ){
     // case 3: a part of the PSF is outside the left side of the image
-    ii = static_cast<int>(floor( (yz - (y0 + h_psf))/dy ));
+    ii = static_cast<int>(floor( (y0 - yz)/dy ));
     jj = static_cast<int>(floor( (xz - x0)/dx ));
     offset_psf = jj;
     offset_img = ii*Nx_img;
@@ -302,8 +302,8 @@ offsetPSF Instrument::offsetPSFtoPosition(double x,double y,RectGrid* grid){
       ni = Ny_psf;
     }
   } else if( xz<x0 and y0<yz and yz<(y0+h_psf) ){
-    // case 4: a part of the PSF is outside the top side of the image
-    ii = static_cast<int>(floor( ((y0 + h_psf) - yz)/dy ));
+    // case 4: a part of the PSF is outside the bottom side of the image
+    ii = static_cast<int>(floor( (yz - y0)/dy ));
     jj = static_cast<int>(floor( (x0 - xz)/dx ));
     offset_img = jj;
     offset_psf = ii*Nx_psf;

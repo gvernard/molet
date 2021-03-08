@@ -52,14 +52,13 @@ int main(int argc,char* argv[]){
     int res_y = static_cast<int>(ceil((ymax-ymin)/mycam.resolution));
     int super_res_x = 10*res_x;
     int super_res_y = 10*res_y;
-    RectGrid mysim(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
+    RectGrid supersim(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
     
 
-    
     // Get the psf in super-resolution, crop it, and create convolution kernel
-    mycam.interpolatePSF(&mysim);
+    mycam.interpolatePSF(&supersim);
     mycam.cropPSF(0.99);
-    mycam.createKernel(mysim.Nx,mysim.Ny);
+    mycam.createKernel(supersim.Nx,supersim.Ny);
     
     
     // Create the fixed extended lensed light
@@ -277,11 +276,11 @@ int main(int argc,char* argv[]){
       // Set the PSF related offsets for each image
       std::vector<offsetPSF> PSFoffsets(images.size());
       for(int q=0;q<images.size();q++){
-	PSFoffsets[q] = Instrument_list[q]->offsetPSFtoPosition(images[q]["x"].asDouble(),images[q]["y"].asDouble(),&mysim);
+	PSFoffsets[q] = Instrument_list[q]->offsetPSFtoPosition(images[q]["x"].asDouble(),images[q]["y"].asDouble(),&supersim);
       }
       FILE* fh = fopen((out_path+"output/psf_locations.dat").c_str(),"w");
       for(int q=0;q<images.size();q++){
-	PSFoffsets[q].printFrame(fh,mysim.Nx,mysim.Ny,mysim.xmin,mysim.xmax,mysim.ymin,mysim.ymax);
+	PSFoffsets[q].printFrame(fh,supersim.Nx,supersim.Ny,supersim.xmin,supersim.xmax,supersim.ymin,supersim.ymax);
       }
       fclose(fh);
       // Calculate the appropriate PSF sums
