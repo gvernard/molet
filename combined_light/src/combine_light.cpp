@@ -57,7 +57,7 @@ int main(int argc,char* argv[]){
 
     // Get the psf in super-resolution, crop it, and create convolution kernel
     mycam.interpolatePSF(&supersim);
-    mycam.cropPSF(0.99);
+    mycam.cropPSF(0.999);
     mycam.createKernel(supersim.Nx,supersim.Ny);
     
     
@@ -82,6 +82,9 @@ int main(int argc,char* argv[]){
     RectGrid* obs_base = base->embeddedNewGrid(res_x,res_y,"integrate");
     delete(base);
 
+    // Adding noise here
+    mycam.noise->addNoise(obs_base);
+
 
 
     // All the static light components have been created.
@@ -97,8 +100,6 @@ int main(int argc,char* argv[]){
     if( !root.isMember("point_source") ){
       //=============== CREATE A SINGLE STATIC IMAGE ====================
 
-      // Adding noise here
-      mycam.noise->addNoise(obs_base);
       // Convert to magnitudes
       if( cut_out_scale == "mag" ){
 	for(int i=0;i<obs_base->Nz;i++){
@@ -167,7 +168,10 @@ int main(int argc,char* argv[]){
 	LC_intrinsic[lc_in] = new LightCurve(intrinsic_lc[lc_in]);
 
 	// Convert from magnitudes to intensities
-	double scale_intrinsic = 0.1;
+	double scale_intrinsic = 1.0;
+	if( root["point_source"]["variability"]["intrinsic"].isMember("scale_factor") ){
+	  scale_intrinsic = root["point_source"]["variability"]["intrinsic"]["scale_factor"].asDouble();
+	} 
 	for(int i=0;i<LC_intrinsic[lc_in]->signal.size();i++){
 	  LC_intrinsic[lc_in]->signal[i] = scale_intrinsic*pow(10.0,-0.4*LC_intrinsic[lc_in]->signal[i]);
 	}
@@ -467,14 +471,19 @@ int main(int argc,char* argv[]){
 	      
 	      // Bin image from 'super' to observed resolution
 	      RectGrid* obs_img = pp_light.embeddedNewGrid(res_x,res_y,"additive");
+	      //RectGrid* obs_img = pp_light.embeddedNewGrid(res_x,res_y,"integrate");
 	      
 	      // Adding time-dependent noise here
-	      mycam.noise->addNoise(obs_img);
+	      //mycam.noise->addNoise(obs_img);
 	      
 	      // Finalize output (e.g convert to magnitudes) and write
 	      if( cut_out_scale == "mag" ){
 		for(int i=0;i<obs_img->Nz;i++){
 		  obs_img->z[i] = -2.5*log10(obs_img->z[i] + obs_base->z[i]);
+		}
+	      } else {
+		for(int i=0;i<obs_img->Nz;i++){
+		  obs_img->z[i] = obs_img->z[i] + obs_base->z[i];
 		}
 	      }
 	      char buffer[4];

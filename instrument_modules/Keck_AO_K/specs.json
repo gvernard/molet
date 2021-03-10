@@ -1,0 +1,11 @@
+{
+    "lambda_min": 1000,
+    "lambda_max": 5000,
+    "resolution": 0.04,
+    "psf": {
+	"pix_x": 127,
+	"pix_y": 127,
+	"width": 5.08,
+	"height": 5.08
+    }
+}
