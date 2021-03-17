@@ -66,6 +66,13 @@ get_map_path:
 get_map_path_clean:
 	make -f makefiles/get_map_path.mk clean
 
+# DRW
+#======================================================
+drw:
+	make -f makefiles/drw.mk drw
+drw_clean:
+	make -f makefiles/drw.mk clean
+
 # INSTRUMENT_COMBINED_LIGHT
 #======================================================
 combined:
@@ -85,6 +92,7 @@ ALL_DEPS += get_map_path
 ALL_DEPS += match_to_gerlumph
 ALL_DEPS += moving_disc
 ALL_DEPS += expanding_supernova
+ALL_DEPS += drw
 ALL_DEPS += combined
 
 CLEAN_DEPS = $(patsubst %,%_clean,$(ALL_DEPS))

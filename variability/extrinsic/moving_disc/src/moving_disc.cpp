@@ -91,13 +91,14 @@ int main(int argc,char* argv[]){
   }
 
   // Monitoring time duration in each filter
+  // Here I need to convert the observer's time to the source frame
   std::vector<double> duration;
   for(int k=0;k<Nfilters;k++){
     //  double duration = dateDifference(root["instrument"]["start"].asString(),root["instrument"]["end"].asString()); // in days
     int Ntime   = root["instruments"][k]["time"].size();
     double t0   = root["instruments"][k]["time"][0].asDouble();
     double tmax = root["instruments"][k]["time"][Ntime-1].asDouble();
-    duration.push_back( ceil(tmax) - floor(t0) );
+    duration.push_back( (ceil(tmax) - floor(t0))/(1.0+zs) );
   }
   double duration_max = 0;
   for(int k=0;k<Nfilters;k++){

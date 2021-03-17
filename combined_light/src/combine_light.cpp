@@ -33,6 +33,7 @@ int main(int argc,char* argv[]){
   } else {
     cut_out_scale = "mag";
   }
+  double z_dil_fac = 1.0+root["source"]["redshift"].asDouble();
 
   
   // Loop over the instruments
@@ -167,7 +168,7 @@ int main(int argc,char* argv[]){
       for(int lc_in=0;lc_in<N_in;lc_in++){
 	LC_intrinsic[lc_in] = new LightCurve(intrinsic_lc[lc_in]);
 
-	// Convert from magnitudes to intensities
+	// Convert from magnitudes to intensities and scale by a factor if necessary
 	double scale_intrinsic = 1.0;
 	if( root["point_source"]["variability"]["intrinsic"].isMember("scale_factor") ){
 	  scale_intrinsic = root["point_source"]["variability"]["intrinsic"]["scale_factor"].asDouble();
@@ -175,8 +176,13 @@ int main(int argc,char* argv[]){
 	for(int i=0;i<LC_intrinsic[lc_in]->signal.size();i++){
 	  LC_intrinsic[lc_in]->signal[i] = scale_intrinsic*pow(10.0,-0.4*LC_intrinsic[lc_in]->signal[i]);
 	}
+
+	// Convert time to the observer's frame
+	for(int i=0;i<LC_intrinsic[lc_in]->time.size();i++){
+	  LC_intrinsic[lc_in]->time[i] *= z_dil_fac;
+	}
 	
-	// Check time limitations
+	// Check time limitations (both intrinsic light curve and tobs are in the observer's reference frame)
 	double tmax_intrinsic = LC_intrinsic[lc_in]->time.back();
 	if( (td_max+tobs_tmax) > tmax_intrinsic ){
 	  printf("Intrinsic light curve %i duration (%f days) is shorter than the maximum time delay plus the observing period (%f + %f days).\n",lc_in,tmax_intrinsic,td_max,tobs_tmax);
@@ -217,7 +223,12 @@ int main(int argc,char* argv[]){
 	  for(int i=0;i<LC_unmicro[lc_in]->signal.size();i++){
 	    LC_unmicro[lc_in]->signal[i] = pow(10.0,-0.4*LC_unmicro[lc_in]->signal[i]);
 	  }
-	  
+
+	  // Convert time to the observer's frame
+	  for(int i=0;i<LC_unmicro[lc_in]->time.size();i++){
+	    LC_unmicro[lc_in]->time[i] *= z_dil_fac;
+	  }
+	
 	  // Check time limitations
 	  double tmax_unmicro = LC_unmicro[lc_in]->time.back();
 	  if( (td_max+tobs_tmax) > tmax_unmicro ){
@@ -258,9 +269,10 @@ int main(int argc,char* argv[]){
 	for(int lc_ex=0;lc_ex<N_ex;lc_ex++){
 	  if( extrinsic_lc[q].size() > 0 ){
 	    LC_extrinsic[q][lc_ex] = new LightCurve(extrinsic_lc[q][lc_ex]);
-	    // Ex. light curves' time begins at 0, so I need to add t0 (of both tobs and tcont) so that the time vectors match
+	    // First, I need to dilate the time (which is on the source plane, as the effective velocity) to the oberver's frame.
+	    // Then, time begins at 0, so I need to add t0 (of either tobs or tcont) so that the time vectors match
 	    for(int t=0;t<LC_extrinsic[q][lc_ex]->time.size();t++){
-	      LC_extrinsic[q][lc_ex]->time[t] += tobs_t0;
+	      LC_extrinsic[q][lc_ex]->time[t] = LC_extrinsic[q][lc_ex]->time[t]*z_dil_fac + tobs_t0;
 	    }
 	  } else {
 	    LC_extrinsic[q][lc_ex] = new LightCurve();
@@ -300,7 +312,7 @@ int main(int argc,char* argv[]){
 	psf_partial_sum[q] = sum;
       }
       
-      
+
       // Loop over intrinsic light curves
       //0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=
       for(int lc_in=0;lc_in<N_in;lc_in++){
@@ -421,7 +433,6 @@ int main(int argc,char* argv[]){
 	  outputLightCurvesJson(samp_LC,out_path+mock+"/"+instrument_name+"_LC_sampled.json");
 	  // *********************** End of product **************************************************
 
-
 	  
 	  
 	  // *********************** Product: Observed sampled cut-outs (images) *****************************
@@ -496,6 +507,7 @@ int main(int argc,char* argv[]){
 	  }
 	  // *********************** End of product **************************************************	    
 
+	  
 	  // Do some cleanup
 	  for(int q=0;q<images.size();q++){
 	    delete(samp_LC[q]);
@@ -509,7 +521,8 @@ int main(int argc,char* argv[]){
       // Loop over intrinsic light curves ends here
       //0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=
 
-      
+
+
       for(int lc_in=0;lc_in<N_in;lc_in++){
 	delete(LC_intrinsic[lc_in]);
       }

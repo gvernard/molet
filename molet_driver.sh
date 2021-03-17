@@ -51,10 +51,10 @@ in_path=`dirname $infile`"/"
 molet_home=`pwd`"/"
 
 
-# Check if input_files directory exists (it needs to contain at least the intrinsic variability file)
+# Check if input_files directory exists
 if [ ! -d ${in_path}"input_files" ]
 then
-    printf "Input files must be in a directory named 'input_files', at the same path as the 'molet_input.json' file!\n"
+    printf "Input files must be in a directory named 'input_files' (which can be empty), at the same path as the 'molet_input.json' file!\n"
     exit
 fi
 
@@ -88,14 +88,38 @@ do
     fi
 done
 # Check if instruments match the INTRINSIC light curve files (one file per instrument)
-for (( b=0; b<$Ninstruments; b++ ))
-do  
-    if [ ! -f ${in_path}"input_files/"${instruments[$b]}"_LC_intrinsic.json" ]
-    then
-	printf "Input INTRINSIC light curves don't exist for instrument \"${instruments[$b]}\"!\n"
-	exit
-    fi
-done
+intrinsic=`echo $injson | jq ".point_source.variability.intrinsic.type" | sed -e 's/^"//' -e 's/"$//'`
+if [ $intrinsic = custom ]
+then
+    for (( b=0; b<$Ninstruments; b++ ))
+    do  
+	if [ ! -f ${in_path}"input_files/"${instruments[$b]}"_LC_intrinsic.json" ]
+	then
+	    printf "Input INTRINSIC light curves don't exist for instrument \"${instruments[$b]}\"!\n"
+	    exit
+	fi
+    done
+else
+    # Check if all instruments have a corresponding mean magnitude given when generating intrinsic light curves
+    mean_mag=(`echo $injson | jq -r '.point_source.variability.intrinsic.mean_mag | keys[]'`)
+    for (( b=0; b<$Ninstruments; b++ ))
+    do
+    	check=false
+    	for (( i=0; i<${#mean_mag[@]}; i++ ))
+    	do  
+    	    if [ ${mean_mag[$i]} == ${instruments[$b]} ]
+    	    then
+    		check=true
+    		break
+    	    fi
+    	done
+    	if [ "$check" = false ]
+    	then
+    	    printf "Instrument \"${instruments[$b]}\" does not have a corresponding mean magnitude given for intrinsic light curve generation!\n"
+    	    exit
+    	fi
+    done
+fi
 # Check if instruments match the EXTRINSIC light curve files (one file per instrument)
 extrinsic=`echo $injson | jq ".point_source.variability.extrinsic.type" | sed -e 's/^"//' -e 's/"$//'`
 if [ $extrinsic = custom ]
@@ -183,6 +207,21 @@ myprocess "$msg" "$cmd" "$log_file"
 check=`echo $injson | jq '. | select(.point_source)'`
 if [ ! -z "${check}" ]
 then
+    # Intrinsic
+    in_type=`echo $injson | jq '.point_source.variability.intrinsic.type' | sed -e 's/^"//' -e 's/"$//'`
+    if [ $in_type != "custom" ]
+    then
+	if [ $in_type = drw ]
+	then
+	    msg="Generating Damped Random Walk intrinsic light curves..."
+	    cmd=$molet_home"variability/intrinsic/DRW/bin/drw "$infile" "$out_path
+	    myprocess "$msg" "$cmd" "$log_file"
+	elif [ $in_type = dum ]
+	then
+	    msg="DUM..."	    
+	fi  
+    fi
+
     # Extrinsic
     ex_type=`echo $injson | jq '.point_source.variability.extrinsic.type' | sed -e 's/^"//' -e 's/"$//'`
     if [ $ex_type != "custom" ]
