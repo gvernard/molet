@@ -49,89 +49,13 @@ infile=`realpath $infile`
 injson=`grep -o '^[^//]*' $infile`
 in_path=`dirname $infile`"/"
 molet_home=`pwd`"/"
+map_path=`${molet_home}"checks/bin/get_map_path"`
 
 
-# Check if input_files directory exists
+# A directory named 'input_files' must exist at the same path as the 'molet_input.json' file, even if it is empty!
 if [ ! -d ${in_path}"input_files" ]
 then
-    printf "Input files must be in a directory named 'input_files' (which can be empty), at the same path as the 'molet_input.json' file!\n"
-    exit
-fi
-
-
-# Check instrument compatibility
-available=($(ls -d ${molet_home}instrument_modules/*))
-Ninstruments=`echo $injson | jq '.instruments | length'`
-instruments=()
-for (( b=0; b<$Ninstruments; b++ ))
-do
-    name=`echo $injson | jq ".instruments[$b].name" | sed -e 's/^"//' -e 's/"$//'`
-    instruments+=( $name )
-done
-# Check if instrument name exists in the modules
-for (( b=0; b<$Ninstruments; b++ ))
-do
-    check=false
-    for (( i=0; i<${#available[@]}; i++ ))
-    do  
-	avail=`basename ${available[$i]}`
-	if [ $avail == ${instruments[$b]} ]
-	then
-	    check=true
-	    break
-	fi
-    done
-    if [ "$check" = false ]
-    then
-	printf "Instrument named \"${instruments[$b]}\" does not exist!\n"
-	exit
-    fi
-done
-# Check if instruments match the INTRINSIC light curve files (one file per instrument)
-intrinsic=`echo $injson | jq ".point_source.variability.intrinsic.type" | sed -e 's/^"//' -e 's/"$//'`
-if [ $intrinsic = custom ]
-then
-    for (( b=0; b<$Ninstruments; b++ ))
-    do  
-	if [ ! -f ${in_path}"input_files/"${instruments[$b]}"_LC_intrinsic.json" ]
-	then
-	    printf "Input INTRINSIC light curves don't exist for instrument \"${instruments[$b]}\"!\n"
-	    exit
-	fi
-    done
-else
-    # Check if all instruments have a corresponding mean magnitude given when generating intrinsic light curves
-    mean_mag=(`echo $injson | jq -r '.point_source.variability.intrinsic.mean_mag | keys[]'`)
-    for (( b=0; b<$Ninstruments; b++ ))
-    do
-    	check=false
-    	for (( i=0; i<${#mean_mag[@]}; i++ ))
-    	do  
-    	    if [ ${mean_mag[$i]} == ${instruments[$b]} ]
-    	    then
-    		check=true
-    		break
-    	    fi
-    	done
-    	if [ "$check" = false ]
-    	then
-    	    printf "Instrument \"${instruments[$b]}\" does not have a corresponding mean magnitude given for intrinsic light curve generation!\n"
-    	    exit
-    	fi
-    done
-fi
-# Check if instruments match the EXTRINSIC light curve files (one file per instrument)
-extrinsic=`echo $injson | jq ".point_source.variability.extrinsic.type" | sed -e 's/^"//' -e 's/"$//'`
-if [ $extrinsic = custom ]
-then
-    for (( b=0; b<$Ninstruments; b++ ))
-    do  
-	if [ ! -f ${in_path}"input_files/"${instruments[$b]}"_LC_extrinsic.json" ]
-	then
-	    printf "Input EXTRINSIC light curves don't exist for instrument \"${instruments[$b]}\"!\n"
-	    exit
-	fi
-    done
+    mkdir ${in_path}"input_files"
 fi
 
 
@@ -154,10 +78,14 @@ fi
 log_file=${out_path}"output/log.txt"
 
 
-# Get map path
-map_path=`${molet_home}"variability/extrinsic/get_map_path/bin/get_map_path"`
 
 
+# Step 0:
+# Perform initialization checks
+####################################################################################
+msg="Check: perform initialization checks..."
+cmd=$molet_home"checks/bin/initialization_checks "$molet_home" "$in_path" "$infile
+myprocess "$msg" "$cmd" "$log_file"
 
 
     
@@ -222,6 +150,12 @@ then
 	fi  
     fi
 
+    # Perform check of light curve lengths: needs intrinsic, unmicro (if needed), tobs, and the time delays.
+    # If intrinsic and unmicro light curves are generated from Molet, then no need to check them, they will conform by construction
+    msg="Check: compatibility of light curve lengths and observing time + time delay length..."
+    cmd=$molet_home"checks/bin/time_vector_checks "$infile" "$in_path" "$out_path
+    myprocess "$msg" "$cmd" "$log_file"
+    
     # Extrinsic
     ex_type=`echo $injson | jq '.point_source.variability.extrinsic.type' | sed -e 's/^"//' -e 's/"$//'`
     if [ $ex_type != "custom" ]
@@ -230,8 +164,8 @@ then
 	cmd=$molet_home"variability/extrinsic/match_to_gerlumph/bin/match_to_gerlumph "$molet_home"data/gerlumph.db "$out_path
 	myprocess "$msg" "$cmd" "$log_file"
 
-	msg="Checking if GERLUMPH maps exist locally..."
-	cmd=$molet_home"variability/extrinsic/match_to_gerlumph/check_map_files.sh "$map_path" "$out_path
+	msg="Check: if GERLUMPH maps exist locally..."
+	cmd=$molet_home"checks/check_map_files.sh "$map_path" "$out_path
 	myprocess "$msg" "$cmd" "$log_file"
 
 	if [ $ex_type = moving_disc ]

@@ -39,21 +39,12 @@ int main(int argc,char* argv[]){
   fin.open(output+"angular_diameter_distances.json",std::ifstream::in);
   fin >> cosmo;
   fin.close();
-
-  // Initialize image plane
-  double xmin = root["instruments"][0]["field-of-view_xmin"].asDouble();
-  double xmax = root["instruments"][0]["field-of-view_xmax"].asDouble();
-  double ymin = root["instruments"][0]["field-of-view_ymin"].asDouble();
-  double ymax = root["instruments"][0]["field-of-view_ymax"].asDouble();
-  double resolution = Instrument::getResolution(root["instruments"][0]["name"].asString());
-  int super_res_x = 10*( static_cast<int>(ceil((xmax-xmin)/resolution)) );
-  int super_res_y = 10*( static_cast<int>(ceil((ymax-ymin)/resolution)) );
-  RectGrid mysim(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
+  
   double xdefl,ydefl;
   //================= END:PARSE INPUT =======================
-
-
   
+
+
   //=============== BEGIN:CREATE THE LENSES ====================
   Json::Value jlens = root["lenses"][0];
 
@@ -72,12 +63,14 @@ int main(int argc,char* argv[]){
     }
   }
   //================= END:CREATE THE LENSES ====================
-
+  
 
 
   //=============== BEGIN:GET CRITICAL LINES AND CAUSTICS =======================
-  RectGrid detA(super_res_x,super_res_y,xmin,xmax,xmin,xmax);
-
+  // Calculate detA
+  double xmin,xmax,ymin,ymax;
+  mass_collection.getExtent(xmin,xmax,ymin,ymax);
+  RectGrid detA(300,300,xmin,xmax,xmin,xmax);
   for(int i=0;i<detA.Ny;i++){
     for(int j=0;j<detA.Nx;j++){
       double mydet = mass_collection.detJacobian(detA.center_x[j],detA.center_y[i]);
@@ -98,7 +91,7 @@ int main(int argc,char* argv[]){
     contours[i].y.push_back( contours[i].y[0] );
   }
 
-  // Create caustic contours, and deflect the contours to fill them
+  // Create caustic contours, and deflect the critical contours to fill them
   std::vector<Contour> caustics(contours.size());
   for(int k=0;k<contours.size();k++){
     caustics[k] = contours[k];
@@ -108,45 +101,55 @@ int main(int argc,char* argv[]){
       caustics[k].y[i] = ydefl;
     }
   } 
+
+  // Image plane magnification (0:positive, 1:negative), caustics, and critical curves
+  std::vector<std::string> keys{"xmin","xmax","ymin","ymax"};
+  std::vector<std::string> values{std::to_string(detA.xmin),std::to_string(detA.xmax),std::to_string(detA.ymin),std::to_string(detA.ymax)};
+  std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
+  FitsInterface::writeFits(detA.Nx,detA.Ny,detA.z,keys,values,descriptions,output + "detA.fits");
+  outputContours(contours,output+"criticals.json");
+  outputContours(caustics,output+"caustics.json");
   //================= END:GET CRITICAL LINES AND CAUSTICS =======================
 
   
 
-  //=============== BEGIN:CREATE THE SOURCES =======================
-  CollectionProfiles profile_collection = JsonParsers::parse_profile(root["source"]["light_profile"],input);
-  //================= END:CREATE THE SOURCES =======================
+  //=============== BEGIN:LENS THE SOURCES =======================
+  for(int k=0;k<root["instruments"].size();k++){
+    std::string name = root["instruments"][k]["name"].asString();
+    
+    // Initialize image plane
+    double xmin = root["instruments"][k]["field-of-view_xmin"].asDouble();
+    double xmax = root["instruments"][k]["field-of-view_xmax"].asDouble();
+    double ymin = root["instruments"][k]["field-of-view_ymin"].asDouble();
+    double ymax = root["instruments"][k]["field-of-view_ymax"].asDouble();
+    double resolution = Instrument::getResolution(name);
+    int super_res_x = 10*( static_cast<int>(ceil((xmax-xmin)/resolution)) );
+    int super_res_y = 10*( static_cast<int>(ceil((ymax-ymin)/resolution)) );
+    RectGrid mysim(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
 
-
-
-  //=============== BEGIN:PRODUCE IMAGE USING RAY-SHOOTING =======================
-  for(int i=0;i<mysim.Ny;i++){
-    for(int j=0;j<mysim.Nx;j++){
-      mass_collection.all_defl(mysim.center_x[j],mysim.center_y[i],xdefl,ydefl);
-      mysim.z[i*mysim.Nx+j] = profile_collection.all_values(xdefl,ydefl);
+    // Create the source
+    CollectionProfiles profile_collection = JsonParsers::parse_profile(root["source"]["light_profile"][name],input);
+    profile_collection.write_all_profiles(output + name + "_source_super.fits");
+    
+    // Produce image using ray-shooting 
+    for(int i=0;i<mysim.Ny;i++){
+      for(int j=0;j<mysim.Nx;j++){
+	mass_collection.all_defl(mysim.center_x[j],mysim.center_y[i],xdefl,ydefl);
+	mysim.z[i*mysim.Nx+j] = profile_collection.all_values(xdefl,ydefl);
+      }
     }
+          
+    // Output super-resolved lensed image
+    std::vector<std::string> keys{"xmin","xmax","ymin","ymax"};
+    std::vector<std::string> values{std::to_string(mysim.xmin),std::to_string(mysim.xmax),std::to_string(mysim.ymin),std::to_string(mysim.ymax)};
+    std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
+    FitsInterface::writeFits(mysim.Nx,mysim.Ny,mysim.z,keys,values,descriptions,output + name + "_lensed_image_super.fits");
+  
+    // Super-resolved source image
+    profile_collection.write_all_profiles(output + name + "_source_super.fits");
   }
-  //================= END:PRODUCE IMAGE USING RAY-SHOOTING =======================
+  //================= END:LENS THE SOURCES =======================
 
-
-  
-  //=============== BEGIN:OUTPUT =======================
-  // Super-resolved lensed image
-  std::vector<std::string> keys{"xmin","xmax","ymin","ymax"};
-  std::vector<std::string> values{std::to_string(mysim.xmin),std::to_string(mysim.xmax),std::to_string(mysim.ymin),std::to_string(mysim.ymax)};
-  std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
-  FitsInterface::writeFits(mysim.Nx,mysim.Ny,mysim.z,keys,values,descriptions,output + "lensed_image_super.fits");
-  
-  // Super-resolved source image
-  profile_collection.write_all_profiles(output + "source_super.fits");
-
-  // Image plane magnification (0:positive, 1:negative)
-  FitsInterface::writeFits(detA.Nx,detA.Ny,detA.z,output + "detA.fits");
-
-  // Caustics and critical curves
-  outputContours(contours,output+"criticals.json");
-  outputContours(caustics,output+"caustics.json");
-  //================= END:OUTPUT =======================
-  
 
   
   return 0;

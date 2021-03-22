@@ -10,12 +10,21 @@ vkl_instruments_clean:
 	make -f makefiles/vkl_instrument_modules.mk clean
 
 
+
 # ANGULAR_DIAMETER_DISTANCES
 #======================================================
 angular_diameter_distances:
 	make -f makefiles/angular_diameter_distances.mk angular_diameter_distances
 angular_diameter_distances_clean:
 	make -f makefiles/angular_diameter_distances.mk clean
+
+# CHECKS
+#======================================================
+mychecks:
+	make -f makefiles/checks.mk all
+mychecks_clean:
+	make -f makefiles/checks.mk clean
+
 
 # VKL_FPROJECT
 #======================================================
@@ -59,13 +68,6 @@ match_to_gerlumph:
 match_to_gerlumph_clean:
 	make -f makefiles/match_to_gerlumph.mk clean
 
-# GET_MAP_PATH
-#======================================================
-get_map_path:
-	make -f makefiles/get_map_path.mk get_map_path
-get_map_path_clean:
-	make -f makefiles/get_map_path.mk clean
-
 # DRW
 #======================================================
 drw:
@@ -88,15 +90,16 @@ ALL_DEPS += angular_diameter_distances
 ALL_DEPS += vkl_fproject
 ALL_DEPS += vkl_point_source
 ALL_DEPS += vkl_llm
-ALL_DEPS += get_map_path
 ALL_DEPS += match_to_gerlumph
 ALL_DEPS += moving_disc
 ALL_DEPS += expanding_supernova
 ALL_DEPS += drw
 ALL_DEPS += combined
+ALL_DEPS += mychecks
+#$(info $$OBJ is [${ALL_DEPS}])
 
 CLEAN_DEPS = $(patsubst %,%_clean,$(ALL_DEPS))
-#$(info $$OBJ is [${CLEAN_DEPS}])
+
 
 all: $(ALL_DEPS)
 clean: $(CLEAN_DEPS)

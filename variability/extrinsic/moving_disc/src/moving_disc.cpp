@@ -91,22 +91,14 @@ int main(int argc,char* argv[]){
   }
 
   // Monitoring time duration in each filter
-  // Here I need to convert the observer's time to the source frame
-  std::vector<double> duration;
-  for(int k=0;k<Nfilters;k++){
-    //  double duration = dateDifference(root["instrument"]["start"].asString(),root["instrument"]["end"].asString()); // in days
-    int Ntime   = root["instruments"][k]["time"].size();
-    double t0   = root["instruments"][k]["time"][0].asDouble();
-    double tmax = root["instruments"][k]["time"][Ntime-1].asDouble();
-    duration.push_back( (ceil(tmax) - floor(t0))/(1.0+zs) );
-  }
-  double duration_max = 0;
-  for(int k=0;k<Nfilters;k++){
-    if( duration[k] > duration_max ){
-      duration_max = duration[k];
-    }
-  }
-
+  // Read tobs_min and tobs_max
+  Json::Value tobs_json;
+  fin.open(output+"tobs.json",std::ifstream::in);
+  fin >> tobs_json;
+  fin.close();
+  double tobs_max = tobs_json["tobs_max"].asDouble();
+  double tobs_min = tobs_json["tobs_min"].asDouble();
+  
   // Create light curve collection
   LightCurveCollection mother(Nlc);
 
@@ -195,8 +187,7 @@ int main(int argc,char* argv[]){
 	
 	// Set light curves
 	mother.setEmap(&emap);
-	mother.createVelocityLocations(254,duration_max,vtot,phi_vtot,phig[m]); // Same in all filters. Will change only if duration_max is replaced by duration[k]
-
+	mother.createVelocityLocations(254,tobs_max-tobs_min,vtot,phi_vtot,phig[m]); // Same in all filters. Will change only if duration_max is replaced by duration[k]
 	
 	kernel.setKernel(profiles[k]);
 	map.convolve(&kernel,&emap);
@@ -214,13 +205,16 @@ int main(int argc,char* argv[]){
 	  Json::Value lc;
 	  Json::Value time;
 	  Json::Value signal;
-	  double t_interval = 11574*map.pixSizePhys/vtot[i]; // 11574 = 1/86400 * 10^9, first term from [day] in [s], second from 10^14 cm pixel size
+	  Json::Value dsignal;
+	  double t_interval = 11574/vtot[i]; // 11574 = 1/86400 * 10^9, first term from [day] in [s], second from 10^14 cm pixel size
 	  for(int j=0;j<mother.lightCurves[i]->Nsamples;j++){
-	    time.append(mother.lightCurves[i]->t[j]*t_interval);
+	    time.append(mother.lightCurves[i]->t[j]*t_interval + tobs_min); // light curve is originally in units of 10^14 cm
 	    signal.append(mother.lightCurves[i]->m[j]);
+	    dsignal.append(mother.lightCurves[i]->dm[j]);
 	  }
-	  lc["time"] = time;
-	  lc["signal"] = signal;
+	  lc["time"]    = time;
+	  lc["signal"]  = signal;
+	  lc["dsignal"] = dsignal;
 	  lcs.append(lc);
 	}
 	image[instrument_name] = lcs;

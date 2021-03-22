@@ -23,8 +23,8 @@ std::vector< std::vector<double> > getDRWLightCurve(std::vector<double> time,dou
   double sf  = pow(10.0,log_sf);
   double tau = pow(10.0,log_tau);
 
-  //  sf  = 0.1;
-  //  tau = 20;
+  //  sf  = 0.318295739;
+  //  tau = 79.8;
 
   std::cout << "sf: " << sf << std::endl;
   std::cout << "tau: " << tau << std::endl;
@@ -35,9 +35,10 @@ std::vector< std::vector<double> > getDRWLightCurve(std::vector<double> time,dou
   for(int j=0;j<N_in;j++){
     std::vector<double> signal(time.size());
     for(int t=0;t<time.size();t++){
-      
-      double normal_mean = exp(-time[t]/tau)*mean_mag + mean_mag*(1.0-exp(-time[t]/tau));
-      double normal_var  = 0.5*pow(sf,2)*(1.0-exp(-2*time[t]/tau));
+
+      double dt = time[t] - time[0];
+      double normal_mean = exp(-dt/tau)*mean_mag + mean_mag*(1.0-exp(-dt/tau));
+      double normal_var  = 0.5*pow(sf,2)*(1.0-exp(-2*dt/tau));
       // Draw from Box-Muller transform
       s2 = 1.1;
       while(s2 > 1.0){

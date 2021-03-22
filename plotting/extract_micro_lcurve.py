@@ -18,11 +18,13 @@ index_lc_ex = int(sys.argv[2])
 images = []
 for i in range(0,len(ex_lc)):
     image = []
-    lc = {}
-    lc["time"]   = ex_lc[i][index_lc_ex]["time"]
-    lc["signal"] = ex_lc[i][index_lc_ex]["signal"]
-    #print(lc["signal"][0])
-    image.append(lc)
+    if len(ex_lc[i]) != 0:
+        lc = {}
+        lc["time"]    = ex_lc[i][index_lc_ex]["time"]
+        lc["signal"]  = ex_lc[i][index_lc_ex]["signal"]
+        lc["dsignal"] = ex_lc[i][index_lc_ex]["dsignal"]
+        image.append(lc)
+        #print(lc["signal"][0])
     images.append(image)
 
 with open('extrinsic_lc.json','w') as outfile:

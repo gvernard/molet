@@ -41,13 +41,6 @@ int main(int argc,char* argv[]){
   fin.open(output+"angular_diameter_distances.json",std::ifstream::in);
   fin >> cosmo;
   fin.close();
-
-  // Initialize image plane
-  double xmin  = root["instruments"][0]["field-of-view_xmin"].asDouble();
-  double xmax  = root["instruments"][0]["field-of-view_xmax"].asDouble();
-  double ymin  = root["instruments"][0]["field-of-view_ymin"].asDouble();
-  double ymax  = root["instruments"][0]["field-of-view_ymax"].asDouble();
-  double res    = Instrument::getResolution(root["instruments"][0]["name"].asString());
   //================= END:PARSE INPUT =======================
 
 
@@ -82,13 +75,15 @@ int main(int argc,char* argv[]){
   point point_source = {root["point_source"]["x0"].asDouble(),root["point_source"]["y0"].asDouble()};
 
   // Create and deflect image plane
+  double xmin,xmax,ymin,ymax;
+  mass_collection.getExtent(xmin,xmax,ymin,ymax);
   std::vector<RectGrid*> planes;
   RectGrid* img = new RectGrid(20,20,xmin,xmax,ymin,ymax);
   planes.push_back(img);
   std::vector<double> xc;
   std::vector<double> yc;
   std::vector<double> rc;
-  double final_scale = res/100.0;
+  double final_scale = hypot(xmax-xmin,ymax-ymin)/300.0;
   bool condition = true;
 
   while( condition ){

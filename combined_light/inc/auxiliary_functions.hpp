@@ -12,11 +12,12 @@ class LightCurve {
 public:
   std::vector<double> time;
   std::vector<double> signal;
+  std::vector<double> dsignal;
   
   LightCurve(){};
   LightCurve(const Json::Value lc);
   LightCurve(std::vector<double> time);
-  LightCurve(std::vector<double> time,std::vector<double> signal);
+  LightCurve(std::vector<double> time,std::vector<double> signal,std::vector<double> dsignal);
   
   void interpolate(std::vector<double> obs_time,double delay,double* interpolated);
   void interpolate(LightCurve* int_lc,double delay);
@@ -24,8 +25,14 @@ public:
   Json::Value jsonOutMag();
 };
 
-void outputLightCurvesJson(std::vector<LightCurve*> lcs,std::string filename);
 
+Json::Value readLightCurvesJson(std::string lc_type,std::string type,std::string instrument_name,std::string in_path,std::string out_path);
+std::vector<LightCurve*> conversions(Json::Value lcs_json,double zs,double scale);
+void combineInExSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* target);
+void combineInExUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* LC_unmicro,LightCurve* target);
+void combineInUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_unmicro,LightCurve* target);
+void justInSignal(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* target);
+void outputLightCurvesJson(std::vector<LightCurve*> lcs,std::string filename);
 
 
 class TransformPSF {
