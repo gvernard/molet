@@ -15,7 +15,7 @@
 		{
 		    "type": "sie",
 		    "pars": {
-			"b": 1.1,
+			"theta_E": 1.1,
 			"q": 0.8,
 			"pa": -145.0,
 			"x0": 0.0,
@@ -31,20 +31,22 @@
 		}
             ],
 
-	    "light_profile": [
-		{
-		    "type": "sersic",
-		    "pars": {
-			"x0": 0.0,
-			"y0": 0.0,
-			"pa": -145.0,
-			"q": 0.8,
-			"M_tot": 17,
-			"r_eff": 1.0,
-			"n": 4
+	    "light_profile": {
+		"testCAM": [
+		    {
+			"type": "sersic",
+			"pars": {
+			    "x0": 0.0,
+			    "y0": 0.0,
+			    "pa": -145.0,
+			    "q": 0.8,
+			    "M_tot": 17,
+			    "r_eff": 1.0,
+			    "n": 4
+			}
 		    }
-		}
-	    ],
+		]
+	    },
 
 	    "compact_mass_model": [
 		{
@@ -69,34 +71,36 @@
     "source": {
 	"redshift": 2.03,
 
-	"light_profile": [
-	    {
-		"type": "gauss",
-		"pars": {
-		    "x0": -0.05,
-		    "y0": 0.05,
-		    "pa": 23.0,
-		    "q": 0.64,
-		    "M_tot": 22.0,
-		    "r_eff": 0.06
+	"light_profile": {
+	    "testCAM": [
+		{
+		    "type": "gauss",
+		    "pars": {
+			"x0": -0.05,
+			"y0": 0.05,
+			"pa": 23.0,
+			"q": 0.64,
+			"M_tot": 22.0,
+			"r_eff": 0.06
+		    }
+		},
+		{
+		    "type": "gauss",
+		    "pars": {
+			"x0": -0.2,
+			"y0": 0.125,
+			"pa": 0.0,
+			"q": 1.0,
+			"M_tot": 22.0,
+			"r_eff": 0.08
+		    }
 		}
-	    },
-	    {
-		"type": "gauss",
-		"pars": {
-		    "x0": -0.2,
-		    "y0": 0.125,
-		    "pa": 0.0,
-		    "q": 1.0,
-		    "M_tot": 22.0,
-		    "r_eff": 0.08
-		}
-	    }
-	]
+	    ]
+	}
     },
-
-
-
+    
+    
+    
     "point_source": {
 	"x0": -0.05,
 	"y0": 0.05,
@@ -118,10 +122,10 @@
 		},
 		"profiles": {
 		    "type": "parametric",
-		    "r0": 100, // in 10^14 cm
+		    "r0": 0.25, // in 10^14 cm
 		    "l0": 102.68, // in nm
 		    "nu": 1.33,
-		    "shape": "uniform",
+		    "shape": "gaussian",
 		    "incl": 0,
 		    "orient": 0
 		}
@@ -132,7 +136,7 @@
     
     "instruments": [
 	{
-	    "name": "test_CAM",
+	    "name": "testCAM",
 	    "field-of-view_xmin": -1.75,
 	    "field-of-view_xmax": 1.75,
 	    "field-of-view_ymin": -1.75,

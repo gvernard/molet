@@ -107,12 +107,12 @@ int main(int argc,char* argv[]){
     
     
     // Create the fixed extended lensed light
-    RectGrid* extended = new RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/lensed_image_super.fits");
+    RectGrid* extended = new RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/"+instrument_name+"_lensed_image_super.fits");
     mycam.convolve(extended);
     //extended->writeImage(output+"psf_lensed_image_super.fits");
     
     // Create the fixed lens galaxy light
-    RectGrid* lens_light = new RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/lens_light_super.fits");
+    RectGrid* lens_light = new RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/"+instrument_name+"_lens_light_super.fits");
     mycam.convolve(lens_light);
     //lens_light->writeImage(output+"psf_lens_light_super.fits");
     
