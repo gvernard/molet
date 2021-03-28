@@ -151,8 +151,6 @@ int main(int argc,char* argv[]){
 
   
   //=============== BEGIN:MAP LOOP =======================
-  int profMaxOffset;
-  int map_res;
   Json::Value images;
   Json::Value maps_locs;
   for(int m=0;m<maps.size();m++){
@@ -164,12 +162,10 @@ int main(int argc,char* argv[]){
 	image[instrument_name] = Json::Value(Json::arrayValue);
       }
       images.append(image);
-
       maps_locs.append(Json::Value(Json::arrayValue));
       
     } else {
       MagnificationMap map(maps[m]["id"].asString(),Rein);
-      map_res = map.Nx;
 
       // Read profiles. Has to be done separately for each map because of the possibly different map.pixSizePhys
       std::vector<BaseProfile*> profiles(Nfilters);
@@ -177,12 +173,14 @@ int main(int argc,char* argv[]){
 	profile_parameter_map[k]["pixSizePhys"] = std::to_string(map.pixSizePhys);
 	profiles[k] = FactoryProfile::getInstance()->createProfileFromHalfRadius(profile_parameter_map[k]);
       }
+
+      // Get maximum profile offset
+      int maxOffset = (int) ceil(profiles[Nfilters-1]->Nx/2);
       
       Json::Value image;
       for(int k=0;k<Nfilters;k++){
 	// set convolution kernel
-	profMaxOffset = (int) ceil(profiles[Nfilters-1]->Nx/2);
-	EffectiveMap emap(profMaxOffset,&map);
+	EffectiveMap emap(maxOffset,&map);
 	Kernel kernel(map.Nx,map.Ny);
 	
 	// Set light curves
@@ -227,10 +225,10 @@ int main(int argc,char* argv[]){
       Json::Value locs;
       for(int i=0;i<Nlc;i++){
 	Json::Value lc;
-	lc["Ax"] = mother.A[i].x/map_res;
-	lc["Ay"] = mother.A[i].y/map_res;
-	lc["Bx"] = mother.B[i].x/map_res;
-	lc["By"] = mother.B[i].y/map_res;
+	lc["Ax"] = (maxOffset+mother.A[i].x)/map.Nx;
+	lc["Ay"] = (maxOffset+mother.A[i].y)/map.Ny;
+	lc["Bx"] = (maxOffset+mother.B[i].x)/map.Nx;
+	lc["By"] = (maxOffset+mother.B[i].y)/map.Ny;
 	locs.append(lc);
       }
       maps_locs.append(locs);

@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <iostream>
 
 #include "auxiliary_functions.hpp"
 
@@ -45,17 +46,17 @@ void LightCurve::interpolate(std::vector<double> obs_time,double delay,double* i
   }
 }
 
-void LightCurve::interpolate(LightCurve* int_lc,double delay){
+void LightCurve::interpolate(LightCurve* interpolated,double delay){
   // Assumption 1: obs_time and interpolated have the same length
   // Assumption 2: the light curve is at least as long as obs_time (in actual time values)
   int i = 0;
   int j = 1;
-  while( i < int_lc->time.size() ){
-    double t = int_lc->time[i] + delay;
+  while( i < interpolated->time.size() ){
+    double t = interpolated->time[i] + delay;
     if( this->time[j] > t ){
       //interpolate
-      int_lc->signal[i]  = this->signal[j-1]+(t-this->time[j-1])*(this->signal[j]-this->signal[j-1])/(this->time[j]-this->time[j-1]);
-      int_lc->dsignal[i] = this->dsignal[j-1]+(t-this->time[j-1])*(this->dsignal[j]-this->dsignal[j-1])/(this->time[j]-this->time[j-1]);
+      interpolated->signal[i]  = this->signal[j-1]+(t-this->time[j-1])*(this->signal[j]-this->signal[j-1])/(this->time[j]-this->time[j-1]);
+      interpolated->dsignal[i] = this->dsignal[j-1]+(t-this->time[j-1])*(this->dsignal[j]-this->dsignal[j-1])/(this->time[j]-this->time[j-1]);
       i++;
     } else {
       j++;
@@ -81,8 +82,8 @@ Json::Value LightCurve::jsonOutMag(){
   for(int i=0;i<this->time.size();i++){
     json_time.append(this->time[i]);
     json_signal.append(-2.5*log10(this->signal[i]));
-    json_dsignal.append( -2.5*log10(sqrt(1.0-pow(this->dsignal[i]/this->signal[i],2))) );
     // This is a symmetric error derived from the asymmetric logarithmic errors as: dm = [(m+)+(m-)]/2
+    json_dsignal.append( -2.5*log10(sqrt(1.0-pow(this->dsignal[i]/this->signal[i],2))) );
   }
   json_lc["time"]    = json_time;
   json_lc["signal"]  = json_signal;
@@ -114,11 +115,93 @@ std::vector<LightCurve*> conversions(Json::Value lcs_json,double zs,double scale
     lcs[i] = new LightCurve(lcs_json[i]);    
     for(int j=0;j<lcs[i]->signal.size();j++){
       lcs[i]->signal[j] = scale*pow(10.0,-0.4*lcs[i]->signal[j]); // Convert from magnitudes to intensities and scale by a factor if necessary
-      lcs[i]->time[j] *= fac; // Convert time to the observer's frame
+      //lcs[i]->time[j] *= fac; // Convert time to the observer's frame
     }
   }	
   return lcs;
 }
+
+
+void justSupernovaInSignal(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* target){
+  // expand intrinsic light curve
+  std::vector<double> tmp_time(4+LC_intrinsic->time.size());
+  LightCurve* tmp_in = new LightCurve(tmp_time);
+  extendIntrinsicLightCurve(LC_intrinsic,tmp_in,td,time[0],time.back());
+  LightCurve* base = new LightCurve(time);
+  tmp_in->interpolate(base,td);
+  for(int t=0;t<time.size();t++){
+    target->signal[t]  = macro_mag*base->signal[t]; // this line includes only the intrinsic signal and excludes microlensing
+    target->dsignal[t] = 0.0;
+  }
+  delete(base);
+  delete(tmp_in);
+}
+
+void combineSupernovaInExSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* target){
+  std::vector<double> tmp_time_in(4+LC_intrinsic->time.size());
+  LightCurve* tmp_in = new LightCurve(tmp_time_in);
+  extendIntrinsicLightCurve(LC_intrinsic,tmp_in,td,time[0],time.back());
+
+  std::vector<double> tmp_time_ex(4+LC_extrinsic->time.size());
+  LightCurve* tmp_ex = new LightCurve(tmp_time_ex);
+  extendExtrinsicLightCurve(LC_extrinsic,tmp_ex,td,time[0],time.back(),LC_intrinsic->time[0]);
+  
+  LightCurve* base = new LightCurve(time);
+  tmp_in->interpolate(base,td);
+  tmp_ex->interpolate(target,td);
+  for(int t=0;t<time.size();t++){
+    target->signal[t]  = target->signal[t]*macro_mag*base->signal[t]; // this line includes only the intrinsic signal and excludes microlensing
+    target->dsignal[t] = target->dsignal[t]*macro_mag*base->signal[t];
+  }
+  delete(base);
+  delete(tmp_in);
+  delete(tmp_ex);  
+}
+
+void extendExtrinsicLightCurve(LightCurve* lc_ex,LightCurve* lc_out,double td,double time_start,double time_end,double time_start_in){
+  lc_out->time[0] = time_start - td - 1;
+  lc_out->time[1] = lc_ex->time[0] + time_start_in - 0.1; // just 0.1 days earlier should be small enough
+  lc_out->time[lc_out->time.size()-2] = lc_ex->time[lc_ex->time.size()-1] + time_start_in + 0.1;
+  lc_out->time[lc_out->time.size()-1] = time_end + td + 1;
+  for(int i=0;i<lc_ex->time.size();i++){
+    lc_out->time[2+i] = lc_ex->time[i] + time_start_in;
+  }
+  lc_out->signal[0] = 1.0;
+  lc_out->signal[1] = 1.0;
+  lc_out->signal[lc_out->signal.size()-2] = lc_ex->signal[lc_ex->signal.size()-1];
+  lc_out->signal[lc_out->signal.size()-1] = lc_ex->signal[lc_ex->signal.size()-1];
+  for(int i=0;i<lc_ex->signal.size();i++){
+    lc_out->signal[2+i]  = lc_ex->signal[i];
+    lc_out->dsignal[2+i] = lc_ex->dsignal[i];
+  }
+  lc_out->dsignal[0] = 0.0;
+  lc_out->dsignal[1] = 0.0;
+  lc_out->dsignal[lc_out->dsignal.size()-2] = lc_ex->dsignal[lc_ex->dsignal.size()-1];
+  lc_out->dsignal[lc_out->dsignal.size()-1] = lc_ex->dsignal[lc_ex->dsignal.size()-1];
+}
+
+void extendIntrinsicLightCurve(LightCurve* lc_in,LightCurve* lc_out,double td,double time_start,double time_end){
+  lc_out->time[0] = time_start - td - 1;
+  lc_out->time[1] = lc_in->time[0]-0.1; // just 0.1 days earlier should be small enough
+  lc_out->time[lc_out->time.size()-2] = lc_in->time[lc_in->time.size()-1]+0.1;
+  lc_out->time[lc_out->time.size()-1] = time_end + td + 1;
+  for(int i=0;i<lc_in->time.size();i++){
+    lc_out->time[2+i] = lc_in->time[i];
+  }
+  lc_out->signal[0] = lc_in->signal[0];
+  lc_out->signal[1] = lc_in->signal[0];
+  lc_out->signal[lc_out->signal.size()-2] = lc_in->signal[lc_in->signal.size()-1];
+  lc_out->signal[lc_out->signal.size()-1] = lc_in->signal[lc_in->signal.size()-1];
+  for(int i=0;i<lc_in->signal.size();i++){
+    lc_out->signal[2+i]  = lc_in->signal[i];
+    lc_out->dsignal[2+i] = lc_in->dsignal[i];
+  }
+  lc_out->dsignal[0] = 0.0;
+  lc_out->dsignal[1] = 0.0;
+  lc_out->dsignal[lc_out->dsignal.size()-2] = 0.0;
+  lc_out->dsignal[lc_out->dsignal.size()-1] = 0.0;
+}
+
 
 void combineInExSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* target){
   // === Combining two signals: intrinsic and extrinsic
@@ -176,6 +259,7 @@ void outputLightCurvesJson(std::vector<LightCurve*> lcs,std::string filename){
   Json::Value lcs_json;
   for(int q=0;q<lcs.size();q++){
     lcs_json.append( lcs[q]->jsonOutMag() );
+    //lcs_json.append( lcs[q]->jsonOut() );
   }
   std::ofstream lcs_file(filename);
   lcs_file << lcs_json;

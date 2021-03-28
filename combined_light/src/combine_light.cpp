@@ -62,7 +62,7 @@ int main(int argc,char* argv[]){
   fin.close();
   double tobs_max = tobs_json["tobs_max"].asDouble();
   double tobs_min = tobs_json["tobs_min"].asDouble();
-  
+
   // Create a 'continuous' time vector: daily cadence
   // The extrinsic light curves have to be calculated in exactly the same range as tcont.
   int Ndays = (int) (ceil(tobs_max) - floor(tobs_min));
@@ -160,8 +160,13 @@ int main(int argc,char* argv[]){
       for(int t=0;t<instrument["time"].size();t++){
 	tobs.push_back(instrument["time"][t].asDouble());
       }
+      bool supernova = false;
+      if( root["point_source"]["source_type"].asString() == "supernova" ){
+	supernova = true;
+      }
       
 
+      
       //======================================== Intrinsic variability ========================================================            
       // Read intrinsic light curve(s) from JSON and apply conversions: from rest frame to observer's frame, from mag to intensity and scale if needed.
       Json::Value intrinsic_lc_json = readLightCurvesJson("intrinsic",root["point_source"]["variability"]["intrinsic"]["type"].asString(),instrument_name,in_path,out_path);
@@ -266,6 +271,8 @@ int main(int argc,char* argv[]){
 	  std::string mock = buffer;
 	  //std::cout << mock << std::endl;
 
+
+	  
 	  // *********************** Product: Observed continuous and sampled light curves ***********************
 	  // cont_LC and samp_LC contain the light curves for ALL the images (i.e. with or without microlensing).
 	  // The first is based on the continuous time, tcont, and the second on the observed (sampled) time, tobs.
@@ -276,34 +283,59 @@ int main(int argc,char* argv[]){
 	    samp_LC[q] = new LightCurve(tobs);
 	  }
 
-	  // Calculate the combined light curve for each image with microlensing
-	  for(int i=0;i<images_micro.size();i++){
-	    int q = images_micro[i];
-	    double td = td_max - images[q]["dt"].asDouble();
-	    double macro_mag = abs(images[q]["mag"].asDouble());
-	    if( unmicro ){
-	      combineInExUnSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],LC_unmicro[lc_in],cont_LC[q]);
-	      combineInExUnSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],LC_unmicro[lc_in],samp_LC[q]);
-	    } else {
-	      combineInExSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],cont_LC[q]);
-	      combineInExSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],samp_LC[q]);
+	  if( supernova ){
+
+	    // Images with microlensing: Combine extrinsic and intrinsic light curves with the given time delay at the same starting time
+	    for(int i=0;i<images_micro.size();i++){
+	      int q = images_micro[i];
+	      double td = td_max - images[q]["dt"].asDouble();
+	      double macro_mag = abs(images[q]["mag"].asDouble());
+	      combineSupernovaInExSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],cont_LC[q]);
+	      combineSupernovaInExSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],samp_LC[q]);
 	    }
-	  }
-	  
-	  // Calculate the combined light curve for each image that doesn't have any microlensing
-	  for(int i=0;i<images_no_micro.size();i++){
-	    int q = images_no_micro[i];
-	    double td = td_max - images[q]["dt"].asDouble();
-	    double macro_mag = abs(images[q]["mag"].asDouble());
-	    if( unmicro ){
-	      combineInUnSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_unmicro[lc_in],cont_LC[q]);
-	      combineInUnSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_unmicro[lc_in],samp_LC[q]);
-	    } else {
-	      justInSignal(td,macro_mag,tcont,LC_intrinsic[lc_in],cont_LC[q]);
-	      justInSignal(td,macro_mag,tobs,LC_intrinsic[lc_in],samp_LC[q]);
+
+	    // Images without microlensing: Just shift the intrinsic light curve by the time delay
+	    for(int i=0;i<images_no_micro.size();i++){
+	      int q = images_no_micro[i];
+	      double td = td_max - images[q]["dt"].asDouble();
+	      double macro_mag = abs(images[q]["mag"].asDouble());
+	      justSupernovaInSignal(td,macro_mag,tcont,LC_intrinsic[lc_in],cont_LC[q]);
+	      justSupernovaInSignal(td,macro_mag,tobs,LC_intrinsic[lc_in],samp_LC[q]);
+	    }	    
+	    
+	  } else {
+	    
+	    // Calculate the combined light curve for each image with microlensing
+	    for(int i=0;i<images_micro.size();i++){
+	      int q = images_micro[i];
+	      double td = td_max - images[q]["dt"].asDouble();
+	      double macro_mag = abs(images[q]["mag"].asDouble());
+	      if( unmicro ){
+		combineInExUnSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],LC_unmicro[lc_in],cont_LC[q]);
+		combineInExUnSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],LC_unmicro[lc_in],samp_LC[q]);
+	      } else {
+		combineInExSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],cont_LC[q]);
+		combineInExSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],samp_LC[q]);
+	      }
 	    }
+	    
+	    // Calculate the combined light curve for each image that doesn't have any microlensing
+	    for(int i=0;i<images_no_micro.size();i++){
+	      int q = images_no_micro[i];
+	      double td = td_max - images[q]["dt"].asDouble();
+	      double macro_mag = abs(images[q]["mag"].asDouble());
+	      if( unmicro ){
+		combineInUnSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_unmicro[lc_in],cont_LC[q]);
+		combineInUnSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_unmicro[lc_in],samp_LC[q]);
+	      } else {
+		justInSignal(td,macro_mag,tcont,LC_intrinsic[lc_in],cont_LC[q]);
+		justInSignal(td,macro_mag,tobs,LC_intrinsic[lc_in],samp_LC[q]);
+	      }
+	    }
+
 	  }
 
+	  
 	  // Write json light curves and clean up
 	  outputLightCurvesJson(cont_LC,out_path+mock+"/"+instrument_name+"_LC_continuous.json");
 	  outputLightCurvesJson(samp_LC,out_path+mock+"/"+instrument_name+"_LC_sampled.json");

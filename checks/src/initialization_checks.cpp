@@ -35,7 +35,7 @@ int main(int argc,char* argv[]){
   DIR* modules;
   struct dirent* ent;
   std::vector<std::string> molet_instruments;
-  if( (modules=opendir((molet_home+"instrument_modules/").c_str())) != NULL ){
+  if( (modules=opendir((molet_home+"instrument_modules/modules/").c_str())) != NULL ){
     while( (ent=readdir(modules)) != NULL ){
       molet_instruments.push_back(ent->d_name);
     }
@@ -161,7 +161,7 @@ int main(int argc,char* argv[]){
 	}
       }
     } else {
-      // Check mean_mags match the given instruments
+      // Check if mean_mags match the given instruments
       for(int i=0;i<instruments.size();i++){
 	if( !root["point_source"]["variability"]["intrinsic"]["mean_mag"].isMember(instruments[i]) ){
 	  fprintf(stderr,"Intrinsic mean magnitude not provided for instrument %s!\n",instruments[i].c_str());

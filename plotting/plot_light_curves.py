@@ -60,12 +60,12 @@ for i in range(0,len(images)):
         td_max = float(images[i]["dt"])
         td_max_index = i
 img_indices = []
-for i in range(0,len(images)):    
-    if i != td_max_index:
-        img_indices.append(i)
+for i in range(0,len(images)):
+    img_indices.append(i)
+    #if i != td_max_index:
+    #    img_indices.append(i)
 
 
-num2let = ["A","B","C","D","E","F","G","H","I"] # very optimistic!
 prop_cycle = plt.rcParams['axes.prop_cycle']
 colors = prop_cycle.by_key()['color']
     
@@ -75,7 +75,7 @@ faded_colors = []
 for i in range(0,len(colors)):
     hex = colors[i].lstrip('#')
     rgb = tuple(int(hex[k:k+2], 16) for k in (0, 2, 4))
-    new_rgb = make_rgb_transparent(rgb,[255.0,255.0,255.0],0.3)
+    new_rgb = make_rgb_transparent(rgb,[255.0,255.0,255.0],0.6)
     faded_colors.append(tuple(new_rgb))
 
 
@@ -98,7 +98,7 @@ for i in range(0,len(img_indices)):
     index = img_indices[i]
     ax.plot(lc_cont[index]["time"],lc_cont[index]["signal"],color=faded_colors[i],zorder=1)
     ax.scatter(lc_samp[index]["time"],lc_samp[index]["signal"],color=colors[i],zorder=2)
-    ax.text(lc_cont[index]["time"][0],lc_cont[index]["signal"][0],num2let[i],horizontalalignment='right',verticalalignment='bottom',color=colors[i],fontsize=22,zorder=3)
+    ax.text(lc_cont[index]["time"][0],lc_cont[index]["signal"][0],index,horizontalalignment='right',verticalalignment='bottom',color=colors[i],fontsize=22,zorder=3)
 
 curves_ymin = ax.get_ylim()[0]
 curves_ymax = ax.get_ylim()[-1]

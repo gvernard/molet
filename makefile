@@ -5,7 +5,7 @@
 #======================================================
 mkfile_path := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 vkl_instruments:
-	make -f makefiles/vkl_instrument_modules.mk INSTRUMENT_PATH=$(mkfile_path)instrument_modules/ instrument_modules
+	make -f makefiles/vkl_instrument_modules.mk INSTRUMENT_PATH=$(mkfile_path)instrument_modules/modules/ instrument_modules
 vkl_instruments_clean:
 	make -f makefiles/vkl_instrument_modules.mk clean
 

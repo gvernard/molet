@@ -28,6 +28,10 @@ public:
 
 Json::Value readLightCurvesJson(std::string lc_type,std::string type,std::string instrument_name,std::string in_path,std::string out_path);
 std::vector<LightCurve*> conversions(Json::Value lcs_json,double zs,double scale);
+void extendIntrinsicLightCurve(LightCurve* lc_in,LightCurve* lc_out,double td,double time_start,double time_end);
+void extendExtrinsicLightCurve(LightCurve* lc_ex,LightCurve* lc_out,double td,double time_start,double time_end,double time_start_in);
+void combineSupernovaInExSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* target);
+void justSupernovaInSignal(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* target);
 void combineInExSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* target);
 void combineInExUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* LC_unmicro,LightCurve* target);
 void combineInUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_unmicro,LightCurve* target);
