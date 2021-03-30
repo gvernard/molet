@@ -13,6 +13,9 @@
 
 #include "json/json.h"
 
+#include "gerlumph.hpp"
+#include "instruments.hpp"
+#include "noise.hpp"
 
 
 int main(int argc,char* argv[]){
@@ -56,12 +59,17 @@ int main(int argc,char* argv[]){
   // Find the tmin and tmax across all instrument times.
   std::vector<double> tmins;
   std::vector<double> tmaxs;
+  std::vector<double> lrest;
   std::vector<std::string> names;
+  double zs = root["source"]["redshift"].asDouble();
   for(int b=0;b<root["instruments"].size();b++){
     int Ntime = root["instruments"][b]["time"].size();
     tmins.push_back( root["instruments"][b]["time"][0].asDouble() );
     tmaxs.push_back( root["instruments"][b]["time"][Ntime-1].asDouble() );
     names.push_back( root["instruments"][b]["name"].asString() );
+    Instrument mycam(root["instruments"][b]["name"].asString(),root["instruments"][b]["noise"]);
+    double lobs  = (mycam.lambda_min + mycam.lambda_max)/2.0;
+    lrest.push_back( lobs/(1.0+zs) );
   }
   double tobs_max = tmaxs[0];
   double tobs_min = tmins[0];
@@ -73,7 +81,7 @@ int main(int argc,char* argv[]){
       tobs_min = tmins[k];
     }
   }
-
+  
 
   
 
@@ -116,6 +124,7 @@ int main(int argc,char* argv[]){
 	  fprintf(stderr,"To include intrinsic light curve %d, a later ending observing time by at least %f day is required in instrument %s!\n",i,(tin_max+1)-tobs_max,iname.c_str());
 	  check = true;
 	}
+	
       }
 
       if( dur.size()>1 ){
@@ -131,9 +140,9 @@ int main(int argc,char* argv[]){
 
 
     // Check custom extrinsic light curves for SN
-    std::string extrinsic_path;
-    if( root["point_source"]["variability"]["extrinsic"]["type"].asString() == "custom" ){
-      extrinsic_path = in_path+"input_files/";
+    std::string ex_type = root["point_source"]["variability"]["extrinsic"]["type"].asString();
+    if( ex_type == "custom" ){
+      std::string extrinsic_path = in_path+"input_files/";
 
       for(int n=0;n<names.size();n++){
 	std::string iname = names[n];      
@@ -142,12 +151,16 @@ int main(int argc,char* argv[]){
 	fin >> json_extrinsic;
 	fin.close();
 
-
 	for(int q=0;q<json_extrinsic.size();q++){
 	  if( json_extrinsic[q].size() > 0 ){
 	    for(int i=0;i<json_extrinsic[q].size();i++){
 	      if( json_extrinsic[q][i]["time"][0].asDouble() != 1.0 ){
 		fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must begin at time=1, i.e. on the first day of the explosion.\n",i,iname.c_str());
+		check = true;
+	      }
+	      int Ntime = json_extrinsic[i]["time"].size();
+	      if( json_extrinsic[i]["time"][Ntime-1] < duration[n] ){
+		fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must have a longer duration than the corresponding intrinsic light curve(s), viz. %f days.\n",i,iname.c_str(),duration[n]);
 		check = true;
 	      }
 	    }
@@ -156,17 +169,38 @@ int main(int argc,char* argv[]){
 	  //  fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must have a magnification of 1 at time=0.\n",i,iname.c_str());
 	  //  check = true;
 	  //}
-	  //int Ntime = json_extrinsic[i]["time"].size();
-	  //if( json_extrinsic[i]["time"][Ntime-1] != duration[n] ){
-	  //  fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must have the same duration as the corresponding intrinsic light curve(s), viz. %f days.\n",i,iname.c_str(),duration[n]);
-	  //  check = true;
-	  //}
 	}
       }
 
+    } else if( ex_type == "expanding_supernova" ){
+      double cutoff_fac = root["point_source"]["variability"]["extrinsic"]["size_cutoff"].asDouble();  // in Rein
+      if( cutoff_fac > 7.0 ){
+	fprintf(stderr,"Cutoff size for the largest supernova profile too big. Consider reducing it below 7 Einstein radii.\n");
+	check = true;
+      }
+
+      double v_expand  = root["point_source"]["variability"]["extrinsic"]["v_expand"].asDouble();     // in 10^5 km/s
+
+      Json::Value cosmo;
+      fin.open(out_path+"output/angular_diameter_distances.json",std::ifstream::in);
+      fin >> cosmo;
+      fin.close();
+      double Dl  = cosmo[0]["Dl"].asDouble();
+      double Ds  = cosmo[0]["Ds"].asDouble();
+      double Dls = cosmo[0]["Dls"].asDouble();
+      double M   = root["point_source"]["variability"]["extrinsic"]["microlens_mass"].asDouble();
+      double Rein = 13.5*sqrt(M*Dls*Ds/Dl); // in 10^14 cm
+
+      // Loop over the intrinsic light curve duration in each filter
+      for(int i=0;i<duration.size();i++){
+	double R_max = duration[i]*v_expand*8.64/Rein; // the numerator is in 10^14 cm
+	if( R_max > cutoff_fac ){
+	  fprintf(stderr,"Maximum physical size of the supernova in instrument %s is above the cutoff size of %f Einstein radii.\n",names[i].c_str(),cutoff_fac);
+	  check = true;
+	}
+      }
     }
 
-    // Check maximum time doesn't correspond to too big profiles (combined check with size_cutoff)
 
     // Print convolution information for the standard GERLUMPH map resolution.
 
@@ -194,9 +228,42 @@ int main(int argc,char* argv[]){
     }
 
     // Quick loop to check if the accretion dize does not become too large for some wavelength, e.g. above several Rein
-    for(int n=0;n<names.size();n++){
-
+    std::vector<double> rhalfs(names.size());
+    if( root["point_source"]["variability"]["extrinsic"]["profiles"]["type"].asString() == "parametric" ){
+      double r0 = root["point_source"]["variability"]["extrinsic"]["profiles"]["r0"].asDouble();
+      double l0 = root["point_source"]["variability"]["extrinsic"]["profiles"]["l0"].asDouble();
+      double nu = root["point_source"]["variability"]["extrinsic"]["profiles"]["nu"].asDouble();
+      for(int i=0;i<names.size();i++){
+	rhalfs[i] = BaseProfile::sizeParametric(r0,l0,nu,lrest[i]);
+      }
+    } else if( root["point_source"]["variability"]["extrinsic"]["profiles"]["type"].asString() == "ss_disc" ){
+      double mbh  = root["point_source"]["variability"]["extrinsic"]["profiles"]["mbh"].asDouble();
+      double fedd = root["point_source"]["variability"]["extrinsic"]["profiles"]["fedd"].asDouble();
+      double eta  = root["point_source"]["variability"]["extrinsic"]["profiles"]["eta"].asDouble();
+      for(int i=0;i<names.size();i++){
+	rhalfs[i] = BaseProfile::sizeSS(mbh,fedd,eta,lrest[i]);
+      }
+    } else if( root["point_source"]["variability"]["extrinsic"]["profiles"]["type"].asString() == "vector" ){
+      for(int i=0;i<names.size();i++){
+	rhalfs[i] = root["point_source"]["variability"]["extrinsic"]["profiles"]["rhalf"][i].asDouble();
+      }
     }
+    Json::Value cosmo;
+    fin.open(out_path+"output/angular_diameter_distances.json",std::ifstream::in);
+    fin >> cosmo;
+    fin.close();
+    double Dl  = cosmo[0]["Dl"].asDouble();
+    double Ds  = cosmo[0]["Ds"].asDouble();
+    double Dls = cosmo[0]["Dls"].asDouble();
+    double M   = root["point_source"]["variability"]["extrinsic"]["microlens_mass"].asDouble();
+    double Rein = 13.5*sqrt(M*Dls*Ds/Dl); // in 10^14 cm
+    for(int i=0;i<names.size();i++){
+      if( rhalfs[i]/Rein > 7 ){
+	fprintf(stderr,"Accretion disc size for instrument %s is too big. Consider reducing rest wavelength %f so that the disc becomes smaller than 7 Einstein radii.\n",names[i].c_str(),lrest[i]);
+	check = true;	
+      }
+    }
+    
       
     for(int n=0;n<names.size();n++){
       std::string iname = names[n];
@@ -220,9 +287,25 @@ int main(int argc,char* argv[]){
 	}
       }
 
-      // Check custom extrinsic light curves
-      // They must extend from 0 to above tobs_max
-
+      // Check custom extrinsic light curves, they must extend from below tobs_min to above tobs_max
+      if( root["point_source"]["variability"]["extrinsic"]["type"].asString() == "custom" ){
+	Json::Value json_extrinsic;
+	fin.open(extrinsic_path+iname+"_LC_extrinsic.json",std::ifstream::in);
+	fin >> json_extrinsic;
+	fin.close();
+	
+	for(int i=0;i<json_extrinsic.size();i++){
+	  if( json_extrinsic[i]["time"][0] > tobs_min ){
+	    fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must have a starting time earlier than the minimum observing time, viz. <%f days.\n",i,iname.c_str(),tobs_min);
+	    check = true;
+	  }
+	  int Ntime = json_extrinsic[i]["time"].size();
+	  if( json_extrinsic[i]["time"][Ntime-1] < tobs_max ){
+	    fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must have a later ending time than the maximum observing time, viz. >%f days.\n",i,iname.c_str(),tobs_max);
+	    check = true;
+	  }
+	}
+      }
       
       // Check unmicrolensed light curves
       if( unmicro ){
