@@ -8,4 +8,4 @@ bin
 
 /data/*
 !/data/gerlumph.db
-!/plotting/example_observed_lc.png
+/plotting/*.png

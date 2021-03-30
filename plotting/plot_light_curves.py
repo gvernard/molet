@@ -61,9 +61,9 @@ for i in range(0,len(images)):
         td_max_index = i
 img_indices = []
 for i in range(0,len(images)):
-    img_indices.append(i)
-    #if i != td_max_index:
-    #    img_indices.append(i)
+    #img_indices.append(i)
+    if i != td_max_index:
+        img_indices.append(i)
 
 
 prop_cycle = plt.rcParams['axes.prop_cycle']
