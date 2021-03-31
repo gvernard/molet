@@ -329,5 +329,28 @@ offsetPSF Instrument::offsetPSFtoPosition(double x,double y,RectGrid* grid){
   return PSFoffset;  
 }
 
+void Instrument::replacePSF(std::string path_to_file){
+  // the new PSF must have exactly the same dimensions and number of pixels as the one it is replacing
+  RectGrid* temp = this->original_psf;
+  this->original_psf = new RectGrid(this->original_psf->Nx,this->original_psf->Ny,0,this->original_psf->width,0,this->original_psf->height,path_to_file);
+  delete(temp);
+}
+
+void Instrument::preparePSF(RectGrid* grid,double ratio){
+  this->interpolatePSF(grid);
+  this->cropPSF(ratio);
+  this->createKernel(grid->Nx,grid->Ny);
+}
+
+double Instrument::sumPSF(offsetPSF* psf_offset){
+  double sum = 0.0;
+  for(int i=0;i<psf_offset->ni;i++){
+    for(int j=0;j<psf_offset->nj;j++){
+      int index_psf = i*this->cropped_psf->Nx + j;
+      sum += this->cropped_psf->z[index_psf];
+    }
+  }
+  return sum;
+}
 // END:INSTRUMENT ===================================================================================================
 

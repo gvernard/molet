@@ -6,6 +6,8 @@
 
 #include "auxiliary_functions.hpp"
 
+#include "vkllib.hpp"
+#include "instruments.hpp"
 
 // START:LIGHTCURVE ========================================================================================
 LightCurve::LightCurve(const Json::Value lc){
@@ -94,6 +96,10 @@ Json::Value LightCurve::jsonOutMag(){
 
 
 
+
+
+
+// START:LIGHTCURVE MANIPULATION FUNCTION ========================================================================================
 Json::Value readLightCurvesJson(std::string lc_type,std::string type,std::string instrument_name,std::string in_path,std::string out_path){
   std::ifstream fin;
   Json::Value lcs_json;
@@ -265,7 +271,84 @@ void outputLightCurvesJson(std::vector<LightCurve*> lcs,std::string filename){
   lcs_file << lcs_json;
   lcs_file.close();									      
 }
+// END:LIGHTCURVE MANIPULATION FUNCTION ========================================================================================
 
+
+
+
+
+// START:IMAGE MANIPULATION FUNCTION ========================================================================================
+RectGrid createObsBase(Instrument* mycam,RectGrid* supersim,int res_x,int res_y,std::string out_path){
+  // supersim is just carrying the resolution and extent of the image.
+  std::string name = mycam->getName();
+  
+  int super_res_x = supersim->Nx;
+  int super_res_y = supersim->Ny;
+  double xmin = supersim->xmin;
+  double xmax = supersim->xmax;
+  double ymin = supersim->ymin;
+  double ymax = supersim->ymax;
+  
+  // Create the fixed extended lensed light
+  RectGrid* extended = new RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/"+name+"_lensed_image_super.fits");
+  mycam->convolve(extended);
+  //extended->writeImage(output+"psf_lensed_image_super.fits");
+  
+  // Create the fixed lens galaxy light
+  RectGrid* lens_light = new RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/"+name+"_lens_light_super.fits");
+  mycam->convolve(lens_light); // I can comment out this line to avoid convolving with a psf
+  //lens_light->writeImage(output+"psf_lens_light_super.fits");  
+  
+  // Combined light of the observed base image (binned from 'super' to observed resolution)
+  RectGrid* base = new RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax); 
+  for(int i=0;i<base->Nz;i++){
+    base->z[i] = lens_light->z[i] + extended->z[i];
+  }
+  RectGrid obs_base = base->embeddedNewGrid(res_x,res_y,"integrate");
+
+  delete(extended);
+  delete(lens_light);
+  delete(base);
+
+  return obs_base;
+}
+
+RectGrid createPointSourceLight(RectGrid* supersim,std::vector<double> image_signal,std::vector<offsetPSF>& PSFoffsets,std::vector<Instrument*>& instrument_list,std::vector<double>& psf_partial_sums,int res_x,int res_y){
+  // Loop over the truncated PSF (through PSF_offsets) for each image, and add their light to the pp_light image that contains all the point source light.
+  // All vectors must have the same size, equal to the number of multiple images.
+  RectGrid pp_light(supersim->Nx,supersim->Ny,supersim->xmin,supersim->xmax,supersim->ymin,supersim->ymax);  // this has to be in intensity units in order to be able to add the different light components
+  
+  for(int q=0;q<PSFoffsets.size();q++){
+    for(int i=0;i<PSFoffsets[q].ni;i++){
+      for(int j=0;j<PSFoffsets[q].nj;j++){
+	int index_img = PSFoffsets[q].offset_image + i*pp_light.Nx + j;
+	int index_psf = PSFoffsets[q].offset_cropped + i*instrument_list[q]->cropped_psf->Nx + j;
+	//pp_light.z[index_img] += 1.0;
+	pp_light.z[index_img] += image_signal[q]*instrument_list[q]->cropped_psf->z[index_psf]/psf_partial_sums[q];
+      }
+    }
+  }
+
+  // Bin image from 'super' to observed resolution
+  RectGrid obs_pp_light = pp_light.embeddedNewGrid(res_x,res_y,"additive");
+  return obs_pp_light;  
+}
+
+
+void writeCutout(std::string cutout_scale,RectGrid* obs_pp_light,RectGrid* obs_base,std::string fname){
+  // Finalize output (e.g convert to magnitudes) and write
+  if( cutout_scale == "mag" ){
+    for(int i=0;i<obs_pp_light->Nz;i++){
+      obs_pp_light->z[i] = -2.5*log10(obs_pp_light->z[i] + obs_base->z[i]);
+    }
+  } else {
+    for(int i=0;i<obs_pp_light->Nz;i++){
+      obs_pp_light->z[i] = obs_pp_light->z[i] + obs_base->z[i];
+    }
+  }
+  FitsInterface::writeFits(obs_pp_light->Nx,obs_pp_light->Ny,obs_pp_light->z,fname);
+}
+// END:IMAGE MANIPULATION FUNCTION ==========================================================================================
 
 
 

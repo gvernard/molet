@@ -294,15 +294,19 @@ int main(int argc,char* argv[]){
 	fin >> json_extrinsic;
 	fin.close();
 	
-	for(int i=0;i<json_extrinsic.size();i++){
-	  if( json_extrinsic[i]["time"][0] > tobs_min ){
-	    fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must have a starting time earlier than the minimum observing time, viz. <%f days.\n",i,iname.c_str(),tobs_min);
-	    check = true;
-	  }
-	  int Ntime = json_extrinsic[i]["time"].size();
-	  if( json_extrinsic[i]["time"][Ntime-1] < tobs_max ){
-	    fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must have a later ending time than the maximum observing time, viz. >%f days.\n",i,iname.c_str(),tobs_max);
-	    check = true;
+	for(int q=0;q<json_extrinsic.size();q++){
+	  if( json_extrinsic[q].size() > 0 ){
+	    for(int i=0;i<json_extrinsic[q].size();i++){
+	      if( json_extrinsic[q][i]["time"][0] > tobs_min ){
+		fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must have a starting time earlier than the minimum observing time, viz. <%f days.\n",i,iname.c_str(),tobs_min);
+		check = true;
+	      }
+	      int Ntime = json_extrinsic[q][i]["time"].size();
+	      if( json_extrinsic[q][i]["time"][Ntime-1] < tobs_max ){
+		fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must have a later ending time than the maximum observing time, viz. >%f days.\n",i,iname.c_str(),tobs_max);
+		check = true;
+	      }
+	    }
 	  }
 	}
       }
@@ -332,6 +336,7 @@ int main(int argc,char* argv[]){
 	  }
 	}    
       }
+
     }
     
   }

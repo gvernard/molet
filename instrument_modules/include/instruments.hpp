@@ -41,6 +41,10 @@ public:
   void createKernel(int Nx,int Ny);
   void convolve(RectGrid* grid);
   offsetPSF offsetPSFtoPosition(double x,double y,RectGrid* grid);
+
+  void replacePSF(std::string path_to_file);
+  void preparePSF(RectGrid* grid,double ratio);
+  double sumPSF(offsetPSF* psf_offset);
 };
 
 #endif /* INSTRUMENT_HPP */
