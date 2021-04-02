@@ -169,7 +169,7 @@ int main(int argc,char* argv[]){
       }
       //=======================================================================================================================            
 
-
+      
       //=============================================== Microlensing ==========================================================      
       // Read extrinsic light curve(s) from JSON
       Json::Value extrinsic_lc = readLightCurvesJson("extrinsic",root["point_source"]["variability"]["extrinsic"]["type"].asString(),instrument_name,in_path,out_path);
@@ -199,7 +199,6 @@ int main(int argc,char* argv[]){
       //=======================================================================================================================      
 
 
-
       //==================================== Configure the PSF for the point source ===========================================
       // Perturb the PSF at each image location
       std::vector<Instrument*> instrument_list(images.size());
@@ -224,6 +223,7 @@ int main(int argc,char* argv[]){
 	psf_partial_sums[q] = instrument_list[q]->sumPSF(&PSFoffsets[q]);
       }
       //=======================================================================================================================
+
 
 
       
@@ -317,26 +317,47 @@ int main(int argc,char* argv[]){
 	  
 	  // *********************** Product: Observed sampled cut-outs (images) *****************************
 	  if( root["point_source"]["output_cutouts"].asBool() ){
+	    RectGrid* ptr_obs_base = &obs_base;
+
+	    // Create list of PSF file names +++++++++++++++++++	    
+	    //std::vector<std::string> psf_fnames = getFileNames(tobs,argv[4]); // user-provided function to get the file names of the PSFs as a function of timestep t
+	    //++++++++++++++++++++++++++++++++++++++++++++++++++	    
+	    
 	    for(int t=0;t<tobs.size();t++){
+
+	      // Time-dependent PSF goes here ++++++++++++++++++++
+	      // //std::cout << psf_fnames[t] << std::endl;
+	      // mycam.replacePSF(psf_fnames[t]);
+	      // mycam.preparePSF(&supersim,0.999);
+	      // for(int q=0;q<instrument_list.size();q++){
+	      // 	PSFoffsets[q] = instrument_list[q]->offsetPSFtoPosition(images[q]["x"].asDouble(),images[q]["y"].asDouble(),&supersim);
+	      // }
+	      // for(int q=0;q<instrument_list.size();q++){
+	      // 	psf_partial_sums[q] = instrument_list[q]->sumPSF(&PSFoffsets[q]);
+	      // }
+	      // RectGrid obs_base_t = createObsBase(&mycam,&supersim,res_x,res_y,out_path);
+	      // ptr_obs_base = &obs_base_t;
+	      //++++++++++++++++++++++++++++++++++++++++++++++++++
+	      
+	      
 	      // construct a vector with the point source brightness in each image at the given time step
 	      std::vector<double> image_signal(images.size());
 	      for(int q=0;q<images.size();q++){
 		image_signal[q] = samp_LC[q]->signal[t];
 	      }
-	      RectGrid obs_pp_light = createPointSourceLight(&supersim,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y); // returns a static variable, no need to delete.
+	      RectGrid obs_pp_light = createPointSourceLight(&supersim,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y);
 
 	      // Adding time-dependent noise here
 	      //mycam.noise->addNoise(&obs_pp_light);
-	      
+
 	      char buffer[100];
 	      sprintf(buffer,"%s%s/OBS_%s_%03d.fits",out_path.c_str(),mock.c_str(),instrument_name.c_str(),t);
 	      std::string fname(buffer);
-	      writeCutout(cutout_scale,&obs_pp_light,&obs_base,fname);
+	      writeCutout(cutout_scale,&obs_pp_light,ptr_obs_base,fname);
 	    }
 	  }
 	  // *********************** End of product **************************************************	    
 
-	  
 	  // Do some cleanup
 	  for(int q=0;q<images.size();q++){
 	    delete(samp_LC[q]);
@@ -366,7 +387,6 @@ int main(int argc,char* argv[]){
 	writeCutout(cutout_scale,&obs_pp_light,&obs_base,fname);
       }
       // *********************** End of product ************************************************************************
-	
 
       for(int lc_in=0;lc_in<LC_intrinsic.size();lc_in++){
 	delete(LC_intrinsic[lc_in]);

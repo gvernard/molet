@@ -46,6 +46,8 @@ RectGrid createPointSourceLight(RectGrid* supersim,std::vector<double> image_sig
 void writeCutout(std::string cutout_scale,RectGrid* obs_pp_light,RectGrid* obs_base,std::string fname);
 
 
+// user provided function for getting the file names of a time dependent PSF
+std::vector<std::string> getFileNames(std::vector<double> tobs,std::string path);
 
 
 class TransformPSF {

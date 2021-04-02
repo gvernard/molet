@@ -337,6 +337,9 @@ void Instrument::replacePSF(std::string path_to_file){
 }
 
 void Instrument::preparePSF(RectGrid* grid,double ratio){
+  delete(this->scaled_psf);
+  delete(this->cropped_psf);
+  delete(this->kernel);
   this->interpolatePSF(grid);
   this->cropPSF(ratio);
   this->createKernel(grid->Nx,grid->Ny);

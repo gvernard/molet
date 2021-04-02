@@ -3,6 +3,8 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
+#include <dirent.h>
+#include <algorithm>
 
 #include "auxiliary_functions.hpp"
 
@@ -380,3 +382,36 @@ double TransformPSF::interpolateValue(double x,double y,PSF* mypsf){
   return 1.0;
 }
 // END:TRANSFORM PSF =====================================================================================
+
+
+
+// user provided function for getting the file names of a time dependent PSF
+std::vector<std::string> getFileNames(std::vector<double> tobs,std::string path){
+  DIR* dir;
+  struct dirent* diread;
+  std::vector<std::string> files;
+  if( (dir=opendir(path.c_str())) != nullptr ){
+    while( (diread=readdir(dir)) != nullptr ){
+      files.push_back(diread->d_name);
+    }
+    closedir(dir);
+  } else {
+    // directory not found
+  }
+  std::sort(files.begin(),files.end(),std::greater<std::string>()); // alphanumerically sorted in descending order
+  files.pop_back(); // removing '.' and '..'
+  files.pop_back();
+  
+  // for(auto file:files){
+  //   std::cout << file << std::endl;
+  // }
+  
+  std::vector<std::string> names(tobs.size());
+  for(int t=0;t<tobs.size();t++){
+    int index = t % files.size();
+    names[t] = path+files[index];
+    //names[t] = "/home/george/Desktop/My Papers/unpublished/2021_molet/extract_with_cosmouline/psfs/3_ECAM.2019-03-01T04:54:57.000_psf_abcdef.fits"; // reference image
+  }
+  return names;
+}
+
