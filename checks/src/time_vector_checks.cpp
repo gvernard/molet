@@ -108,7 +108,7 @@ int main(int argc,char* argv[]){
       fin.open(intrinsic_path+iname+"_LC_intrinsic.json",std::ifstream::in);
       fin >> json_intrinsic;
       fin.close();
-
+      
       // Loop for all different realizations of intrinsic light curves
       std::vector<double> dur;
       for(int i=0;i<json_intrinsic.size();i++){
@@ -123,8 +123,7 @@ int main(int argc,char* argv[]){
 	if( tobs_max < (tin_max+1) ){
 	  fprintf(stderr,"To include intrinsic light curve %d, a later ending observing time by at least %f day is required in instrument %s!\n",i,(tin_max+1)-tobs_max,iname.c_str());
 	  check = true;
-	}
-	
+	}	
       }
 
       if( dur.size()>1 ){
@@ -138,7 +137,6 @@ int main(int argc,char* argv[]){
       duration[n] = dur[0];
     }
 
-
     // Check custom extrinsic light curves for SN
     std::string ex_type = root["point_source"]["variability"]["extrinsic"]["type"].asString();
     if( ex_type == "custom" ){
@@ -150,6 +148,7 @@ int main(int argc,char* argv[]){
 	fin.open(extrinsic_path+iname+"_LC_extrinsic.json",std::ifstream::in);
 	fin >> json_extrinsic;
 	fin.close();
+	std::cout << duration[n] << std::endl;
 
 	for(int q=0;q<json_extrinsic.size();q++){
 	  if( json_extrinsic[q].size() > 0 ){
@@ -158,8 +157,8 @@ int main(int argc,char* argv[]){
 		fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must begin at time=1, i.e. on the first day of the explosion.\n",i,iname.c_str());
 		check = true;
 	      }
-	      int Ntime = json_extrinsic[i]["time"].size();
-	      if( json_extrinsic[i]["time"][Ntime-1] < duration[n] ){
+	      int Ntime = json_extrinsic[q][i]["time"].size();
+	      if( json_extrinsic[q][i]["time"][Ntime-1].asDouble() < duration[n] ){
 		fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must have a longer duration than the corresponding intrinsic light curve(s), viz. %f days.\n",i,iname.c_str(),duration[n]);
 		check = true;
 	      }
