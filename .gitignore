@@ -6,6 +6,7 @@ lib
 obj
 bin
 
+/instrument_modules/modules/KeckAOk_true
 /data/*
 !/data/gerlumph.db
 /plotting/*.png
