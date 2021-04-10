@@ -15,7 +15,7 @@ double transverse_comoving_distance(double Wm,double Wr,double Wk,double Wv,doub
 
   // Transverse comoving distance
   double ratio = 1.00;
-  double x = sqrt(abs(Wk))*DCMR;
+  double x = sqrt(std::abs(Wk))*DCMR;
   if( x > 0.1 ){
     if( Wk > 0){
       ratio = 0.5*(exp(x)-exp(-x))/x;

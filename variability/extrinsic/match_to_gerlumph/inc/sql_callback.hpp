@@ -1,6 +1,8 @@
 #ifndef SQL_CALLBACK_HPP
 #define SQL_CALLBACK_HPP
 
+#include <cstring>
+#include <memory>
 #include <sqlite3.h> 
 
 struct dbEntry {
