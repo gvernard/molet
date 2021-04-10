@@ -175,9 +175,20 @@ then
 	    myprocess "$msg" "$cmd" "$log_file"
 	elif [ $ex_type = expanding_supernova ]
 	then
-	    msg="Getting 'expanding_supernova' microlensing variability for each image..."
-	    cmd=$molet_home"variability/extrinsic/expanding_supernova/bin/expanding_supernova "$infile" "$out_path
-	    myprocess "$msg" "$cmd" "$log_file"
+	    cmd=$molet_home"checks/bin/confirm_convolutions "$infile" "$out_path
+	    eval "$cmd"
+	    exit_code=$?
+	    
+	    if [ "$exit_code" -ne "0" ]
+	    then
+		echo "Quitting MOLET..."
+		exit
+	    else
+		msg="Getting 'expanding_supernova' microlensing variability for each image..."
+		cmd=$molet_home"variability/extrinsic/expanding_supernova/bin/expanding_supernova "$infile" "$out_path
+		myprocess "$msg" "$cmd" "$log_file"
+		exit
+	    fi
 	fi  
     fi    
 fi
