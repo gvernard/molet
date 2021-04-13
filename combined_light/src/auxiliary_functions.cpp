@@ -123,6 +123,7 @@ std::vector<LightCurve*> conversions(Json::Value lcs_json,double zs,double scale
     lcs[i] = new LightCurve(lcs_json[i]);    
     for(int j=0;j<lcs[i]->signal.size();j++){
       lcs[i]->signal[j] = scale*pow(10.0,-0.4*lcs[i]->signal[j]); // Convert from magnitudes to intensities and scale by a factor if necessary
+      //lcs[i]->signal[j] = pow(10.0,-0.4*(lcs[i]->signal[j]+scale)); // Add constant to magnitude (Dmag) and convert from magnitudes to intensities
       //lcs[i]->time[j] *= fac; // Convert time to the observer's frame
     }
   }	

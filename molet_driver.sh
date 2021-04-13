@@ -187,7 +187,6 @@ then
 		msg="Getting 'expanding_supernova' microlensing variability for each image..."
 		cmd=$molet_home"variability/extrinsic/expanding_supernova/bin/expanding_supernova "$infile" "$out_path
 		myprocess "$msg" "$cmd" "$log_file"
-		exit
 	    fi
 	fi  
     fi    
