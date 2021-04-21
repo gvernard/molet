@@ -125,33 +125,33 @@ int main(int argc,char* argv[]){
       fixed.createGridLocations();
 
       Json::Value image;
-      for(int k=0;k<Nfilters;k++){
-	int Ntime = times_rhalfs[k][m]["times"].size();
+      int Ntime = times_rhalfs[0][m]["times"].size();
 
-	double** raw_signal  = (double**) malloc(Nfixed*sizeof(double*));
-	double** raw_dsignal = (double**) malloc(Nfixed*sizeof(double*));
+      double** raw_signal  = (double**) malloc(Nfixed*sizeof(double*));
+      double** raw_dsignal = (double**) malloc(Nfixed*sizeof(double*));
+      for(int f=0;f<Nfixed;f++){
+	raw_signal[f]  = (double*) malloc(Ntime*sizeof(double));
+	raw_dsignal[f] = (double*) malloc(Ntime*sizeof(double));
+      }
+
+      for(int t=0;t<Ntime;t++){
+	double rhalf = times_rhalfs[0][m]["rhalfs"][t].asDouble(); // half light radius in 10^14cm
+	UniformDisc profile(map.pixSizePhys,rhalf,incl,orient); // shape of the brightness profile
+
+	EffectiveMap emap(maxOffset,&map);
+	Kernel kernel(map.Nx,map.Ny);
+	kernel.setKernel(&profile);
+	map.convolve(&kernel,&emap);
+	
+	fixed.setEmap(&emap);
+	fixed.extract();
 	for(int f=0;f<Nfixed;f++){
-	  raw_signal[f]  = (double*) malloc(Ntime*sizeof(double));
-	  raw_dsignal[f] = (double*) malloc(Ntime*sizeof(double));
+	  raw_signal[f][t]  = fixed.m[f];
+	  raw_dsignal[f][t] = fixed.dm[f];
 	}
-
-	for(int t=0;t<Ntime;t++){
-	  double rhalf = times_rhalfs[k][m]["rhalfs"][t].asDouble(); // half light radius in 10^14cm
-	  UniformDisc profile(map.pixSizePhys,rhalf,incl,orient); // shape of the brightness profile
-
-	  EffectiveMap emap(maxOffset,&map);
-	  Kernel kernel(map.Nx,map.Ny);
-	  kernel.setKernel(&profile);
-	  map.convolve(&kernel,&emap);
-
-	  fixed.setEmap(&emap);
-	  fixed.extract();
-	  for(int f=0;f<Nfixed;f++){
-	    raw_signal[f][t]  = fixed.m[f];
-	    raw_dsignal[f][t] = fixed.dm[f];
-	  }
-	}
-
+      }
+      
+      for(int k=0;k<Nfilters;k++){
 	// Store light curve for filter for image
 	std::string instrument_name = root["instruments"][k]["name"].asString();
 	Json::Value lcs;
@@ -171,19 +171,17 @@ int main(int argc,char* argv[]){
 	  lcs.append(lc);
 	}
 	image[instrument_name] = lcs;
-	
-	// Some clean up
-	for(int f=0;f<Nfixed;f++){
-	  delete(raw_signal[f]);
-	  delete(raw_dsignal[f]);
-	}
-	delete(raw_signal);
-	delete(raw_dsignal);
-
-	printf("Map %d filter %d done.\n",m,k);
       }
+      printf("Map %d done.\n",m);
       images.append(image);
-
+	
+      // Some clean up
+      for(int f=0;f<Nfixed;f++){
+	delete(raw_signal[f]);
+	delete(raw_dsignal[f]);
+      }
+      delete(raw_signal);
+      delete(raw_dsignal);
       
       // Fixed locations (different for each map, but always the same orientation - minus the shear angle),
       // in normalized units (0 to 1)

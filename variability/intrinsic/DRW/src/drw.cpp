@@ -98,7 +98,7 @@ int main(int argc,char* argv[]){
   if( tmin < 0 ){
     tmin = 0;
   }
-  //std::cout << tmin << " " << tmax << std::endl;
+  std::cout << tmin << " " << tmax << std::endl;
 
   // Get time vector in the source reference frame
   // I add a single day to tmin every time in the observer's frame and then convert to the source reference frame.
@@ -106,7 +106,7 @@ int main(int argc,char* argv[]){
   int N = (int) ceil(tmax -tmin);
   std::vector<double> time(N);
   for(int t=0;t<N;t++){
-    time[t] = (tmin + t)/(1+zs);
+    time[t] = (tmin + t);///(1+zs);
   }
   //=========================================================================================
 

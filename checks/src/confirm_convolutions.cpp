@@ -104,7 +104,7 @@ int main(int argc,char* argv[]){
       tot_times[m] = time;
       tot_rhalfs[m] = rhalfs;
     }
-  }  
+  }
   //================= END:CREATE TIME AND SIZE VECTORS ===============
 
 
@@ -115,8 +115,8 @@ int main(int argc,char* argv[]){
     convs_per_filter += tot_times[m].size();
   }
   printf(">>>>>> Please pay ATTENTION to the following: <<<<<<\n");
-  printf("   The total number of convolutions will be %d x %d.\n",convs_per_filter,Nfilters);
-  double conv_fac = convs_per_filter*Nfilters/3600.0;
+  printf("   The total number of convolutions will be %d.\n",convs_per_filter);
+  double conv_fac = convs_per_filter/3600.0;
   printf("   It will approximately take %.2f hours on the CPU and %.2f hours on the GPU.\n",conv_fac*13.0,conv_fac*3.0); // convolution on a CPU lasts 13s and on the GPU 3s (approximate numbers)
   printf("   (if you want to compille gerlumphpp for GPUs see here: https://github.com/gvernard/gerlumphpp)\n");
   printf("   If that is too long, consider shortening the observing time for each instrument, or increasing the fractional_increase parameter, or decreasing the size_cutoff parameter.\n");

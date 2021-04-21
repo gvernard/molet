@@ -385,6 +385,7 @@ int main(int argc,char* argv[]){
 	// Finalize output (e.g convert to magnitudes) and write
 	std::string fname = out_path+"output/OBS_"+instrument_name+"_static.fits";
 	writeCutout(cutout_scale,&obs_pp_light,&obs_base,fname);
+	//FitsInterface::writeFits(obs_base.Nx,obs_base.Ny,obs_base.z,fname);
       }
       // *********************** End of product ************************************************************************
 

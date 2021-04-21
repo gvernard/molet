@@ -23,11 +23,12 @@ std::vector< std::vector<double> > getDRWLightCurve(std::vector<double> time,dou
   double sf  = pow(10.0,log_sf);
   double tau = pow(10.0,log_tau);
 
-  //  sf  = 0.318295739;
-  //  tau = 79.8;
+  sf  = 0.318295739;
+  tau = 10009.8;
 
   std::cout << "sf: " << sf << std::endl;
   std::cout << "tau: " << tau << std::endl;
+  std::cout << "mean: " << mean_mag << std::endl;
 
   
   // Calculate the light curve
