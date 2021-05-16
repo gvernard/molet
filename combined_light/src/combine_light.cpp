@@ -226,6 +226,7 @@ int main(int argc,char* argv[]){
 
 
 
+      std::srand(123);
       
       // Loop over intrinsic light curves
       //0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=
@@ -240,128 +241,70 @@ int main(int argc,char* argv[]){
 	  std::string mock = buffer;
 	  //std::cout << mock << std::endl;
 
+	  // ********** BEGIN:time delay loop **********
+	  for(int itd=0;itd<3;itd++){
 
+	    // Assign time delays randomly and use 'mod_images' instead of 'images'
+	    Json::Value mod_images = images;
+	    for(int q=0;q<images.size();q++){
+	      mod_images[q]["dt"] = images[q]["dt"].asDouble() + std::rand() % 20 + 1;
+	    }
+	    // We also need to get the new td_max here
+	    double td_max = 0.0;
+	    for(int q=0;q<mod_images.size();q++){
+	      double td = mod_images[q]["dt"].asDouble();
+	      if( td > td_max ){
+		td_max = td;
+	      }
+	    }
+	    // We need a file name to save the light curves with the modified delays
+	    char tmp_buffer[4];
+	    sprintf(tmp_buffer,"%03d",itd);
+	    std::string file_spec = tmp_buffer;
+	    
 	  
-	  // *********************** Product: Observed continuous and sampled light curves ***********************
-	  // cont_LC and samp_LC contain the light curves for ALL the images (i.e. with or without microlensing).
-	  // The first is based on the continuous time, tcont, and the second on the observed (sampled) time, tobs.
-	  std::vector<LightCurve*> cont_LC(images.size());
-	  std::vector<LightCurve*> samp_LC(images.size());
-	  for(int q=0;q<images.size();q++){
-	    cont_LC[q] = new LightCurve(tcont);
-	    samp_LC[q] = new LightCurve(tobs);
-	  }
-
-	  if( supernova ){
-
-	    // Images with microlensing: Combine extrinsic and intrinsic light curves with the given time delay at the same starting time
-	    for(int i=0;i<images_micro.size();i++){
-	      int q = images_micro[i];
-	      double td = td_max - images[q]["dt"].asDouble();
-	      double macro_mag = abs(images[q]["mag"].asDouble());
-	      combineSupernovaInExSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],cont_LC[q]);
-	      combineSupernovaInExSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],samp_LC[q]);
+	    // *********************** Product: Observed continuous and sampled light curves ***********************
+	    // cont_LC and samp_LC contain the light curves for ALL the images (i.e. with or without microlensing).
+	    // The first is based on the continuous time, tcont, and the second on the observed (sampled) time, tobs.
+	    std::vector<LightCurve*> cont_LC(images.size());
+	    for(int q=0;q<images.size();q++){
+	      cont_LC[q] = new LightCurve(tcont);
 	    }
 
-	    // Images without microlensing: Just shift the intrinsic light curve by the time delay
-	    for(int i=0;i<images_no_micro.size();i++){
-	      int q = images_no_micro[i];
-	      double td = td_max - images[q]["dt"].asDouble();
-	      double macro_mag = abs(images[q]["mag"].asDouble());
-	      justSupernovaInSignal(td,macro_mag,tcont,LC_intrinsic[lc_in],cont_LC[q]);
-	      justSupernovaInSignal(td,macro_mag,tobs,LC_intrinsic[lc_in],samp_LC[q]);
-	    }	    
-	    
-	  } else {
-	    
 	    // Calculate the combined light curve for each image with microlensing
 	    for(int i=0;i<images_micro.size();i++){
 	      int q = images_micro[i];
-	      double td = td_max - images[q]["dt"].asDouble();
+	      double td = td_max - mod_images[q]["dt"].asDouble(); // mod_images used here
 	      double macro_mag = abs(images[q]["mag"].asDouble());
 	      if( unmicro ){
 		combineInExUnSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],LC_unmicro[lc_in],cont_LC[q]);
-		combineInExUnSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],LC_unmicro[lc_in],samp_LC[q]);
 	      } else {
 		combineInExSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],cont_LC[q]);
-		combineInExSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],samp_LC[q]);
 	      }
 	    }
 	    
 	    // Calculate the combined light curve for each image that doesn't have any microlensing
 	    for(int i=0;i<images_no_micro.size();i++){
 	      int q = images_no_micro[i];
-	      double td = td_max - images[q]["dt"].asDouble();
+	      double td = td_max - mod_images[q]["dt"].asDouble(); // mod_images used here
 	      double macro_mag = abs(images[q]["mag"].asDouble());
 	      if( unmicro ){
 		combineInUnSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_unmicro[lc_in],cont_LC[q]);
-		combineInUnSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_unmicro[lc_in],samp_LC[q]);
 	      } else {
 		justInSignal(td,macro_mag,tcont,LC_intrinsic[lc_in],cont_LC[q]);
-		justInSignal(td,macro_mag,tobs,LC_intrinsic[lc_in],samp_LC[q]);
 	      }
 	    }
 
-	  }
-
-	  
-	  // Write json light curves and clean up
-	  outputLightCurvesJson(cont_LC,out_path+mock+"/"+instrument_name+"_LC_continuous.json");
-	  outputLightCurvesJson(samp_LC,out_path+mock+"/"+instrument_name+"_LC_sampled.json");
-	  for(int q=0;q<images.size();q++){
-	    delete(cont_LC[q]);
-	    // we don't delete samp_LC yet because it is needed in case of outputing cutouts
-	  }
-	  // *********************** End of product **************************************************************
-
-	  
-	  // *********************** Product: Observed sampled cut-outs (images) *****************************
-	  if( root["point_source"]["output_cutouts"].asBool() ){
-	    RectGrid* ptr_obs_base = &obs_base;
-
-	    // Create list of PSF file names +++++++++++++++++++	    
-	    //std::vector<std::string> psf_fnames = getFileNames(tobs,argv[4]); // user-provided function to get the file names of the PSFs as a function of timestep t
-	    //++++++++++++++++++++++++++++++++++++++++++++++++++	    
+	    // Write json light curves and clean up
+	    outputLightCurvesJson(cont_LC,out_path+mock+"/"+instrument_name+"_"+file_spec+"_LC_continuous.json");
+	    for(int q=0;q<images.size();q++){
+	      delete(cont_LC[q]);
+	    }
 	    
-	    for(int t=0;t<tobs.size();t++){
-
-	      // Time-dependent PSF goes here ++++++++++++++++++++
-	      // //std::cout << psf_fnames[t] << std::endl;
-	      // mycam.replacePSF(psf_fnames[t]);
-	      // mycam.preparePSF(&supersim,0.999);
-	      // for(int q=0;q<instrument_list.size();q++){
-	      // 	PSFoffsets[q] = instrument_list[q]->offsetPSFtoPosition(images[q]["x"].asDouble(),images[q]["y"].asDouble(),&supersim);
-	      // }
-	      // for(int q=0;q<instrument_list.size();q++){
-	      // 	psf_partial_sums[q] = instrument_list[q]->sumPSF(&PSFoffsets[q]);
-	      // }
-	      // RectGrid obs_base_t = createObsBase(&mycam,&supersim,res_x,res_y,out_path);
-	      // ptr_obs_base = &obs_base_t;
-	      //++++++++++++++++++++++++++++++++++++++++++++++++++
-	      
-	      
-	      // construct a vector with the point source brightness in each image at the given time step
-	      std::vector<double> image_signal(images.size());
-	      for(int q=0;q<images.size();q++){
-		image_signal[q] = samp_LC[q]->signal[t];
-	      }
-	      RectGrid obs_pp_light = createPointSourceLight(&supersim,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y);
-
-	      // Adding time-dependent noise here
-	      //mycam.noise->addNoise(&obs_pp_light);
-
-	      char buffer[100];
-	      sprintf(buffer,"%s%s/OBS_%s_%03d.fits",out_path.c_str(),mock.c_str(),instrument_name.c_str(),t);
-	      std::string fname(buffer);
-	      writeCutout(cutout_scale,&obs_pp_light,ptr_obs_base,fname);
-	    }
 	  }
-	  // *********************** End of product **************************************************	    
-
-	  // Do some cleanup
-	  for(int q=0;q<images.size();q++){
-	    delete(samp_LC[q]);
-	  }
+	  // ********** END:time delay loop **********
+	  
+	  // *********************** End of product **************************************************************
 
 	  //std::cout << "done" << std::endl;
 	}
