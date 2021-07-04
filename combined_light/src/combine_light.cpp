@@ -39,36 +39,38 @@ int main(int argc,char* argv[]){
 
   //=============== Initialization for time varying light ONLY ==================
   // Calculate the common continuous observed time and perform checks with the intrinsic and unmicro lensed light curves
-
-  // Read the multiple images' parameters from JSON
   Json::Value images;
-  fin.open(out_path+"output/multiple_images.json",std::ifstream::in);
-  fin >> images;
-  fin.close();
-
-  // Get maximum image time delay
   double td_max = 0.0;
-  for(int q=0;q<images.size();q++){
-    double td = images[q]["dt"].asDouble();
-    if( td > td_max ){
-      td_max = td;
-    }
-  }
-  
-  // Read tobs_min and tobs_max
-  Json::Value tobs_json;
-  fin.open(out_path+"output/tobs.json",std::ifstream::in);
-  fin >> tobs_json;
-  fin.close();
-  double tobs_max = tobs_json["tobs_max"].asDouble();
-  double tobs_min = tobs_json["tobs_min"].asDouble();
+  std::vector<double> tcont;
+  if( root.isMember("point_source") ){
+    // Read the multiple images' parameters from JSON
+    fin.open(out_path+"output/multiple_images.json",std::ifstream::in);
+    fin >> images;
+    fin.close();
 
-  // Create a 'continuous' time vector: daily cadence
-  // The extrinsic light curves have to be calculated in exactly the same range as tcont.
-  int Ndays = (int) (ceil(tobs_max) - floor(tobs_min));
-  std::vector<double> tcont(Ndays);
-  for(int t=0;t<Ndays;t++){
-    tcont[t] = tobs_min + t;
+    // Get maximum image time delay
+    for(int q=0;q<images.size();q++){
+      double td = images[q]["dt"].asDouble();
+      if( td > td_max ){
+	td_max = td;
+      }
+    }
+  
+    // Read tobs_min and tobs_max
+    Json::Value tobs_json;
+    fin.open(out_path+"output/tobs.json",std::ifstream::in);
+    fin >> tobs_json;
+    fin.close();
+    double tobs_max = tobs_json["tobs_max"].asDouble();
+    double tobs_min = tobs_json["tobs_min"].asDouble();
+    
+    // Create a 'continuous' time vector: daily cadence
+    // The extrinsic light curves have to be calculated in exactly the same range as tcont.
+    int Ndays = (int) (ceil(tobs_max) - floor(tobs_min));
+    tcont.resize(Ndays);
+    for(int t=0;t<Ndays;t++){
+      tcont[t] = tobs_min + t;
+    }
   }
   //=============================================================================
   
