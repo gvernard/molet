@@ -84,12 +84,19 @@ int main(int argc,char* argv[]){
 
   // Get detA contours on the image plane
   std::vector<Contour> contours = mooreNeighborTracing(&detA);
-
-  // Add first point as last and close the polygon
+  
+  // Check nonzero contours and add first point as last to close the polygon
+  std::vector<Contour> clean_contours;
   for(int i=0;i<contours.size();i++){
-    contours[i].x.push_back( contours[i].x[0] );
-    contours[i].y.push_back( contours[i].y[0] );
+    if( contours[i].x.size() > 4 ){
+      contours[i].x.push_back( contours[i].x[0] );
+      contours[i].y.push_back( contours[i].y[0] );
+      clean_contours.push_back( contours[i]);
+    }
   }
+  contours.clear();
+  contours = clean_contours;
+  clean_contours.clear();
 
   // Create caustic contours, and deflect the critical contours to fill them
   std::vector<Contour> caustics(contours.size());

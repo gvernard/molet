@@ -30,10 +30,10 @@ int main(int argc,char* argv[]){
   fin >> root;
   fin.close();
 
-  std::string in_path = argv[1];
+  std::string in_path = argv[2];
   std::string input   = in_path+"input_files/";
 
-  std::string out_path = argv[2];
+  std::string out_path = argv[3];
   std::string output = out_path+"output/";
 
   // Read the cosmological parameters

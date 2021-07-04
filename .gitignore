@@ -7,6 +7,7 @@ obj
 bin
 
 /instrument_modules/modules/KeckAOk_true
+/instrument_modules/modules/aymericCAM
 /data/*
 !/data/gerlumph.db
 /plotting/*.png
