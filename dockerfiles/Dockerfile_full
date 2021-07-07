@@ -106,6 +106,12 @@ RUN git clone https://github.com/open-source-parsers/jsoncpp.git \
 	&&	make \
 	&&	make install
 
+# Install jq and libsqlite3 necessary to run MOLET
+RUN apt-get update\
+	&& apt-get install -y\
+	libsqlite3-dev\
+	jq\
+	&& rm -r /var/lib/apt/lists/*
 
 ENV CPATH $CPATH:$LIBDIR/fftw/include:$LIBDIR/cfitsio/include:$LIBDIR/CCfits/include:$LIBDIR/libpng/include:$LIBDIR/gmp/include:$LIBDIR/mpfr/include:$LIBDIR/boost/include:$LIBDIR/CGAL/include:$LIBDIR/jsoncpp/include
 ENV LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib:$LIBDIR/libpng/lib:$LIBDIR/gmp/lib:$LIBDIR/mpfr/lib:$LIBDIR/boost/lib:$LIBDIR/CGAL/lib:$LIBDIR/jsoncpp/lib
