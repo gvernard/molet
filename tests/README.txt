@@ -5,3 +5,4 @@ Here is the summary of all the examples included:
 "test_2"  -  Same as 'test_0', but now the microlensing light curves will be generated from magnification maps on the fly, using the 'moving_disc' model. If the maps are missing, a download link is provided automatically.
 "test_3"  -  A selected microlensing light curve trajectory from 'test_0' (index: 20), for which cutouts are also calculated.
 "test_4"  -  Same as 'test_0' but now the point source is replaced by an expanding supernova and the cadence of the observations is changed.
+"test_5"  -  Same as 'test_0' but now the point source is removed and there are gridded lens potential perturbations present.
