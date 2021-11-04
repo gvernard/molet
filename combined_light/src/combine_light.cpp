@@ -125,6 +125,11 @@ int main(int argc,char* argv[]){
 
       // Convert to magnitudes
       if( cutout_scale == "mag" ){
+
+	// The units of obs_base are electrons/(s arcsec^2), so multiply it by the area of a pixel and exposure time
+	
+	
+
 	for(int i=0;i<obs_base.Nz;i++){
 	  obs_base.z[i] = -2.5*log10(obs_base.z[i]);
 	}

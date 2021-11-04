@@ -3,6 +3,7 @@
 
 #include "vkllib.hpp"
 
+#include "instruments.hpp"
 #include "noise.hpp"
 
 // START: NoNoise ====================================
@@ -10,10 +11,23 @@ NoNoise::NoNoise(){}
 void NoNoise::addNoise(RectGrid* mydata){}
 // END: NoNoise ======================================
 
+
+// START: PoissonNoise ============================
+PoissonNoise::PoissonNoise(double a,double b,double c,double d,double readout,double res): sn(a),texp(b),Msb(c),ZP(d){
+  this->Ibg = pow(10.0,-0.4*(Msb-ZP))*pow(res,2)*texp + pow(readout,2); // the sky background in electrons
+}
+
+void PoissonNoise::addNoise(RectGrid* mydata){
+  
+} 
+// END: PoissonNoise ==============================
+
+
 // START: UniformGaussian ============================
 UniformGaussian::UniformGaussian(double sn){
   this->sn = sn;
 }
+
 void UniformGaussian::addNoise(RectGrid* mydata){
   this->seed += 2; // increment seed at each call
 
@@ -37,7 +51,8 @@ void UniformGaussian::addNoise(RectGrid* mydata){
     }
   }
 
-  // renormalize by adding the minimum (negative) noise value
+  // Renormalize by adding the minimum (negative) noise value
+  // This is needed because the pixels can contain nan's if mag scale is used
   for(int i=0;i<mydata->Nz;i++){
     mydata->z[i] += abs(min_noise);
   }

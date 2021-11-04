@@ -27,7 +27,7 @@ RUN wget http://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio-3.47.tar.gz 
 	&&	make install
 
 # Install CCfits
-RUN wget https://heasarc.gsfc.nasa.gov/fitsio/CCfits/CCfits-2.5.tar.gz \
+RUN wget https://heasarc.gsfc.nasa.gov/fitsio/CCfits-2.5/CCfits-2.5.tar.gz \
 	&&	tar -xvf CCfits-2.5.tar.gz \
 	&&	cd CCfits \
 	&&	./configure --prefix=$LIBDIR/CCfits --with-cfitsio=$LIBDIR/cfitsio \

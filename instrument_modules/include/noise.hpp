@@ -26,8 +26,19 @@ public:
 class UniformGaussian: public BaseNoise {
 public:
   const double two_pi = 2.0*M_PI;
-  double sn; // signal to noise ratio
+  double sn;   // signal to noise ratio
   UniformGaussian(double sn);
+  void addNoise(RectGrid* mydata);
+};
+
+class PoissonNoise: public BaseNoise {
+public:
+  const double two_pi = 2.0*M_PI;
+  double texp; // exposure time in seconds
+  double Msb;  // the sky background in mag/arcsec^2
+  double ZP;   // zero-point, Vega's aparent magnitude in V
+  double Ibg;  // the sky background in electrons
+  UniformGaussian(double sn,double texp,double Msb,double ZP,double readout,double res);
   void addNoise(RectGrid* mydata);
 };
 
@@ -41,13 +52,18 @@ public:
     return &dum;
   }
 
-  BaseNoise* createNoiseModel(Json::Value noise_pars){
+  BaseNoise* createNoiseModel(Json::Value noise_pars,Instrument* instrument){
     std::string type = noise_pars["type"].asString();
     if( type == "NoNoise" ){
       return new NoNoise();
     } else if( type == "UniformGaussian" ){
       double sn = noise_pars["sn"].asDouble();
       return new UniformGaussian(sn);
+    } else if( type == "PoissonNoise" ){
+      double texp = noise_pars["texp"].asDouble();
+      double Msb = noise_pars["Msb"].asDouble();
+      double ZP = noise_pars["ZP"].asDouble();
+      return new PoissonNoise(texp,Msb,ZP,instrument->readout,instrument->resolution);
     } else {
       return new NoNoise();
     }

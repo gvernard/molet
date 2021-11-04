@@ -25,11 +25,13 @@ public:
   double lambda_min; // in nm
   double lambda_max; // in nm
   double resolution; // in arcsec
+  double readout;    // in electrons
+  
   RectGrid* original_psf = NULL;
   RectGrid* scaled_psf   = NULL;
   RectGrid* cropped_psf  = NULL;
-  double* kernel           = NULL;
-  BaseNoise* noise         = NULL;
+  double* kernel         = NULL;
+  BaseNoise* noise       = NULL;
   
   Instrument(std::string name,Json::Value noise_pars);
   ~Instrument();

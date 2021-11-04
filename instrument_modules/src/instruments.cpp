@@ -56,14 +56,15 @@ Instrument::Instrument(std::string name,Json::Value noise_pars):name(name){
   this->lambda_min = specs["lambda_min"].asDouble();
   this->lambda_max = specs["lambda_max"].asDouble();
   this->resolution = specs["resolution"].asDouble();
-
+  this->readout    = specs["readout"].asDouble();
+  
   int pix_x  = specs["psf"]["pix_x"].asInt();
   int pix_y  = specs["psf"]["pix_y"].asInt();
   int width  = specs["psf"]["width"].asDouble();
   int height = specs["psf"]["height"].asDouble();
   this->original_psf = new RectGrid(pix_x,pix_y,0,width,0,height,full_path+"psf.fits");
 
-  this->noise = FactoryNoiseModel::getInstance()->createNoiseModel(noise_pars);
+  this->noise = FactoryNoiseModel::getInstance()->createNoiseModel(noise_pars,this);
 }
 
 Instrument::~Instrument(){
