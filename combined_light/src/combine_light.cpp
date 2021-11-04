@@ -105,11 +105,8 @@ int main(int argc,char* argv[]){
     mycam.preparePSF(&supersim,0.999);
     
     // Create base image (lens light and extended lensed source)
-    RectGrid obs_base = createObsBase(&mycam,&supersim,res_x,res_y,out_path);
+    RectGrid obs_base = createObsBase(&mycam,&supersim,res_x,res_y,out_path); // remember, the units are electrons/(s arcsec^2)
     
-    // Adding noise here
-    mycam.noise->addNoise(&obs_base);
-
     // All the static light components have been created.
     // The resulting observed image (not super-resolved) is "obs_base".
     // If there is no time dimension required, the code just outputs the obs_base image and stops.
@@ -123,17 +120,9 @@ int main(int argc,char* argv[]){
     if( !root.isMember("point_source") ){
       //=============== CREATE A SINGLE STATIC IMAGE ====================
 
-      // Convert to magnitudes
-      if( cutout_scale == "mag" ){
+      // Adding noise here
+      mycam.noise->addNoise(&obs_base);
 
-	// The units of obs_base are electrons/(s arcsec^2), so multiply it by the area of a pixel and exposure time
-	
-	
-
-	for(int i=0;i<obs_base.Nz;i++){
-	  obs_base.z[i] = -2.5*log10(obs_base.z[i]);
-	}
-      }
       // Output the observed base image
       FitsInterface::writeFits(obs_base.Nx,obs_base.Ny,obs_base.z,out_path + "output/OBS_" + instrument_name + ".fits");
       

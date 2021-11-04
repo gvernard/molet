@@ -12,7 +12,9 @@ class RectGrid;
 class BaseNoise {
 public:
   int seed = 123;
+  double texp; // exposure time in seconds
   BaseNoise(){};
+  BaseNoise(double texp): texp(texp){};
   ~BaseNoise(){};
   virtual void addNoise(RectGrid* mydata) = 0;
 };
@@ -34,11 +36,11 @@ public:
 class PoissonNoise: public BaseNoise {
 public:
   const double two_pi = 2.0*M_PI;
-  double texp; // exposure time in seconds
   double Msb;  // the sky background in mag/arcsec^2
   double ZP;   // zero-point, Vega's aparent magnitude in V
   double Ibg;  // the sky background in electrons
-  UniformGaussian(double sn,double texp,double Msb,double ZP,double readout,double res);
+  double res2; // pixel area in arcsec^2
+  PoissonNoise(double texp,double Msb,double ZP,double readout,double res);
   void addNoise(RectGrid* mydata);
 };
 
