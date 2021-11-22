@@ -124,7 +124,8 @@ int main(int argc,char* argv[]){
       //=============== CREATE A SINGLE STATIC IMAGE ====================
 
       // Adding noise here and output realization
-      mycam.noise->calculateNoise(&obs_base);
+      mycam.noise->initializeFromData(&obs_base);
+      mycam.noise->calculateNoise();
       mycam.noise->addNoise(&obs_base);
       mycam.noise->outputNoiseProperties(out_path + "output/",instrument_name);
       
@@ -381,7 +382,8 @@ int main(int argc,char* argv[]){
 	RectGrid obs_pp_light = createPointSourceLight(&supersim,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y);
 	
 	// Adding time-dependent noise here
-	mycam.noise->calculateNoise(&obs_pp_light);
+	mycam.noise->initializeFromData(&obs_pp_light);
+	mycam.noise->calculateNoise();
 	mycam.noise->addNoise(&obs_pp_light);
 	mycam.noise->outputNoiseProperties(out_path + "output/",instrument_name);
 	

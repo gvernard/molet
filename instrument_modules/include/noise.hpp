@@ -12,6 +12,7 @@ class RectGrid;
 class BaseNoise {
 public:
   int seed = 123;
+  const double two_pi = 2.0*M_PI;
   double texp; // exposure time in seconds
   RectGrid* noise_realization = NULL;
 
@@ -22,11 +23,13 @@ public:
   void addNoise(RectGrid* mydata);
   
   virtual void setGrid(RectGrid* obs_grid) = 0;
-  virtual void calculateNoise(RectGrid* mydata) = 0;
+  virtual void initializeFromData(RectGrid* mydata) = 0;
+  virtual void calculateNoise() = 0;
   virtual void outputNoiseProperties(std::string out_path,std::string instrument_name) = 0;
 
 protected:
   void outputNoiseRealization(std::string output,std::string instrument_name);
+  std::vector<double> getBoxMullerVector(int N);
 };
 
 
@@ -35,23 +38,24 @@ class NoNoise: public BaseNoise {
 public:
   NoNoise(){};
   void setGrid(RectGrid* obs_grid){};
-  void calculateNoise(RectGrid* mydata){};
+  void initializeFromData(RectGrid* mydata){};
+  void calculateNoise(){};
   void outputNoiseProperties(std::string out_path,std::string instrument_name){};
 };
 
 class UniformGaussian: public BaseNoise {
 public:
-  const double two_pi = 2.0*M_PI;
   double sn;   // signal to noise ratio
+  double sigma;
   UniformGaussian(double sn);
   void setGrid(RectGrid* obs_grid);
-  void calculateNoise(RectGrid* mydata);
+  void initializeFromData(RectGrid* mydata);
+  void calculateNoise();
   void outputNoiseProperties(std::string out_path,std::string instrument_name);
 };
 
 class PoissonNoise: public BaseNoise {
 public:
-  const double two_pi = 2.0*M_PI;
   double Msb;  // the sky background in mag/arcsec^2
   double ZP;   // zero-point, Vega's aparent magnitude in V
   double Ibg;  // the sky background in electrons
@@ -60,7 +64,8 @@ public:
   PoissonNoise(double texp,double Msb,double ZP,double readout,double res);
   ~PoissonNoise();
   void setGrid(RectGrid* obs_grid);
-  void calculateNoise(RectGrid* mydata);
+  void initializeFromData(RectGrid* mydata);
+  void calculateNoise();
   void outputNoiseProperties(std::string out_path,std::string instrument_name);
 };
 
