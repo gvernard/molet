@@ -130,7 +130,10 @@ int main(int argc,char* argv[]){
       mycam.noise->outputNoiseProperties(out_path + "output/",instrument_name);
       
       // Output the observed base image
-      FitsInterface::writeFits(obs_base.Nx,obs_base.Ny,obs_base.z,out_path + "output/OBS_" + instrument_name + ".fits");
+      std::vector<std::string> keys{"xmin","xmax","ymin","ymax"};
+      std::vector<std::string> values{std::to_string(obs_base.xmin),std::to_string(obs_base.xmax),std::to_string(obs_base.ymin),std::to_string(obs_base.ymax)};
+      std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
+      FitsInterface::writeFits(obs_base.Nx,obs_base.Ny,obs_base.z,keys,values,descriptions,out_path + "output/OBS_" + instrument_name + ".fits");
       
     } else {
       //=============== CREATE THE TIME VARYING LIGHT ====================

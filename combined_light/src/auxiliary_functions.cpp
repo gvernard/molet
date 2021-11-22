@@ -349,7 +349,10 @@ void writeCutout(std::string cutout_scale,RectGrid* obs_pp_light,RectGrid* obs_b
       obs_pp_light->z[i] = obs_pp_light->z[i] + obs_base->z[i];
     }
   }
-  FitsInterface::writeFits(obs_pp_light->Nx,obs_pp_light->Ny,obs_pp_light->z,fname);
+  std::vector<std::string> keys{"xmin","xmax","ymin","ymax"};
+  std::vector<std::string> values{std::to_string(obs_base->xmin),std::to_string(obs_base->xmax),std::to_string(obs_base->ymin),std::to_string(obs_base->ymax)};
+  std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
+  FitsInterface::writeFits(obs_pp_light->Nx,obs_pp_light->Ny,obs_pp_light->z,keys,values,descriptions,fname);
 }
 // END:IMAGE MANIPULATION FUNCTION ==========================================================================================
 
