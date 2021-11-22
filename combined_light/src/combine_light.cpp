@@ -100,12 +100,15 @@ int main(int argc,char* argv[]){
     int super_res_x = 10*res_x;
     int super_res_y = 10*res_y;
     RectGrid supersim(super_res_x,super_res_y,xmin,xmax,ymin,ymax);    
-
+    
     // Get the psf in super-resolution, crop it, and create convolution kernel
     mycam.preparePSF(&supersim,0.999);
-    
+
     // Create base image (lens light and extended lensed source)
     RectGrid obs_base = createObsBase(&mycam,&supersim,res_x,res_y,out_path); // remember, the units are electrons/(s arcsec^2)
+
+    // Assign noise grid
+    mycam.noise->setGrid(&obs_base);
     
     // All the static light components have been created.
     // The resulting observed image (not super-resolved) is "obs_base".
@@ -120,9 +123,11 @@ int main(int argc,char* argv[]){
     if( !root.isMember("point_source") ){
       //=============== CREATE A SINGLE STATIC IMAGE ====================
 
-      // Adding noise here
+      // Adding noise here and output realization
+      mycam.noise->calculateNoise(&obs_base);
       mycam.noise->addNoise(&obs_base);
-
+      mycam.noise->outputNoiseProperties(out_path + "output/",instrument_name);
+      
       // Output the observed base image
       FitsInterface::writeFits(obs_base.Nx,obs_base.Ny,obs_base.z,out_path + "output/OBS_" + instrument_name + ".fits");
       
@@ -376,7 +381,9 @@ int main(int argc,char* argv[]){
 	RectGrid obs_pp_light = createPointSourceLight(&supersim,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y);
 	
 	// Adding time-dependent noise here
+	mycam.noise->calculateNoise(&obs_pp_light);
 	mycam.noise->addNoise(&obs_pp_light);
+	mycam.noise->outputNoiseProperties(out_path + "output/",instrument_name);
 	
 	// Finalize output (e.g convert to magnitudes) and write
 	std::string fname = out_path+"output/OBS_"+instrument_name+"_static.fits";
