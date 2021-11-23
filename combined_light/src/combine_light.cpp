@@ -353,9 +353,11 @@ int main(int argc,char* argv[]){
 	      }
 	      RectGrid obs_pp_light = createPointSourceLight(&supersim,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y);
 
-	      // Adding time-dependent noise here
-	      //mycam.noise->addNoise(&obs_pp_light);
-
+	      // Adding a simple time-dependent noise here, no need to save the noise realizations
+	      mycam.noise->initializeFromData(&obs_pp_light);
+	      mycam.noise->calculateNoise();
+	      mycam.noise->addNoise(&obs_pp_light);
+	
 	      char buffer[100];
 	      sprintf(buffer,"%s%s/OBS_%s_%03d.fits",out_path.c_str(),mock.c_str(),instrument_name.c_str(),t);
 	      std::string fname(buffer);
