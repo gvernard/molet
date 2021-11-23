@@ -88,8 +88,9 @@ int main(int argc,char* argv[]){
   for(int b=0;b<root["instruments"].size();b++){
     const Json::Value instrument = root["instruments"][b];
     std::string instrument_name = root["instruments"][b]["name"].asString();
-    Instrument mycam(instrument_name,root["instruments"][b]["noise"]);
-    
+    double ZP = root["instruments"][b]["ZP"].asDouble();
+    Instrument mycam(instrument_name,ZP,root["instruments"][b]["noise"]);
+
     // Set output image plane in super-resolution
     double xmin = root["instruments"][b]["field-of-view_xmin"].asDouble();
     double xmax = root["instruments"][b]["field-of-view_xmax"].asDouble();

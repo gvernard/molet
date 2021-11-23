@@ -26,16 +26,19 @@ public:
   double lambda_max; // in nm
   double resolution; // in arcsec
   double readout;    // in electrons
+  double ZP;
   
   RectGrid* original_psf = NULL;
   RectGrid* scaled_psf   = NULL;
   RectGrid* cropped_psf  = NULL;
   double* kernel         = NULL;
   BaseNoise* noise       = NULL;
-  
+
   Instrument(std::string name,Json::Value noise_pars);
+  Instrument(std::string name,double ZP,Json::Value noise_pars);
   ~Instrument();
 
+  void common_constructor(Json::Value noise_pars);
   static double getResolution(std::string name);
   std::string getName();
   void interpolatePSF(RectGrid* grid);

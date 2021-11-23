@@ -130,12 +130,13 @@ int main(int argc,char* argv[]){
     double ymin = root["instruments"][k]["field-of-view_ymin"].asDouble();
     double ymax = root["instruments"][k]["field-of-view_ymax"].asDouble();
     double resolution = Instrument::getResolution(name);
+    double ZP = root["instruments"][k]["ZP"].asDouble();
     int super_res_x = 10*( static_cast<int>(ceil((xmax-xmin)/resolution)) );
     int super_res_y = 10*( static_cast<int>(ceil((ymax-ymin)/resolution)) );
     RectGrid mysim(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
 
     // Create the source
-    CollectionProfiles profile_collection = JsonParsers::parse_profile(root["source"]["light_profile"][name],input);
+    CollectionProfiles profile_collection = JsonParsers::parse_profile(root["source"]["light_profile"][name],ZP,input);
     profile_collection.write_all_profiles(output + name + "_source_super.fits");
     
     // Produce image using ray-shooting 

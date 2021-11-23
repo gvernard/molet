@@ -49,6 +49,15 @@ int main(int argc,char* argv[]){
   for(int k=0;k<root["instruments"].size();k++){
     std::string name = root["instruments"][k]["name"].asString();
 
+    double xmin = root["instruments"][k]["field-of-view_xmin"].asDouble();
+    double xmax = root["instruments"][k]["field-of-view_xmax"].asDouble();
+    double ymin = root["instruments"][k]["field-of-view_ymin"].asDouble();
+    double ymax = root["instruments"][k]["field-of-view_ymax"].asDouble();
+    double res  = Instrument::getResolution(name);
+    double ZP = root["instruments"][k]["ZP"].asDouble();
+    int super_res_x = 10*( static_cast<int>(ceil((xmax-xmin)/res)) );
+    int super_res_y = 10*( static_cast<int>(ceil((ymax-ymin)/res)) );
+    RectGrid mylight(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
     
     Json::Value all_lenses;
     for(int i=0;i<root["lenses"].size();i++){
@@ -56,16 +65,8 @@ int main(int argc,char* argv[]){
 	all_lenses.append(root["lenses"][i]["light_profile"][name][j]);
       }
     }
-    CollectionProfiles light_collection = JsonParsers::parse_profile(all_lenses,input);
+    CollectionProfiles light_collection = JsonParsers::parse_profile(all_lenses,ZP,input);
 
-    double xmin = root["instruments"][k]["field-of-view_xmin"].asDouble();
-    double xmax = root["instruments"][k]["field-of-view_xmax"].asDouble();
-    double ymin = root["instruments"][k]["field-of-view_ymin"].asDouble();
-    double ymax = root["instruments"][k]["field-of-view_ymax"].asDouble();
-    double res  = Instrument::getResolution(name);
-    int super_res_x = 10*( static_cast<int>(ceil((xmax-xmin)/res)) );
-    int super_res_y = 10*( static_cast<int>(ceil((ymax-ymin)/res)) );
-    RectGrid mylight(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
     for(int i=0;i<mylight.Ny;i++){
       for(int j=0;j<mylight.Nx;j++){
 	mylight.z[i*mylight.Nx+j] = light_collection.all_values(mylight.center_x[j],mylight.center_y[i]);

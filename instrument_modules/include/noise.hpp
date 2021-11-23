@@ -89,8 +89,7 @@ public:
     } else if( type == "PoissonNoise" ){
       double texp = noise_pars["texp"].asDouble();
       double Msb = noise_pars["Msb"].asDouble();
-      double ZP = noise_pars["ZP"].asDouble();
-      return new PoissonNoise(texp,Msb,ZP,instrument->readout,instrument->resolution);
+      return new PoissonNoise(texp,Msb,instrument->ZP,instrument->readout,instrument->resolution);
     } else {
       return new NoNoise();
     }

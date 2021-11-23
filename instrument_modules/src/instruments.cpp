@@ -45,9 +45,19 @@ void offsetPSF::printFrame(FILE* fh,int Nx,int Ny,double xmin,double xmax,double
 
 
 // START:INSTRUMENT =================================================================================================
-Instrument::Instrument(std::string name,Json::Value noise_pars):name(name){
-  std::string full_path = this->path + this->name + "/";
+Instrument::Instrument(std::string name,double ZP,Json::Value noise_pars):name(name){
+  this->ZP = ZP;
+  this->common_constructor(noise_pars);
+}
 
+Instrument::Instrument(std::string name,Json::Value noise_pars):name(name){
+  this->ZP = 0.0;
+  this->common_constructor(noise_pars);
+}
+
+void Instrument::common_constructor(Json::Value noise_pars){
+  std::string full_path = this->path + this->name + "/";
+  
   Json::Value specs;
   std::ifstream fin(full_path+"specs.json",std::ifstream::in);
   fin >> specs;
