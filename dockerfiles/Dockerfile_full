@@ -35,7 +35,7 @@ RUN wget https://heasarc.gsfc.nasa.gov/fitsio/CCfits-2.5/CCfits-2.5.tar.gz \
 	&&	make install
 
 # Install libpng
-RUN wget https://sourceforge.net/projects/libpng/files/libpng16/1.6.37/libpng-1.6.37.tar.gz \
+RUN wget --no-check-certificate https://sourceforge.net/projects/libpng/files/libpng16/1.6.37/libpng-1.6.37.tar.gz \
 	&&	tar -xvf libpng-1.6.37.tar.gz \
 	&&	cd libpng-1.6.37 \
 	&&	./configure --prefix=$LIBDIR/libpng \
@@ -59,7 +59,7 @@ RUN wget http://www.mpfr.org/mpfr-4.0.2/mpfr-4.0.2.tar.gz \
 	&&	make install
 
 # Install boost
-RUN wget https://dl.bintray.com/boostorg/release/1.66.0/source/boost_1_66_0.tar.gz \
+RUN wget https://boostorg.jfrog.io/artifactory/main/release/1.66.0/source/boost_1_66_0.tar.gz \
 	&&	tar -xvf boost_1_66_0.tar.gz \
 	&&	cd boost_1_66_0 \
 	&&	./bootstrap.sh --with-libraries=thread \
