@@ -47,6 +47,7 @@ class UniformGaussian: public BaseNoise {
 public:
   double sn;   // signal to noise ratio
   double sigma;
+  double min_noise; // the minimum value of the noise
   UniformGaussian(double sn);
   void setGrid(RectGrid* obs_grid);
   void initializeFromData(RectGrid* mydata);

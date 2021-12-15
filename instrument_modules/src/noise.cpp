@@ -112,19 +112,20 @@ void UniformGaussian::initializeFromData(RectGrid* mydata){
   
 void UniformGaussian::calculateNoise(){
   std::vector<double> z = this->getBoxMullerVector(this->noise_realization->Nz);
-  double noise,min_noise;
+  double noise;
+  this->min_noise = this->sigma;
   for(int i=0;i<this->noise_realization->Nz;i++){
     noise = z[i]*this->sigma;
     this->noise_realization->z[i] += noise;
-    if( noise < min_noise ){
-      min_noise = noise;
+    if( noise < this->min_noise ){
+      this->min_noise = noise;
     }
   }
 
   // Renormalize by adding the minimum (negative) noise value
   // This is needed because the pixels can contain nan's if mag scale is used
   for(int i=0;i<this->noise_realization->Nz;i++){
-    this->noise_realization->z[i] += abs(min_noise);
+    this->noise_realization->z[i] += abs(this->min_noise);
   }
 }
 
@@ -133,7 +134,8 @@ void UniformGaussian::outputNoiseProperties(std::string output,std::string instr
 
   Json::Value json_obj;
   json_obj["type"] = "UniformGaussian";
-  json_obj["sigma"] = this->sigma;  
+  json_obj["sigma"] = this->sigma;
+  json_obj["min_noise"] = this->min_noise;
   std::ofstream noise_properties(output + instrument_name + "_noise_properties.json");
   noise_properties << json_obj;
   noise_properties.close();
