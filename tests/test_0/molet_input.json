@@ -106,8 +106,12 @@
 	}
     },
     
-
-
+    "output_options": {
+	"cut_outs": {
+	    "scale": "amp"
+	}
+    },
+    
     "point_source": {
     	"x0": -0.05,
     	"y0": 0.05,
