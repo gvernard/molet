@@ -6,3 +6,5 @@ Here is the summary of all the examples included:
 "test_3"  -  A selected microlensing light curve trajectory from 'test_0' (index: 20), for which cutouts are also calculated.
 "test_4"  -  Same as 'test_0' but now the point source is replaced by an expanding supernova and the cadence of the observations is changed.
 "test_5"  -  Same as 'test_0' but now the point source is removed and there are gridded lens potential perturbations present.
+"test_6"  -  A test case originally designed to compare conventions with lenstronomy. No point source.
+"test_7"  -  Same as 'test_6' with an additional sub-halo.

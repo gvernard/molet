@@ -142,7 +142,6 @@ int main(int argc,char* argv[]){
     std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
     FitsInterface::writeFits(kappa_star.Nx,kappa_star.Ny,kappa_star.z,keys,values,descriptions,output + "lens_kappa_star_super.fits");      
     
-
     // Read the image parameters
     Json::Value images;
     fin.open(output+"multiple_images.json",std::ifstream::in);

@@ -18,6 +18,8 @@ void offsetPSF::print(){
   printf("  %20s %d\n","nj:",this->nj);
   printf("  %20s %d\n","ni:",this->ni);
 }
+
+
 void offsetPSF::printFrame(FILE* fh,int Nx,int Ny,double xmin,double xmax,double ymin,double ymax){
   int* x = (int*) malloc(5*sizeof(int));
   int* y = (int*) malloc(5*sizeof(int));
@@ -50,10 +52,12 @@ Instrument::Instrument(std::string name,double ZP,Json::Value noise_pars):name(n
   this->common_constructor(noise_pars);
 }
 
+
 Instrument::Instrument(std::string name,Json::Value noise_pars):name(name){
   this->ZP = 0.0;
   this->common_constructor(noise_pars);
 }
+
 
 void Instrument::common_constructor(Json::Value noise_pars){
   std::string full_path = this->path + this->name + "/";
@@ -77,6 +81,7 @@ void Instrument::common_constructor(Json::Value noise_pars){
   this->noise = FactoryNoiseModel::getInstance()->createNoiseModel(noise_pars,this);
 }
 
+
 Instrument::~Instrument(){
   delete(original_psf);
   delete(scaled_psf);
@@ -84,6 +89,7 @@ Instrument::~Instrument(){
   free(kernel);
   delete(noise);
 }
+
 
 double Instrument::getResolution(std::string name){
   Json::Value specs;
@@ -96,9 +102,11 @@ double Instrument::getResolution(std::string name){
   return res;
 }
 
+
 std::string Instrument::getName(){
   return this->name;
 }
+
 
 void Instrument::interpolatePSF(RectGrid* grid){
   //    double newPixSize  = (mydata->xmax - mydata->xmin)/mydata->Nj;
@@ -111,21 +119,50 @@ void Instrument::interpolatePSF(RectGrid* grid){
     newNx = grid->Nx;
     newNy = grid->Ny;
   } else {
-    newNx = floor( grid->Nx*(0.901*this->original_psf->width)/grid->width );
-    newNy = floor( grid->Ny*(0.901*this->original_psf->height)/grid->height );
+    //newNx = floor( grid->Nx*(0.901*this->original_psf->width)/grid->width );
+    //newNy = floor( grid->Ny*(0.901*this->original_psf->height)/grid->height );
+    //newNx = 10*this->original_psf->Nx;
+    //newNy = 10*this->original_psf->Ny;
+    newNx = floor(this->original_psf->width/newPixSize);
+    newNy = floor(this->original_psf->height/newPixSize);
   }
+
+
   
   double neww    = newNx*newPixSize;
+  //double neww    = this->original_psf->width;
   double xoffset = (this->original_psf->width - neww)/2.0;
   double newh    = newNy*newPixSize;
+  //double newh    = this->original_psf->height;
   double yoffset = (this->original_psf->height - newh)/2.0;
   
   this->scaled_psf = new RectGrid(newNx,newNy,0,neww,0,newh);
- 
+  std::cout << grid->width << std::endl;
+  std::cout << this->original_psf->width << std::endl;
+  std::cout << neww << std::endl;
+
+  std::cout << grid->width/grid->Nx << std::endl;
+  std::cout << this->original_psf->width/this->original_psf->Nx << std::endl;
+  std::cout << this->scaled_psf->width/newNx << std::endl;
+
+  
+  double sum = 0.0;
+  for(int i=0;i<this->scaled_psf->Ny;i++){
+    double y = this->scaled_psf->center_y[i];
+    for(int j=0;j<this->scaled_psf->Nx;j++){
+      double x = this->scaled_psf->center_x[j];
+      double val = this->original_psf->interp2d_bilinear(x,y,this->original_psf->z);
+      //this->scaled_psf->z[i*this->scaled_psf->Nx+j] = (this->original_psf->RectGrid::interp2d)(x,y,this->original_psf->z);
+      this->scaled_psf->z[i*this->scaled_psf->Nx+j] = val;
+      sum += val;
+    }
+  }
+
+  /*  
   double sum = 0.0;
   double x,y,xp,yp,dx,dy,ddx,ddy,w00,w10,w01,w11,f00,f10,f01,f11;
   int ii,jj;
-  
+
   for(int i=0;i<this->scaled_psf->Ny;i++){
     y  = yoffset+i*newPixSize;
     ii = floor( y/origPixSize );
@@ -155,11 +192,11 @@ void Instrument::interpolatePSF(RectGrid* grid){
       sum += this->scaled_psf->z[i*this->scaled_psf->Nx+j];
     }
   }
+  */
   
   for(int i=0;i<this->scaled_psf->Nz;i++){
     this->scaled_psf->z[i] /= sum;
   }
-  
 }
 
 
@@ -191,7 +228,6 @@ void Instrument::cropPSF(double threshold){
     }
   }
 
-
   double psf_pix_size_x = this->scaled_psf->width/this->scaled_psf->Nx;
   double psf_pix_size_y = this->scaled_psf->height/this->scaled_psf->Ny;
   this->cropped_psf = new RectGrid(Ncropx,Ncropy,0,Ncropx*psf_pix_size_x,0,Ncropy*psf_pix_size_y);
@@ -200,6 +236,7 @@ void Instrument::cropPSF(double threshold){
   }
   free(blur);
 }
+
 
 void Instrument::createKernel(int Nx,int Ny){
   int bNx = this->cropped_psf->Nx/2.0;
@@ -255,6 +292,7 @@ void Instrument::convolve(RectGrid* grid){
   }
 }
 
+
 offsetPSF Instrument::offsetPSFtoPosition(double x,double y,RectGrid* grid){
   int Nx_img   = grid->Nx;
   int Ny_img   = grid->Ny;
@@ -273,7 +311,6 @@ offsetPSF Instrument::offsetPSFtoPosition(double x,double y,RectGrid* grid){
   // x0,y0 is the bottom left corner of the PSF
   double x0 = -w_psf/2.0;
   double y0 = -h_psf/2.0;
-
 
   int offset_img,offset_psf,ni,nj,ii,jj;
   if( x0<xz and xz<(x0+w_psf) and y0<yz and yz<(y0+h_psf) ){
@@ -340,12 +377,14 @@ offsetPSF Instrument::offsetPSFtoPosition(double x,double y,RectGrid* grid){
   return PSFoffset;  
 }
 
+
 void Instrument::replacePSF(std::string path_to_file){
   // the new PSF must have exactly the same dimensions and number of pixels as the one it is replacing
   RectGrid* temp = this->original_psf;
   this->original_psf = new RectGrid(this->original_psf->Nx,this->original_psf->Ny,0,this->original_psf->width,0,this->original_psf->height,path_to_file);
   delete(temp);
 }
+
 
 void Instrument::preparePSF(RectGrid* grid,double ratio){
   delete(this->scaled_psf);
@@ -355,6 +394,7 @@ void Instrument::preparePSF(RectGrid* grid,double ratio){
   this->cropPSF(ratio);
   this->createKernel(grid->Nx,grid->Ny);
 }
+
 
 double Instrument::sumPSF(offsetPSF* psf_offset){
   double sum = 0.0;
