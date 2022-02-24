@@ -32,6 +32,7 @@ std::vector<triangle> imagePlaneToTriangles(RectGrid* image){
   return triangles;
 }
 
+
 std::vector<itriangle> imagePlaneToTriangleIndices(RectGrid* image){
   std::vector<itriangle> itriangles;
 
@@ -58,6 +59,7 @@ std::vector<itriangle> imagePlaneToTriangleIndices(RectGrid* image){
    
   return itriangles;
 }
+
 
 void deflectTriangles(const std::vector<triangle>& triangles_in,std::vector<triangle>& triangles_out,CollectionMassModels* mycollection){
   for(int i=0;i<triangles_in.size();i++){
@@ -90,13 +92,13 @@ bool pointInTriangle(point p0,point p1,point p2,point p3){
 }
 
 
-
 double determinant3x3(std::vector<double> row1,std::vector<double> row2,std::vector<double> row3){
   double termA =  row1[0]*(row2[1]*row3[2] - row3[1]*row2[2]);
   double termB = -row1[1]*(row2[0]*row3[2] - row3[0]*row2[2]);
   double termC =  row1[2]*(row2[0]*row3[1] - row3[0]*row2[1]);
   return termA + termB + termC;
 }
+
 
 void circumcircle(point A,point B,point C,double& xc,double& yc,double& r){
   std::vector<double> row1;

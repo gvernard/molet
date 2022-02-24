@@ -75,8 +75,24 @@ int main(int argc,char* argv[]){
   point point_source = {root["point_source"]["x0"].asDouble(),root["point_source"]["y0"].asDouble()};
 
   // Create and deflect image plane
-  double xmin,xmax,ymin,ymax;
-  mass_collection.getExtent(xmin,xmax,ymin,ymax);
+  //mass_collection.getExtent(xmin,xmax,ymin,ymax); // This will return zeros if there is no mass (e.g. theta_E = 0)
+
+  double xmin = 0;
+  double xmax = 0;
+  double ymin = 0;
+  double ymax = 0;
+  double xmin_tmp,xmax_tmp,ymin_tmp,ymax_tmp;
+  for(int b=0;b<root["instruments"].size();b++){
+    xmin_tmp = root["instruments"][b]["field-of-view_xmin"].asDouble();
+    xmax_tmp = root["instruments"][b]["field-of-view_xmax"].asDouble();
+    ymin_tmp = root["instruments"][b]["field-of-view_ymin"].asDouble();
+    ymax_tmp = root["instruments"][b]["field-of-view_ymax"].asDouble();
+    if( xmin_tmp < xmin ){ xmin = xmin_tmp; }
+    if( xmax_tmp > xmax ){ xmax = xmax_tmp; }
+    if( ymin_tmp < ymin ){ ymin = ymin_tmp; }
+    if( ymax_tmp > ymax ){ ymax = ymax_tmp; }
+  }
+  
   std::vector<RectGrid*> planes;
   RectGrid* img = new RectGrid(20,20,xmin,xmax,ymin,ymax);
   planes.push_back(img);
@@ -121,7 +137,7 @@ int main(int argc,char* argv[]){
       }
       free(tmp_defl_x);
       free(tmp_defl_y);
-      
+
       // Get the center and radius of the circumcircle of each image triangle
       double xdum,ydum,rdum;
       for(int i=0;i<match.size();i++){
@@ -145,6 +161,8 @@ int main(int argc,char* argv[]){
 	counter++;
       }
     }
+
+    
     if( counter > 0 ){
       // Set new smaller image planes around xc,yc
       for(int p=0;p<planes.size();p++){
@@ -165,8 +183,7 @@ int main(int argc,char* argv[]){
 	delete(planes[p]);
       }
       condition = false;
-    }   
-
+    }
   }
   
   // Filter images by location
