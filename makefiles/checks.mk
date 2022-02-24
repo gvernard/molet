@@ -22,6 +22,7 @@ all:
 	$(GPP) $(CPP_FLAGS) -o $(BIN_DIR)/initialization_checks $(SRC_DIR)/initialization_checks.cpp -ljsoncpp
 	$(GPP) $(CPP_FLAGS) -o $(BIN_DIR)/get_map_path $(SRC_DIR)/get_map_path.cpp -lgerlumph
 	$(GPP) $(CPP_FLAGS) -o $(BIN_DIR)/confirm_convolutions $(SRC_DIR)/confirm_convolutions.cpp -ljsoncpp -lgerlumph
+	$(GPP) $(CPP_FLAGS) -o $(BIN_DIR)/multiple_images_match_file $(SRC_DIR)/multiple_images_match_file.cpp -ljsoncpp
 
 
 clean:

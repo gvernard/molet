@@ -188,7 +188,11 @@ then
 		cmd=$molet_home"variability/extrinsic/expanding_supernova/bin/expanding_supernova "$infile" "$out_path
 		myprocess "$msg" "$cmd" "$log_file"
 	    fi
-	fi  
+	fi
+    else
+	msg="Check: if given light curves match the number of multiple images..."
+	cmd=$molet_home"checks/bin/multiple_images_match_file "$infile" "$in_path" "$out_path
+	myprocess "$msg" "$cmd" "$log_file"	
     fi    
 fi
 

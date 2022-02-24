@@ -193,8 +193,6 @@ int main(int argc,char* argv[]){
       }      
       int N_ex = extrinsic_lc[images_micro[0]].size();
 
-      std::cout << extrinsic_lc.size() << " " << images.size() << std::endl;
-
       // No need to dilate the time because the effective velocity has length units in the source plane and time in the oberver's frame.
       // Also, the starting time is tobs_min, so no need to set it either.
       std::vector< std::vector<LightCurve*> > LC_extrinsic(images.size());
