@@ -176,7 +176,7 @@ int main(int argc,char* argv[]){
       }
       //=======================================================================================================================            
 
-      
+
       //=============================================== Microlensing ==========================================================      
       // Read extrinsic light curve(s) from JSON
       Json::Value extrinsic_lc = readLightCurvesJson("extrinsic",root["point_source"]["variability"]["extrinsic"]["type"].asString(),instrument_name,in_path,out_path);
@@ -192,6 +192,8 @@ int main(int argc,char* argv[]){
 	}
       }      
       int N_ex = extrinsic_lc[images_micro[0]].size();
+
+      std::cout << extrinsic_lc.size() << " " << images.size() << std::endl;
 
       // No need to dilate the time because the effective velocity has length units in the source plane and time in the oberver's frame.
       // Also, the starting time is tobs_min, so no need to set it either.
@@ -230,7 +232,6 @@ int main(int argc,char* argv[]){
 	psf_partial_sums[q] = instrument_list[q]->sumPSF(&PSFoffsets[q]);
       }
       //=======================================================================================================================
-
 
 
       
@@ -380,7 +381,7 @@ int main(int argc,char* argv[]){
       // Loop over intrinsic light curves ends here
       //0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=
 
-      
+
 
       // *********************** Product: Just one cutout with only the macromagnification *****************************
       if( !root["point_source"]["output_cutouts"].asBool() ){
