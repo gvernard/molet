@@ -124,17 +124,17 @@ void Instrument::interpolatePSF(RectGrid* grid){
     //newNy = floor( grid->Ny*(0.901*this->original_psf->height)/grid->height );
     //newNx = 10*this->original_psf->Nx;
     //newNy = 10*this->original_psf->Ny;
-    newNx = floor(this->original_psf->width/newPixSize);
-    newNy = floor(this->original_psf->height/newPixSize);
+    newNx = floor(this->original_psf->width/newPixSize) - 1;
+    newNy = floor(this->original_psf->height/newPixSize) - 1;
   }
 
 
   
-  double neww    = newNx*newPixSize;
-  //double neww    = this->original_psf->width;
+  //double neww    = newNx*newPixSize;
+  double neww    = this->original_psf->width;
   double xoffset = (this->original_psf->width - neww)/2.0;
-  double newh    = newNy*newPixSize;
-  //double newh    = this->original_psf->height;
+  //double newh    = newNy*newPixSize;
+  double newh    = this->original_psf->height;
   double yoffset = (this->original_psf->height - newh)/2.0;
   
   this->scaled_psf = new RectGrid(newNx,newNy,0,neww,0,newh);
