@@ -124,11 +124,9 @@ void Instrument::interpolatePSF(RectGrid* grid){
     //newNy = floor( grid->Ny*(0.901*this->original_psf->height)/grid->height );
     //newNx = 10*this->original_psf->Nx;
     //newNy = 10*this->original_psf->Ny;
-    newNx = floor(this->original_psf->width/newPixSize) - 1;
-    newNy = floor(this->original_psf->height/newPixSize) - 1;
+    newNx = ceil(this->original_psf->width/newPixSize);
+    newNy = ceil(this->original_psf->height/newPixSize);
   }
-
-
   
   //double neww    = newNx*newPixSize;
   double neww    = this->original_psf->width;
@@ -138,14 +136,6 @@ void Instrument::interpolatePSF(RectGrid* grid){
   double yoffset = (this->original_psf->height - newh)/2.0;
   
   this->scaled_psf = new RectGrid(newNx,newNy,0,neww,0,newh);
-  std::cout << grid->width << std::endl;
-  std::cout << this->original_psf->width << std::endl;
-  std::cout << neww << std::endl;
-
-  std::cout << grid->width/grid->Nx << std::endl;
-  std::cout << this->original_psf->width/this->original_psf->Nx << std::endl;
-  std::cout << this->scaled_psf->width/newNx << std::endl;
-
   
   double sum = 0.0;
   for(int i=0;i<this->scaled_psf->Ny;i++){
@@ -159,42 +149,6 @@ void Instrument::interpolatePSF(RectGrid* grid){
     }
   }
 
-  /*  
-  double sum = 0.0;
-  double x,y,xp,yp,dx,dy,ddx,ddy,w00,w10,w01,w11,f00,f10,f01,f11;
-  int ii,jj;
-
-  for(int i=0;i<this->scaled_psf->Ny;i++){
-    y  = yoffset+i*newPixSize;
-    ii = floor( y/origPixSize );
-    yp = ii*origPixSize;
-    dy = (y - yp)/origPixSize;
-    ddy = (1.0 - dy);
-    
-    for(int j=0;j<this->scaled_psf->Nx;j++){
-      x  = xoffset+j*newPixSize;
-      jj = floor( x/origPixSize );
-      xp = jj*origPixSize;
-      dx = (x - xp)/origPixSize;
-      ddx = (1.0 - dx);
-      
-      // first index: i (y direction) second index: j (x direction)
-      w00 = ddx*ddy;
-      w01 = dx*ddy;
-      w10 = dy*ddx;
-      w11 = dx*dy;
-      
-      f00 = this->original_psf->z[ii*this->original_psf->Nx+jj];
-      f01 = this->original_psf->z[ii*this->original_psf->Nx+jj+1];
-      f10 = this->original_psf->z[(ii+1)*this->original_psf->Nx+jj];
-      f11 = this->original_psf->z[(ii+1)*this->original_psf->Nx+jj+1];
-      
-      this->scaled_psf->z[i*this->scaled_psf->Nx+j] = f00*w00 + f10*w10 + f01*w01 + f11*w11;
-      sum += this->scaled_psf->z[i*this->scaled_psf->Nx+j];
-    }
-  }
-  */
-  
   for(int i=0;i<this->scaled_psf->Nz;i++){
     this->scaled_psf->z[i] /= sum;
   }

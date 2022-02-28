@@ -104,7 +104,7 @@ int main(int argc,char* argv[]){
     
     // Get the psf in super-resolution, crop it, and create convolution kernel
     mycam.preparePSF(&supersim,0.999);
-    FitsInterface::writeFits(mycam.scaled_psf->Nx,mycam.scaled_psf->Ny,mycam.scaled_psf->z,out_path + "output/supersampled_psf.fits");
+    //FitsInterface::writeFits(mycam.scaled_psf->Nx,mycam.scaled_psf->Ny,mycam.scaled_psf->z,out_path + "output/supersampled_psf.fits");
 
     // Create base image (lens light and extended lensed source)
     RectGrid obs_base = createObsBase(&mycam,&supersim,res_x,res_y,out_path); // remember, the units are electrons/(s arcsec^2)
