@@ -80,6 +80,15 @@ log_file=${out_path}"output/log.txt"
 
 
 
+# Step -1:
+# Convert input file from coolest standard if necessary
+####################################################################################
+msg="Check: conversion from coolest..."
+cmd=$molet_home"checks/bin/coolest_convertion "$in_path" "$infile
+myprocess "$msg" "$cmd" "$log_file"
+
+
+
 # Step 0:
 # Perform initialization checks
 ####################################################################################
