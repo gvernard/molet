@@ -187,6 +187,7 @@
 	    "field-of-view_xmax": 8.0,
 	    "field-of-view_ymin": 0.0,
 	    "field-of-view_ymax": 8.0,
+	    "ZP": 15.0,
 	    "noise":{
 		"type": "UniformGaussian",
 		"sn": 150

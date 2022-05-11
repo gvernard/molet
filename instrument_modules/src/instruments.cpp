@@ -94,7 +94,7 @@ Instrument::~Instrument(){
 double Instrument::getResolution(std::string name){
   Json::Value specs;
   
-  std::ifstream fin(path + name + "/specs.json",std::ifstream::in);
+  std::ifstream fin(Instrument::path + name + "/specs.json",std::ifstream::in);
   fin >> specs;
   fin.close();
 
