@@ -8,7 +8,7 @@
 
 #include "json/json.h"
 
-
+#include "instruments.hpp"
 
 Json::Value parseMass(Json::Value coolest_mass_model,std::string name){
   Json::Value profiles = Json::Value(Json::arrayValue);
@@ -132,8 +132,9 @@ Json::Value parseLight(Json::Value coolest_light_model,std::string name){
 
       
 int main(int argc,char* argv[]){
-  std::string case_path  = argv[1];
-  std::string input_file = argv[2];
+  std::string molet_home = argv[1];
+  std::string case_path  = argv[2];
+  std::string input_file = argv[3];
   Json::Value::Members jmembers;
 
   Json::Value root;
@@ -198,9 +199,47 @@ int main(int argc,char* argv[]){
 
 
 
-  // Find instrument
-  std::string myinstrument = "testCAM";
+  // Create new instrument
+  Json::Value new_instrument;
+  new_instrument["name"] = root["instrument"]["name"];
+  new_instrument["band"] = root["instrument"]["band"];
+  new_instrument["readout"] = root["instrument"]["readout"];
+  new_instrument["resolution"] = root["instrument"]["pixel_size"];
+  Json::Value psf;
+  psf["pix_x"]  = root["instrument"]["psf"]["pix_x"];
+  psf["pix_y"]  = root["instrument"]["psf"]["pix_y"];
+  psf["width"]  = root["instrument"]["psf"]["width"];
+  psf["height"] = root["instrument"]["psf"]["height"];
+  new_instrument["psf"] = psf;
+  std::string instrument_name = Instrument::createNewInstrument(new_instrument,"path_to_psf");
+  //std::string instrument_name = root["instrument"]["name"].asString();
+
   
+  // Observation options
+  Json::Value molet_instruments = Json::Value(Json::arrayValue);
+  Json::Value instrument;
+  instrument["name"] = instrument_name;
+  instrument["field-of-view_xmin"] = root["observation"]["fov-xmin"];
+  instrument["field-of-view_xmax"] = root["observation"]["fov-xmax"];
+  instrument["field-of-view_ymin"] = root["observation"]["fov-ymin"];
+  instrument["field-of-view_ymax"] = root["observation"]["fov-ymax"];
+  instrument["ZP"] = root["observation"]["ZP"];
+  std::string noise_type = root["observation"]["noise"]["type"].asString();
+  Json::Value noise;
+  if( noise_type == "Poisson" ){
+    noise["type"] = "PoissonNoise";
+    noise["texp"] = root["observation"]["texp"];
+    noise["Msb"]  = root["observation"]["Msb"]; 
+  } else if( noise_type == "UniformGaussian" ){
+    noise["type"] = "UniformGaussian";
+    noise["sn"] = root["observation"]["noise"]["sn"];
+  } else if( noise_type == "NoiseMap" ){
+    noise["type"] = "NoiseMap";
+  } else {
+    fprintf(stderr,"Incompatible noise type '%s'!\n",noise_type.c_str());
+  }
+  instrument["noise"] = noise;
+  molet_instruments.append( instrument );
 
   
   // Loop over the lens planes and get the 'light' and 'mass' profiles of each 'lensing entity', while converting each profile to the MOLET conventions
@@ -220,11 +259,11 @@ int main(int argc,char* argv[]){
 
 
     Json::Value light_model;
-    light_model[myinstrument] = Json::Value(Json::arrayValue);
+    light_model[instrument_name] = Json::Value(Json::arrayValue);
     for(int j=0;j<planes[i].size();j++){
       Json::Value lmodel = parseLight(planes[i][j]["light_model"],planes[i][j]["name"].asString());
       for(int k=0;k<lmodel.size();k++){
-	light_model[myinstrument].append( lmodel[k] );
+	light_model[instrument_name].append( lmodel[k] );
       }
     }
     lens["light_profile"] = light_model;
@@ -238,12 +277,12 @@ int main(int argc,char* argv[]){
   // Get the 'light' profile of the source (last lens plane)
   Json::Value molet_source;
   Json::Value light_model;
-  light_model[myinstrument] = Json::Value(Json::arrayValue);
+  light_model[instrument_name] = Json::Value(Json::arrayValue);
   Json::Value last_plane = planes[planes.size()-1];
   for(int j=0;j<last_plane.size();j++){
     Json::Value lmodel = parseLight(last_plane[j]["light_model"],last_plane[j]["name"].asString());
     for(int k=0;k<lmodel.size();k++){
-      light_model[myinstrument].append( lmodel[k] );
+      light_model[instrument_name].append( lmodel[k] );
     }
   }
   molet_source["redshift"] = redshifts.back();
@@ -261,7 +300,7 @@ int main(int argc,char* argv[]){
   Json::Value molet_final;
   molet_final["cosmology"] = molet_cosmo;
   molet_final["lenses"] = molet_lenses;
-  molet_final["source"] = molet_source;
+  molet_final["instruments"] = molet_instruments;
   std::cout << molet_final << std::endl;
 
 

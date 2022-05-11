@@ -39,6 +39,7 @@ public:
   ~Instrument();
 
   void common_constructor(Json::Value noise_pars);
+  static std::string createNewInstrument(Json::Value pars,std::string path_to_psf);
   static double getResolution(std::string name);
   std::string getName();
   void interpolatePSF(RectGrid* grid);

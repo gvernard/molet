@@ -84,7 +84,7 @@ log_file=${out_path}"output/log.txt"
 # Convert input file from coolest standard if necessary
 ####################################################################################
 msg="Check: conversion from coolest..."
-cmd=$molet_home"checks/bin/coolest_convertion "$in_path" "$infile
+cmd=$molet_home"checks/bin/coolest_conversion "$molet_home" "$in_path" "$infile
 myprocess "$msg" "$cmd" "$log_file"
 
 

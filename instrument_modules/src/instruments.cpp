@@ -82,6 +82,14 @@ void Instrument::common_constructor(Json::Value noise_pars){
 }
 
 
+std::string Instrument::createNewInstrument(Json::Value pars,std::string path_to_psf){
+  std::cout << INSTRUMENT_PATH << std::endl;
+
+  std::string name = "mapa";
+  return name;
+}
+
+
 Instrument::~Instrument(){
   delete(original_psf);
   delete(scaled_psf);
