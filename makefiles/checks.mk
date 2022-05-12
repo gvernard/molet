@@ -5,6 +5,7 @@ GPP = g++
 
 
 CPP_FLAGS = -std=c++11 -fPIC -g -frounding-math
+CPP_FLAGS17 = -std=c++17 -fPIC -g -frounding-math
 
 ROOT_DIR = checks
 SRC_DIR = $(ROOT_DIR)/src
@@ -22,7 +23,7 @@ all:
 	$(GPP) $(CPP_FLAGS) -o $(BIN_DIR)/initialization_checks $(SRC_DIR)/initialization_checks.cpp -ljsoncpp
 	$(GPP) $(CPP_FLAGS) -o $(BIN_DIR)/get_map_path $(SRC_DIR)/get_map_path.cpp -lgerlumph
 	$(GPP) $(CPP_FLAGS) -o $(BIN_DIR)/confirm_convolutions $(SRC_DIR)/confirm_convolutions.cpp -ljsoncpp -lgerlumph
-	$(GPP) $(CPP_FLAGS) -I instrument_modules/include -o $(BIN_DIR)/coolest_conversion $(SRC_DIR)/coolest_conversion.cpp -ljsoncpp -linstruments -L instrument_modules/lib -Wl,-rpath,instrument_modules/lib
+	$(GPP) $(CPP_FLAGS17) -I instrument_modules/include -o $(BIN_DIR)/coolest_conversion $(SRC_DIR)/coolest_conversion.cpp -ljsoncpp -linstruments -L instrument_modules/lib -Wl,-rpath,instrument_modules/lib
 
 
 clean:

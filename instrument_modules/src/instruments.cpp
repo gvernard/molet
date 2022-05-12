@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <string>
 #include <fstream>
+#include <filesystem>
 
 #include "vkllib.hpp"
 #include "json/json.h"
@@ -81,12 +82,39 @@ void Instrument::common_constructor(Json::Value noise_pars){
   this->noise = FactoryNoiseModel::getInstance()->createNoiseModel(noise_pars,this);
 }
 
+bool Instrument::checkInstrumentExists(std::string name){
+  if( std::filesystem::exists(Instrument::path + name) ){
+    return true;
+  } else {
+    return false;
+  }
+}
+  
+void Instrument::createNewInstrument(Json::Value specs,std::string path_to_psf){
+  // Create temporary directory
+  std::string tmp_name = "dum";
+  if( std::filesystem::exists(Instrument::path + tmp_name) ){
+    std::filesystem::remove_all(Instrument::path + tmp_name);
+  }
+  std::filesystem::create_directory(Instrument::path + tmp_name);
 
-std::string Instrument::createNewInstrument(Json::Value pars,std::string path_to_psf){
-  std::cout << INSTRUMENT_PATH << std::endl;
+  // Create specs.json file
+  std::ofstream file_specs(Instrument::path + tmp_name + "/specs.json");
+  file_specs << specs;
+  file_specs.close();
 
-  std::string name = "mapa";
-  return name;
+  // Copy PSF to the temporary directory
+  std::filesystem::copy(path_to_psf,Instrument::path + tmp_name + "/psf.fits");
+
+  // Test that the instrument can be created
+  Json::Value dum_noise;
+  dum_noise["type"] = "NoNoise";
+  Instrument test(tmp_name,dum_noise);
+
+  // If the instrument can be created (i.e. no error above) then copy to the right directory
+  std::string dir_name = specs["name"].asString() + "-" + specs["band"].asString();
+  std::filesystem::copy(Instrument::path + tmp_name,Instrument::path + dir_name);
+  std::filesystem::remove_all(Instrument::path + tmp_name);
 }
 
 

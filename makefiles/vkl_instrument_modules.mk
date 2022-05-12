@@ -5,6 +5,7 @@
 GPP = g++
 
 CPP_FLAGS = -std=c++11 -fPIC -g -frounding-math
+CPP_FLAGS17 = -std=c++17 -fPIC -g -frounding-math
 CPP_LIBS  = -lvkl -lfftw3 -ljsoncpp
 
 ROOT_DIR = instrument_modules
@@ -39,7 +40,7 @@ $(OBJ_DIR)/instruments.o: $(FULL_SPECIAL) $(HEADERS)
 ifndef INSTRUMENT_PATH
 	$(error INSTRUMENT_PATH is not set)
 else
-	$(GPP) $(CPP_FLAGS) -I $(INC_DIR) $(INSTRUMENT_PATH_FLAGS) -c -o $@ $<
+	$(GPP) $(CPP_FLAGS17) -I $(INC_DIR) $(INSTRUMENT_PATH_FLAGS) -c -o $@ $<
 endif
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)

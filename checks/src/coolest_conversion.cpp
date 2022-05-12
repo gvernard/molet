@@ -5,6 +5,7 @@
 #include <vector>
 #include <dirent.h>
 #include <algorithm>
+#include <filesystem>
 
 #include "json/json.h"
 
@@ -32,7 +33,13 @@ Json::Value parseMass(Json::Value coolest_mass_model,std::string name){
 	  fprintf(stderr,"Unknown parameter name '%s' for lensing entity '%s'!\n",key.c_str(),name.c_str());
 	}
       }
-
+      if( !profile["pars"].isMember("x0") ){
+	profile["pars"]["x0"] = 0.0;
+      }
+      if( !profile["pars"].isMember("y0") ){
+	profile["pars"]["y0"] = 0.0;
+      }
+      
     } else if( mmodel_type == "SIE" ){
       profile["type"] = "sie";
       for( auto const& key : coolest_mass_model[i]["parameters"].getMemberNames()){
@@ -200,19 +207,25 @@ int main(int argc,char* argv[]){
 
 
   // Create new instrument
-  Json::Value new_instrument;
-  new_instrument["name"] = root["instrument"]["name"];
-  new_instrument["band"] = root["instrument"]["band"];
-  new_instrument["readout"] = root["instrument"]["readout"];
-  new_instrument["resolution"] = root["instrument"]["pixel_size"];
-  Json::Value psf;
-  psf["pix_x"]  = root["instrument"]["psf"]["pix_x"];
-  psf["pix_y"]  = root["instrument"]["psf"]["pix_y"];
-  psf["width"]  = root["instrument"]["psf"]["width"];
-  psf["height"] = root["instrument"]["psf"]["height"];
-  new_instrument["psf"] = psf;
-  std::string instrument_name = Instrument::createNewInstrument(new_instrument,"path_to_psf");
-  //std::string instrument_name = root["instrument"]["name"].asString();
+  std::string instrument_name = root["instrument"]["name"].asString() + "-" + root["instrument"]["band"].asString();
+  if( Instrument::checkInstrumentExists(instrument_name) ){
+    fprintf(stdout,"Instrument module '%s' already exists and will be used.\n",instrument_name.c_str());
+    fprintf(stdout,"If you still want to provide it just rename the existing one in %s.\n",(molet_home+"instrument_modules/modules/").c_str());
+  } else {
+    Json::Value new_instrument;
+    new_instrument["name"] = root["instrument"]["name"];
+    new_instrument["band"] = root["instrument"]["band"];
+    new_instrument["readout"] = root["instrument"]["readout"];
+    new_instrument["resolution"] = root["instrument"]["pixel_size"];
+    Json::Value psf;
+    psf["pix_x"]  = root["instrument"]["psf"]["pix_x"];
+    psf["pix_y"]  = root["instrument"]["psf"]["pix_y"];
+    psf["width"]  = root["instrument"]["psf"]["width"];
+    psf["height"] = root["instrument"]["psf"]["height"];
+    new_instrument["psf"] = psf;
+    Instrument::createNewInstrument(new_instrument,case_path+"psf.fits");
+    fprintf(stdout,"New instrument '%s' has been created.\n",instrument_name.c_str());
+  }
 
   
   // Observation options
@@ -300,10 +313,21 @@ int main(int argc,char* argv[]){
   Json::Value molet_final;
   molet_final["cosmology"] = molet_cosmo;
   molet_final["lenses"] = molet_lenses;
+  molet_final["source"] = molet_source;
   molet_final["instruments"] = molet_instruments;
-  std::cout << molet_final << std::endl;
+  //std::cout << molet_final << std::endl;
+  //std::cout << molet_instruments << std::endl;
 
-
+  // Create final molet input file
+  std::string fname = std::filesystem::path(input_file).filename().string();
+  std::filesystem::copy(input_file,case_path+"original_"+fname);
+  std::ofstream molet_input(input_file);
+  Json::StreamWriterBuilder wbuilder;
+  wbuilder.settings_["precision"] = 6;
+  wbuilder.settings_["indentation"] = "    ";
+  std::unique_ptr<Json::StreamWriter> writer(wbuilder.newStreamWriter());
+  writer->write(molet_final,&molet_input);
+  molet_input.close();
   
   return 0;
 }
