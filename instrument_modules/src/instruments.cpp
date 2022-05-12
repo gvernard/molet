@@ -102,7 +102,7 @@ Instrument::~Instrument(){
 double Instrument::getResolution(std::string name){
   Json::Value specs;
   
-  std::ifstream fin(path + name + "/specs.json",std::ifstream::in);
+  std::ifstream fin(Instrument::path + name + "/specs.json",std::ifstream::in);
   fin >> specs;
   fin.close();
 
@@ -145,13 +145,13 @@ void Instrument::interpolatePSF(RectGrid* grid){
   double yoffset = (this->original_psf->height - newh)/2.0;
   
   this->scaled_psf = new RectGrid(newNx,newNy,0,neww,0,newh);
-  std::cout << grid->width << std::endl;
-  std::cout << this->original_psf->width << std::endl;
-  std::cout << neww << std::endl;
+  //std::cout << grid->width << std::endl;
+  //std::cout << this->original_psf->width << std::endl;
+  //std::cout << neww << std::endl;
 
-  std::cout << grid->width/grid->Nx << std::endl;
-  std::cout << this->original_psf->width/this->original_psf->Nx << std::endl;
-  std::cout << this->scaled_psf->width/newNx << std::endl;
+  //std::cout << grid->width/grid->Nx << std::endl;
+  //std::cout << this->original_psf->width/this->original_psf->Nx << std::endl;
+  //std::cout << this->scaled_psf->width/newNx << std::endl;
 
   
   double sum = 0.0;

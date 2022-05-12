@@ -101,7 +101,7 @@ int main(int argc,char* argv[]){
     int super_res_x = 10*res_x;
     int super_res_y = 10*res_y;
     RectGrid supersim(super_res_x,super_res_y,xmin,xmax,ymin,ymax);    
-    
+
     // Get the psf in super-resolution, crop it, and create convolution kernel
     mycam.preparePSF(&supersim,0.999);
     FitsInterface::writeFits(mycam.scaled_psf->Nx,mycam.scaled_psf->Ny,mycam.scaled_psf->z,out_path + "output/supersampled_psf.fits");
@@ -136,8 +136,9 @@ int main(int argc,char* argv[]){
       std::vector<std::string> values{std::to_string(obs_base.xmin),std::to_string(obs_base.xmax),std::to_string(obs_base.ymin),std::to_string(obs_base.ymax)};
       std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
       FitsInterface::writeFits(obs_base.Nx,obs_base.Ny,obs_base.z,keys,values,descriptions,out_path + "output/OBS_" + instrument_name + ".fits");
-      
+
     } else {
+
       //=============== CREATE THE TIME VARYING LIGHT ====================
       std::vector<double> tobs;
       for(int t=0;t<instrument["time"].size();t++){
@@ -149,7 +150,6 @@ int main(int argc,char* argv[]){
       }
       
 
-      
       //======================================== Intrinsic variability ========================================================            
       // Read intrinsic light curve(s) from JSON and apply conversions: from rest frame to observer's frame, from mag to intensity and scale if needed.
       Json::Value intrinsic_lc_json = readLightCurvesJson("intrinsic",root["point_source"]["variability"]["intrinsic"]["type"].asString(),instrument_name,in_path,out_path);
@@ -204,6 +204,7 @@ int main(int argc,char* argv[]){
 	}
       }
       //=======================================================================================================================      
+
 
 
       //==================================== Configure the PSF for the point source ===========================================
@@ -364,6 +365,7 @@ int main(int argc,char* argv[]){
 	      std::string fname(buffer);
 	      writeCutout(cutout_scale,&obs_pp_light,ptr_obs_base,fname);
 	    }
+
 	  }
 	  // *********************** End of product **************************************************	    
 
