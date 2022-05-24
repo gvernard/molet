@@ -5,6 +5,8 @@ log.txt
 lib
 obj
 bin
+/install_third_party/libraries
+/install_third_party/src
 
 /instrument_modules/modules/KeckAOk_true
 /instrument_modules/modules/aymericCAM
