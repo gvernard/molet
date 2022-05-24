@@ -1,4 +1,4 @@
-FROM gcc:7.5
+FROM gcc:11.3
 
 ARG LIBDIR=/home/libraries
 ARG SRCDIR=/home/src
