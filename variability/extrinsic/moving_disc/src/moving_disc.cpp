@@ -126,7 +126,7 @@ int main(int argc,char* argv[]){
     if( main_map["type"] == "vector" ){
       rhalfs[k] = root["point_source"]["variability"]["extrinsic"]["profiles"]["rhalf"][k].asDouble();
     } else {
-      rhalfs[k] = BaseProfile::getSize(main_map,lrest[k]);      
+      rhalfs[k] = BaseProfile::getSize(main_map,lrest[k]);
     }
     main_map["rhalf"] = std::to_string(rhalfs[k]);
     profile_parameter_map[k] = main_map;

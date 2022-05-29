@@ -227,26 +227,22 @@ int main(int argc,char* argv[]){
     }
 
     // Quick loop to check if the accretion dize does not become too large for some wavelength, e.g. above several Rein
+    Json::Value::Members json_members = root["point_source"]["variability"]["extrinsic"]["profiles"].getMemberNames();
+    std::map<std::string,std::string> main_map; // size should be json_members.size()+2
+    for(int i=0;i<json_members.size();i++){
+      main_map.insert( std::pair<std::string,std::string>(json_members[i],root["point_source"]["variability"]["extrinsic"]["profiles"][json_members[i]].asString()) );
+    }
+    main_map.insert( std::pair<std::string,std::string>("rhalf","") );
+    
     std::vector<double> rhalfs(names.size());
-    if( root["point_source"]["variability"]["extrinsic"]["profiles"]["type"].asString() == "parametric" ){
-      double r0 = root["point_source"]["variability"]["extrinsic"]["profiles"]["r0"].asDouble();
-      double l0 = root["point_source"]["variability"]["extrinsic"]["profiles"]["l0"].asDouble();
-      double nu = root["point_source"]["variability"]["extrinsic"]["profiles"]["nu"].asDouble();
-      for(int i=0;i<names.size();i++){
-	rhalfs[i] = BaseProfile::sizeParametric(r0,l0,nu,lrest[i]);
-      }
-    } else if( root["point_source"]["variability"]["extrinsic"]["profiles"]["type"].asString() == "ss_disc" ){
-      double mbh  = root["point_source"]["variability"]["extrinsic"]["profiles"]["mbh"].asDouble();
-      double fedd = root["point_source"]["variability"]["extrinsic"]["profiles"]["fedd"].asDouble();
-      double eta  = root["point_source"]["variability"]["extrinsic"]["profiles"]["eta"].asDouble();
-      for(int i=0;i<names.size();i++){
-	rhalfs[i] = BaseProfile::sizeSS(mbh,fedd,eta,lrest[i]);
-      }
-    } else if( root["point_source"]["variability"]["extrinsic"]["profiles"]["type"].asString() == "vector" ){
-      for(int i=0;i<names.size();i++){
+    for(int i=0;i<names.size();i++){
+      if( main_map["type"] == "vector" ){
 	rhalfs[i] = root["point_source"]["variability"]["extrinsic"]["profiles"]["rhalf"][i].asDouble();
+      } else {
+	rhalfs[i] = BaseProfile::getSize(main_map,lrest[i]);
       }
     }
+
     Json::Value cosmo;
     fin.open(out_path+"output/angular_diameter_distances.json",std::ifstream::in);
     fin >> cosmo;
