@@ -110,28 +110,7 @@ int main(int argc,char* argv[]){
     lrest[k] = lobs/(1.0+zs);
   }
 
-  // Get half-light radii
-  std::vector<double> rhalfs(Nfilters);
-  if( root["point_source"]["variability"]["extrinsic"]["profiles"]["type"].asString() == "parametric" ){
-    double r0 = root["point_source"]["variability"]["extrinsic"]["profiles"]["r0"].asDouble();
-    double l0 = root["point_source"]["variability"]["extrinsic"]["profiles"]["l0"].asDouble();
-    double nu = root["point_source"]["variability"]["extrinsic"]["profiles"]["nu"].asDouble();
-    for(int k=0;k<Nfilters;k++){
-      rhalfs[k] = BaseProfile::sizeParametric(r0,l0,nu,lrest[k]);
-    }
-  } else if( root["point_source"]["variability"]["extrinsic"]["profiles"]["type"].asString() == "ss_disc" ){
-    double mbh  = root["point_source"]["variability"]["extrinsic"]["profiles"]["mbh"].asDouble();
-    double fedd = root["point_source"]["variability"]["extrinsic"]["profiles"]["fedd"].asDouble();
-    double eta  = root["point_source"]["variability"]["extrinsic"]["profiles"]["eta"].asDouble();
-    for(int k=0;k<Nfilters;k++){
-      rhalfs[k] = BaseProfile::sizeSS(mbh,fedd,eta,lrest[k]);
-    }
-  } else if( root["point_source"]["variability"]["extrinsic"]["profiles"]["type"].asString() == "vector" ){
-    for(int k=0;k<Nfilters;k++){
-      rhalfs[k] = root["point_source"]["variability"]["extrinsic"]["profiles"]["rhalf"][k].asDouble();
-    }    
-  }
-  
+
   // Create profile parameter maps
   Json::Value::Members json_members = root["point_source"]["variability"]["extrinsic"]["profiles"].getMemberNames();
   std::map<std::string,std::string> main_map; // size should be json_members.size()+2
@@ -140,8 +119,15 @@ int main(int argc,char* argv[]){
   }
   main_map.insert( std::pair<std::string,std::string>("pixSizePhys","") );
   main_map.insert( std::pair<std::string,std::string>("rhalf","") );
+  
+  std::vector<double> rhalfs(Nfilters);
   std::vector< std::map<std::string,std::string> > profile_parameter_map(Nfilters);
   for(int k=0;k<Nfilters;k++){
+    if( main_map["type"] == "vector" ){
+      rhalfs[k] = root["point_source"]["variability"]["extrinsic"]["profiles"]["rhalf"][k].asDouble();
+    } else {
+      rhalfs[k] = BaseProfile::getSize(main_map,lrest[k]);      
+    }
     main_map["rhalf"] = std::to_string(rhalfs[k]);
     profile_parameter_map[k] = main_map;
   }
