@@ -5,6 +5,8 @@
 #include <algorithm>
 
 #include "json/json.h"
+#include "vkllib.hpp"
+#include "instruments.hpp"
 
 
 inline bool file_exists(const std::string& name){
@@ -70,7 +72,24 @@ int main(int argc,char* argv[]){
       check = true;
     }
   }
-      
+
+  
+  // Check if the given Field of View is larger than the instruments' PSFs
+  for(int i=0;i<instruments.size();i++){
+    double fov_width  = root["instruments"][i]["field-of-view_xmax"].asDouble() - root["instruments"][i]["field-of-view_xmin"].asDouble();
+    double fov_height = root["instruments"][i]["field-of-view_ymax"].asDouble() - root["instruments"][i]["field-of-view_ymin"].asDouble();
+
+    double ZP = root["instruments"][i]["ZP"].asDouble();
+    Instrument test(instruments[i],ZP,root["instruments"][i]["noise"]);
+    double psf_width  = test.original_psf->xmax - test.original_psf->xmin;
+    double psf_height = test.original_psf->ymax - test.original_psf->ymin;
+
+    if( fov_width < psf_width || fov_height < psf_height ){
+      fprintf(stderr,"The Field of View (%.4f by %.4f) given for instrument %s is smaller than its PSF (%.4f by %.4f)! Increase the given Field of View.\n",fov_width,fov_height,instruments[i].c_str(),psf_width,psf_height);
+      check = true;
+    }
+  }
+
   
   // Check mass model
   for(int j=0;j<root["lenses"].size();j++){
@@ -86,6 +105,7 @@ int main(int argc,char* argv[]){
     }
   }
 
+  
   // Check compact mass model of the lenses if a point source exists
   if( point_source ){
     for(int j=0;j<root["lenses"].size();j++){
@@ -102,6 +122,7 @@ int main(int argc,char* argv[]){
     }
   }
 
+  
   // Exit here if there is something wrong at the first stage of the checks
   if( check ){
     return 1;
@@ -109,11 +130,6 @@ int main(int argc,char* argv[]){
 
 
 
-
-
-
-
-  
   
 
   // Loop over instruments and check light profiles

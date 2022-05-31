@@ -20,7 +20,7 @@ $(shell mkdir -p $(BIN_DIR))
 
 all:
 	$(GPP) $(CPP_FLAGS) -I instrument_modules/include -o $(BIN_DIR)/time_vector_checks $(SRC_DIR)/time_vector_checks.cpp -ljsoncpp -lgerlumph -lpng -linstruments -L instrument_modules/lib -Wl,-rpath,instrument_modules/lib
-	$(GPP) $(CPP_FLAGS) -o $(BIN_DIR)/initialization_checks $(SRC_DIR)/initialization_checks.cpp -ljsoncpp
+	$(GPP) $(CPP_FLAGS) -I instrument_modules/include -o $(BIN_DIR)/initialization_checks $(SRC_DIR)/initialization_checks.cpp -ljsoncpp -linstruments -L instrument_modules/lib -Wl,-rpath,instrument_modules/lib
 	$(GPP) $(CPP_FLAGS) -o $(BIN_DIR)/get_map_path $(SRC_DIR)/get_map_path.cpp -lgerlumph
 	$(GPP) $(CPP_FLAGS) -o $(BIN_DIR)/confirm_convolutions $(SRC_DIR)/confirm_convolutions.cpp -ljsoncpp -lgerlumph
 	$(GPP) $(CPP_FLAGS17) -I instrument_modules/include -o $(BIN_DIR)/coolest_conversion $(SRC_DIR)/coolest_conversion.cpp -ljsoncpp -linstruments -L instrument_modules/lib -Wl,-rpath,instrument_modules/lib
