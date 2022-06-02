@@ -243,10 +243,11 @@ int main(int argc,char* argv[]){
 	for(int lc_ex=0;lc_ex<N_ex;lc_ex++){ // use the first multiple image to get the number of extrinsic light curves
 
 	  // Output directory
-	  char buffer[15];
+	  //char buffer[15];
+	  char buffer[30];
 	  sprintf(buffer,"mock_%04d_%04d",lc_in,lc_ex);
 	  std::string mock = buffer;
-	  //std::cout << mock << std::endl;
+	  std::cout << mock << std::endl;
 
 
 	  
