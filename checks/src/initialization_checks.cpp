@@ -37,7 +37,7 @@ int main(int argc,char* argv[]){
   DIR* modules;
   struct dirent* ent;
   std::vector<std::string> molet_instruments;
-  if( (modules=opendir((molet_home+"instrument_modules/modules/").c_str())) != NULL ){
+  if( (modules=opendir((molet_home+"instrument_modules/").c_str())) != NULL ){
     while( (ent=readdir(modules)) != NULL ){
       molet_instruments.push_back(ent->d_name);
     }

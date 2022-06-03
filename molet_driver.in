@@ -48,14 +48,14 @@ infile=$1
 infile=`realpath $infile`
 injson=`grep -o '^[^//]*' $infile`
 in_path=`dirname $infile`"/"
-molet_home=`pwd`"/"
-map_path=`${molet_home}"checks/bin/get_map_path"`
+molet_home=@MOLET_HOME@"/"
+map_path=`${molet_home}"bin/check_get_map_path"`
 
 
 # A directory named 'input_files' must exist at the same path as the 'molet_input.json' file, even if it is empty!
 if [ ! -d ${in_path}"input_files" ]
 then
-    mkdir ${in_path}"input_files"
+    @MKDIR_P@ ${in_path}"input_files"
 fi
 
 
@@ -73,7 +73,7 @@ else
 fi
 if [ ! -d ${out_path}"output" ]
 then
-    mkdir ${out_path}"output"
+    @MKDIR_P@ ${out_path}"output"
 fi
 log_file=${out_path}"output/log.txt"
 
@@ -84,7 +84,7 @@ log_file=${out_path}"output/log.txt"
 # Convert input file from coolest standard if necessary
 ####################################################################################
 msg="Check: conversion from coolest..."
-cmd=$molet_home"checks/bin/coolest_conversion "$molet_home" "$in_path" "$infile
+cmd=$molet_home"bin/check_coolest_conversion "$molet_home" "$in_path" "$infile
 myprocess "$msg" "$cmd" "$log_file"
 
 
@@ -93,7 +93,7 @@ myprocess "$msg" "$cmd" "$log_file"
 # Perform initialization checks
 ####################################################################################
 msg="Check: perform initialization checks..."
-cmd=$molet_home"checks/bin/initialization_checks "$molet_home" "$in_path" "$infile
+cmd=$molet_home"bin/check_initialization "$molet_home" "$in_path" "$infile
 myprocess "$msg" "$cmd" "$log_file"
 
 
@@ -102,7 +102,7 @@ myprocess "$msg" "$cmd" "$log_file"
 # Get angular diameter distances
 ####################################################################################
 msg="Getting angular diameter distances..."
-cmd=$molet_home"cosmology/angular_diameter_distances/bin/angular_diameter_distances "$infile" "$out_path
+cmd=$molet_home"bin/angular_diameter_distances "$infile" "$out_path
 myprocess "$msg" "$cmd" "$log_file"
 
 
@@ -111,7 +111,7 @@ myprocess "$msg" "$cmd" "$log_file"
 # Get extended lensed images of the source
 ####################################################################################
 msg="Getting extended source lensed features..."
-cmd=$molet_home"lensed_extended_source/vkl_fproject/bin/fproject "$infile" "$in_path" "$out_path
+cmd=$molet_home"bin/vkl_fproject "$infile" "$in_path" "$out_path
 myprocess "$msg" "$cmd" "$log_file"
 
 
@@ -119,11 +119,11 @@ myprocess "$msg" "$cmd" "$log_file"
 # Intermediate step:
 # Get point source images, their locations are needed for the following
 ####################################################################################
-check=`echo $injson | jq '. | select(.point_source)'`
+check=`echo $injson | @AM_JQ@ '. | select(.point_source)'`
 if [ ! -z "${check}" ]
 then
     msg="Getting point-like source lensed images..."
-    cmd=$molet_home"lensed_point_source/vkl_point_source/bin/point_source "$infile" "$in_path" "$out_path
+    cmd=$molet_home"bin/vkl_point_source "$infile" "$in_path" "$out_path
     myprocess "$msg" "$cmd" "$log_file"
 fi
 
@@ -133,7 +133,7 @@ fi
 # Get light profile of the lens (and compact matter if required)
 ####################################################################################
 msg="Getting light profile of the lens..."
-cmd=$molet_home"lens_light_mass/vkl_llm/bin/llm "$infile" "$in_path" "$out_path
+cmd=$molet_home"bin/vkl_lens "$infile" "$in_path" "$out_path
 myprocess "$msg" "$cmd" "$log_file"
 
 
@@ -141,36 +141,36 @@ myprocess "$msg" "$cmd" "$log_file"
 # Intermediate step:
 # Get variability
 ####################################################################################
-check=`echo $injson | jq '. | select(.point_source)'`
+check=`echo $injson | @AM_JQ@ '. | select(.point_source)'`
 if [ ! -z "${check}" ]
 then
     # Intrinsic
-    in_type=`echo $injson | jq '.point_source.variability.intrinsic.type' | sed -e 's/^"//' -e 's/"$//'`
+    in_type=`echo $injson | @AM_JQ@ '.point_source.variability.intrinsic.type' | @SED@ -e 's/^"//' -e 's/"$//'`
     if [ $in_type != "custom" ]
     then
 	if [ $in_type = drw ]
 	then
 	    msg="Generating Damped Random Walk intrinsic light curves..."
-	    cmd=$molet_home"variability/intrinsic/DRW/bin/drw "$infile" "$out_path
+	    cmd=$molet_home"bin/var_drw "$infile" "$out_path
 	    myprocess "$msg" "$cmd" "$log_file"
 	elif [ $in_type = dum ]
 	then
-	    msg="DUM..."	    
-	fi  
+	    msg="DUM..."
+	fi
     fi
 
     # Perform check of light curve lengths: needs intrinsic, unmicro (if needed), tobs, and the time delays.
     # If intrinsic and unmicro light curves are generated from Molet, then no need to check them, they will conform by construction
     msg="Check: compatibility of light curve lengths and observing time + time delay length..."
-    cmd=$molet_home"checks/bin/time_vector_checks "$infile" "$in_path" "$out_path
+    cmd=$molet_home"bin/check_time_vector "$infile" "$in_path" "$out_path
     myprocess "$msg" "$cmd" "$log_file"
     
     # Extrinsic
-    ex_type=`echo $injson | jq '.point_source.variability.extrinsic.type' | sed -e 's/^"//' -e 's/"$//'`
+    ex_type=`echo $injson | @AM_JQ@ '.point_source.variability.extrinsic.type' | @SED@ -e 's/^"//' -e 's/"$//'`
     if [ $ex_type != "custom" ]
     then
 	msg="Matching macro-images to GERLUMPH maps..."
-	cmd=$molet_home"variability/extrinsic/match_to_gerlumph/bin/match_to_gerlumph "$molet_home"data/gerlumph.db "$out_path
+	cmd=$molet_home"bin/var_match_to_gerlumph "$molet_home"data/gerlumph.db "$out_path
 	myprocess "$msg" "$cmd" "$log_file"
 
 	msg="Check: if GERLUMPH maps exist locally..."
@@ -180,11 +180,11 @@ then
 	if [ $ex_type = moving_disc ]
 	then
 	    msg="Getting 'moving_disc' microlensing variability for each image..."
-	    cmd=$molet_home"variability/extrinsic/moving_disc/bin/moving_disc "$infile" "$out_path
+	    cmd=$molet_home"bin/var_moving_disc "$infile" "$out_path
 	    myprocess "$msg" "$cmd" "$log_file"
 	elif [ $ex_type = expanding_supernova ]
 	then
-	    cmd=$molet_home"checks/bin/confirm_convolutions "$infile" "$out_path
+	    cmd=$molet_home"bin/check_confirm_convolutions "$infile" "$out_path
 	    eval "$cmd"
 	    exit_code=$?
 	    
@@ -194,7 +194,7 @@ then
 		exit
 	    else
 		msg="Getting 'expanding_supernova' microlensing variability for each image..."
-		cmd=$molet_home"variability/extrinsic/expanding_supernova/bin/expanding_supernova "$infile" "$out_path
+		cmd=$molet_home"bin/var_expanding_supernova "$infile" "$out_path
 		myprocess "$msg" "$cmd" "$log_file"
 	    fi
 	fi  
@@ -206,18 +206,18 @@ fi
 # Combine different light components
 ####################################################################################
 # Create output directories if necessary
-check=`echo $injson | jq '. | select(.point_source)'`
+check=`echo $injson | @AM_JQ@ '. | select(.point_source)'`
 if [ ! -z "${check}" ]
 then
    msg="Mock output directories created..."
-   cmd=$molet_home"combined_light/setup_dirs.sh "$infile" "$in_path" "$out_path
+   cmd=$molet_home"combine_light/setup_dirs.sh "$infile" "$in_path" "$out_path
    myprocess "$msg" "$cmd" "$log_file"
 fi
 
 
 # Combine light
 msg="Combining light components and including instrumental effects..."
-cmd=$molet_home"combined_light/bin/combine_light "$infile" "$in_path" "$out_path
+cmd=$molet_home"bin/final_combine_light "$infile" "$in_path" "$out_path
 myprocess "$msg" "$cmd" "$log_file"
     
 
