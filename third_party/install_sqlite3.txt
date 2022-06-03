@@ -1,0 +1,6 @@
+wget https://www.sqlite.org/2022/sqlite-autoconf-3380500.tar.gz
+tar -xvf sqlite-autoconf-3380500.tar.gz
+cd sqlite-autoconf-3380500
+./configure
+make
+make install

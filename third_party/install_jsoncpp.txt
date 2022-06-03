@@ -1,0 +1,12 @@
+git clone https://github.com/open-source-parsers/jsoncpp.git
+cd jsoncpp
+mkdir -p build
+cd build
+cmake \
+ -DCMAKE_BUILD_TYPE=release \
+ -DBUILD_SHARED_LIBS=ON \
+ -DARCHIVE_INSTALL_DIR=. \
+ -G "Unix Makefiles" \
+ ..
+make
+make install

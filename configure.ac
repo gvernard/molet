@@ -16,6 +16,25 @@ LT_INIT([disable-static])
 
 
 
+AC_DEFUN([AC_INSTALLATION_INSTRUCTIONS],
+	[
+		name=$1
+		echo ""
+		echo "Program/library $(tput bold)$(tput setaf 1)${name} is missing$(tput sgr0), you need to install it using your package manager."
+		echo "Alternatively, you can install ${name} from source using the following instructions:"
+		echo $(tput setaf 6)
+		cat ${MOLET_HOME}/third_party/install_${name}.txt
+		echo $(tput sgr0)
+		echo "If you use the 'prefix' option while running ./configure above, then you need to pass:"
+		echo "   $(tput setaf 2)--with-${name}=prefix$(tput sgr0)"
+		echo "when running the MOLET ./configure script."
+		AC_MSG_ERROR("Program/library ${name} not found")
+	]
+)
+
+
+
+
 AC_ARG_WITH([jq],
     [AS_HELP_STRING([--with-jq=prefix],[give the path to the jq program binary file.])],
     [
@@ -24,7 +43,7 @@ AC_ARG_WITH([jq],
     [
 	AC_PATH_PROG(AM_JQ,jq,[no],[path=$PATH])
 	if test "$AM_JQ" = no ; then
-	   AC_MSG_ERROR("you need to have the jq program installed.")
+	   AC_INSTALLATION_INSTRUCTIONS(jq)
 	fi
     ])
 
@@ -42,7 +61,7 @@ AC_ARG_WITH([fftw3],
 	ac_new_LIBS+=" -lfftw3"
     ],
     [
-	AC_CHECK_LIB(fftw3,main,[],[AC_MSG_ERROR("you need to have the fftw3 library installed.")])
+	AC_CHECK_LIB(fftw3,main,[],[AC_INSTALLATION_INSTRUCTIONS(fftw3)])
 	AC_CHECK_HEADERS(fftw3.h,[],[AC_MSG_ERROR("you need to have the fftw3 header files installed.")])
     ])
 
@@ -54,7 +73,7 @@ AC_ARG_WITH([cfitsio],
 	ac_new_LIBS+=" -lcfitsio"
     ],
     [
-	AC_CHECK_LIB(cfitsio,main,[],[AC_MSG_ERROR("you need to have the cfitsio library installed.")])
+	AC_CHECK_LIB(cfitsio,main,[],[AC_INSTALLATION_INSTRUCTIONS(cfitsio)])
 	AC_CHECK_HEADERS(fitsio.h,[],[AC_MSG_ERROR("you need to have the cfitsio header files installed.")])
     ])
 
@@ -66,7 +85,7 @@ AC_ARG_WITH([CCfits],
 	ac_new_LIBS+=" -lCCfits"
     ],
     [
-	AC_CHECK_LIB(CCfits,main,[],[AC_MSG_ERROR("you need to have the CCfits library installed.")])
+	AC_CHECK_LIB(CCfits,main,[],[AC_INSTALLATION_INSTRUCTIONS(CCfits)])
 	AC_CHECK_HEADERS(CCfits/CCfits.h,[],[AC_MSG_ERROR("you need to have the CCfits header files installed.")])
     ])
 
@@ -78,7 +97,7 @@ AC_ARG_WITH([gmp],
 	ac_new_LIBS+=" -lgmp"
     ],
     [
-	AC_CHECK_LIB(gmp,main,[],[AC_MSG_ERROR("you need to have the gmp library installed.")])
+	AC_CHECK_LIB(gmp,main,[],[AC_INSTALLATION_INSTRUCTIONS(gmp)])
 	AC_CHECK_HEADERS(gmp.h,[],[AC_MSG_ERROR("you need to have the gmp header files installed.")])
     ])
 
@@ -90,7 +109,7 @@ AC_ARG_WITH([CGAL],
 	ac_new_LIBS+=" -lCGAL"
     ],
     [
-	AC_CHECK_LIB(CGAL,main,[],[AC_MSG_ERROR("you need to have the CGAL library installed.")])
+	AC_CHECK_LIB(CGAL,main,[],[AC_INSTALLATION_INSTRUCTIONS(CGAL)])
 	#AC_CHECK_HEADERS(CGAL/CGAL.h,[],[AC_MSG_ERROR("you need to have the CGAL header files installed.")])
     ])
 
@@ -102,7 +121,7 @@ AC_ARG_WITH([jsoncpp],
 	ac_new_LIBS+=" -ljsoncpp"
     ],
     [
-	AC_CHECK_LIB(jsoncpp,main,[],[AC_MSG_ERROR("you need to have the jsoncpp library installed.")])
+	AC_CHECK_LIB(jsoncpp,main,[],[AC_INSTALLATION_INSTRUCTIONS(jsoncpp)])
 	AC_CHECK_HEADERS(json/json.h,[],[AC_MSG_ERROR("you need to have the jsoncpp header files installed.")])
     ])
 
@@ -114,7 +133,7 @@ AC_ARG_WITH([png],
 	ac_new_LIBS+=" -lpng"
     ],
     [
-	AC_CHECK_LIB(png,main,[],[AC_MSG_ERROR("you need to have the png library installed.")])
+	AC_CHECK_LIB(png,main,[],[AC_INSTALLATION_INSTRUCTIONS(png)])
 	AC_CHECK_HEADERS(png.h,[],[AC_MSG_ERROR("you need to have the png header files installed.")])
     ])
 
@@ -126,7 +145,7 @@ AC_ARG_WITH([sqlite3],
 	ac_new_LIBS+=" -lsqlite3"
     ],
     [
-	AC_CHECK_LIB(sqlite3,main,[],[AC_MSG_ERROR("you need to have the sqlite3 library installed.")])
+	AC_CHECK_LIB(sqlite3,main,[],[AC_INSTALLATION_INSTRUCTIONS(sqlite3)])
 	AC_CHECK_HEADERS(sqlite3.h,[],[AC_MSG_ERROR("you need to have the sqlite3 header files installed.")])
     ])
 
@@ -138,7 +157,7 @@ AC_ARG_WITH([vkl],
 	ac_new_LIBS+=" -lvkl"
     ],
     [
-	AC_CHECK_LIB(vkl,main,[],[AC_MSG_ERROR("you need to have the vkl library installed.")])
+	AC_CHECK_LIB(vkl,main,[],[AC_INSTALLATION_INSTRUCTIONS(vkl)])
 	AC_CHECK_HEADERS(vkllib.hpp,[],[AC_MSG_ERROR("you need to have the vkl header files installed.")])
     ])
 
@@ -150,7 +169,7 @@ AC_ARG_WITH([gerlumph],
 	ac_new_LIBS+=" -lgerlumph"
     ],
     [
-	AC_CHECK_LIB(gerlumph,main,[],[AC_MSG_ERROR("you need to have the gerlumph library installed.")])
+	AC_CHECK_LIB(gerlumph,main,[],[AC_INSTALLATION_INSTRUCTIONS(gerlumph)])
 	AC_CHECK_HEADERS(gerlumph.hpp,[],[AC_MSG_ERROR("you need to have the gerlumph header files installed.")])
     ])
     

@@ -1,0 +1,6 @@
+git clone https://github.com/gvernard/vkl_lib.git
+cd vkl_lib
+autoreconf -i
+./configure
+make
+make install

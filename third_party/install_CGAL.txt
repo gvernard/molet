@@ -1,0 +1,14 @@
+wget https://github.com/CGAL/cgal/archive/releases/CGAL-4.11.2.tar.gz
+tar -xvf CGAL-4.11.2.tar.gz
+cd cgal-releases-CGAL-4.11.2
+mkdir build_CGAL
+cd build_CGAL
+cmake \
+ -DGMP_INCLUDE_DIR=<PATH/TO/YOUR/gmp>/include \
+ -DGMP_LIBRARIES=<PATH/TO/YOUR/gmp>/lib \
+ -DMPFR_INCLUDE_DIR=<PATH/TO/YOUR/mpfr>/include \
+ -DMPFR_LIBRARIES=<PATH/TO/YOUR/mpfr>/lib \
+ -DBOOST_INCLUDEDIR=<PATH/TO/YOUR/boost>/include \
+ ..
+make
+make install

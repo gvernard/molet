@@ -1,0 +1,7 @@
+wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-1.5.tar.gz
+tar -xvf jq-1.5.tar.gz
+cd jq-1.5
+autoreconf -i
+./configure --disable-maintainer-mode
+make
+make install

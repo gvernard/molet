@@ -1,0 +1,6 @@
+wget https://heasarc.gsfc.nasa.gov/fitsio/CCfits-2.5/CCfits-2.5.tar.gz
+tar -xvf CCfits-2.5.tar.gz
+cd CCfits
+./configure --with-cfitsio=<PATH/TO/YOUR/cfitsio>
+make
+make install
