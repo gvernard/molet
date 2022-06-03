@@ -1,11 +1,32 @@
 #!/bin/bash
-WITH_GPU=no
-MAP_PATH=/home/giorgos/unbacked_up_data/gerlumph_mirror/
+while getopts ":g:m:s:" opt; do
+  case $opt in
+    g) WITH_GPU="$OPTARG"
+    ;;
+    m) MAP_PATH="$OPTARG"
+    ;;
+    s) SCRIPT_DIR="$OPTARG"
+    ;;
+    \?) echo "Invalid option -$OPTARG" >&2
+    exit 1
+    ;;
+  esac
+done
+
+if [ -z "$WITH_GPU" ] || [ -z "$MAP_PATH" ] || [ -z "$SCRIPT_DIR" ]
+then
+    echo "You need to specify all of the following command line options:"
+    echo " -g: either 'yes' or 'no', enables GPU support"
+    echo " -m: the absolute path to a directory with the GERLUMPH maps (can be dummy if not used)"
+    echo " -s: the absolute path to the directory where all the third party libraries will be installed"
+    exit 1;
+fi
 
 
-SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]:-$0}"; )" &> /dev/null && pwd 2> /dev/null; )";
+
 LIBDIR=$SCRIPT_DIR/libraries
 SRCDIR=$SCRIPT_DIR/src
+
 
 mkdir $LIBDIR
 mkdir $SRCDIR
@@ -78,13 +99,13 @@ wget https://boostorg.jfrog.io/artifactory/main/release/1.66.0/source/boost_1_66
     &&  cd $SRCDIR
 
 # Install cmake
-wget https://github.com/Kitware/CMake/archive/refs/tags/v3.15.5.tar.gz \
-    &&  tar -xvf v3.15.5.tar.gz \
-    &&  cd CMake-3.15.5 \
-    &&  ./bootstrap --prefix=$LIBDIR/cmake \
-    &&	make \
-    &&	make install \
-    &&  cd $SRCDIR
+# wget https://github.com/Kitware/CMake/archive/refs/tags/v3.15.5.tar.gz \
+#     &&  tar -xvf v3.15.5.tar.gz \
+#     &&  cd CMake-3.15.5 \
+#     &&  ./bootstrap --prefix=$LIBDIR/cmake \
+#     &&	make \
+#     &&	make install \
+#     &&  cd $SRCDIR
 
 # Install CGAL
 wget https://github.com/CGAL/cgal/archive/releases/CGAL-4.11.2.tar.gz \
@@ -92,7 +113,8 @@ wget https://github.com/CGAL/cgal/archive/releases/CGAL-4.11.2.tar.gz \
     &&	cd cgal-releases-CGAL-4.11.2 \
     &&	mkdir build_CGAL \
     &&	cd build_CGAL \
-    &&	$LIBDIR/cmake/bin/cmake \
+	   #    &&	$LIBDIR/cmake/bin/cmake \
+    &&  cmake \
 	    -DGMP_INCLUDE_DIR=$LIBDIR/gmp/include \
 	    -DGMP_LIBRARIES=$LIBDIR/gmp/lib \
 	    -DMPFR_INCLUDE_DIR=$LIBDIR/mpfr/include \
@@ -109,7 +131,8 @@ git clone https://github.com/open-source-parsers/jsoncpp.git \
     &&	cd jsoncpp \
     &&	mkdir -p build \
     &&	cd build \
-    &&	$LIBDIR/cmake/bin/cmake \
+	   #    &&	$LIBDIR/cmake/bin/cmake \
+    &&  cmake \
 	    -DCMAKE_BUILD_TYPE=release \
 	    -DBUILD_SHARED_LIBS=ON \
 	    -DARCHIVE_INSTALL_DIR=. \
@@ -157,5 +180,15 @@ git clone https://github.com/gvernard/gerlumphpp.git \
     &&  make install \
     &&  cd $SRCDIR
 
-cd ..
-#rm -r -f $SRCDIR
+
+configure="./configure --with-jq=${LIBDIR}/jq --with-fftw3=${LIBDIR}/fftw --with-cfitsio=${LIBDIR}/cfitsio --with-CCfits=${LIBDIR}/CCfits --with-gmp=${LIBDIR}/gmp --with-CGAL=${LIBDIR}/CGAL --with-jsconcpp=${LIBDIR}/jsoncpp --with-png=${LIBDIR}/libpng --with-sqlite3=${LIBDIR}/sqlite3 --with-vkl=${LIBDIR}/vkl_lib --with-gerlumph=${LIBDIR}/gerlumphpp"
+echo $configure | cat > configure_command.txt
+
+
+echo ""
+echo $(tput setaf 2)Success! Third-party libraries have been installed$(tput sgr0) - but check above anyway for any missed errors
+echo "Run 'cd ..' and then the following command to configure MOLET (also saved in $(tput smul)configure_command.txt$(tput rmul)):"
+echo ""
+echo $(tput setaf 1)$configure$(tput sgr0)
+echo ""
+echo "Once you are sure that MOLET can compile, you can also delete the $SRCDIR directory"

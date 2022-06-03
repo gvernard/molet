@@ -7,6 +7,7 @@ obj
 bin
 /third_party/libraries
 /third_party/src
+/third_party/configure_command.txt
 
 /instrument_modules/KeckAOk_true
 /instrument_modules/aymericCAM
