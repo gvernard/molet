@@ -160,7 +160,7 @@ cd sqlite3 \
 # Install vkl_lib
 cd vkl_lib \
     &&  autoreconf -i \
-    &&	./configure --prefix=$LIBDIR/vkl_lib/ --with-external=$LIBDIR/ \
+    &&	./configure --prefix=$LIBDIR/vkl_lib/ --with-cfitsio=$LIBDIR/cfitsio --with-CCfits=$LIBDIR/CCfits --with-gmp=$LIBDIR/gmp --with-CGAL=$LIBDIR/CGAL --with-jsoncpp=$LIBDIR/jsoncpp \
     &&  make \
     &&  make install \
     &&  cd $SRCDIR
@@ -168,7 +168,7 @@ cd vkl_lib \
 # Install gerlumphpp
 cd gerlumphpp \
     &&  autoreconf -i \
-    &&  ./configure --prefix=$LIBDIR/gerlumphpp/ --with-map-path=$MAP_PATH --with-external=$LIBDIR/ --enable-gpu=$WITH_GPU \
+    &&  ./configure --prefix=$LIBDIR/gerlumphpp/ --with-map-path=$MAP_PATH --with-cfitsio=$LIBDIR/cfitsio --with-CCfits=$LIBDIR/CCfits --with-png=$LIBDIR/libpng --with-fftw3=$LIBDIR/fftw --enable-gpu=$WITH_GPU \
     &&  make \
     &&  make install \
     &&  cd $SRCDIR
