@@ -14,10 +14,17 @@ Setting up a local installation is a bit more time consuming, but the code can r
 The latter is the recommended approach for using MOLET in production mode, e.g. when one needs to simulate more than a handful of systems.
 Furthermore, enabling GPU support dramatically increase the speed of microlensing related computations.
 
-Here are some timing results when running the example found in the test_2 directory on a generic laptop:  
-- docker CPU: Xs
-- local CPU: Xs (x times faster)
-- local GPU: Xs (X times faster)
+Here are some timing results when running two examples found in the 'tests' directory on a generic laptop:  
+
+Test 2 (including microlensing):
+- docker CPU: 120s
+- local CPU: 80s (x1.5 faster)
+- local GPU: 22s (x5.5 faster)
+
+Test 5 (no microlensing, producing just a cutout):
+- docker CPU: 8.8s
+- local CPU: 1.8s (x5 faster)
+
 
 
 ### Docker container
@@ -47,20 +54,22 @@ You can find more information on this standard docker usage [here](https://docs.
 ### Installing manually
 MOLET uses third party libraries that must be pre-installed in the system in order to run it.
 For convenience, the list of commands that downloads and installs all these libraries is provided in the *third_party/install_all.sh* script.
-The only requirements to run this script are: CMake, Autotools (for the 'autoreconf' command), an existing C/C++ compiler, and CUDA for GPU support.
+The only requirements to run this script are: CMake, Autotools (for the 'autoreconf' command), an existing C/C++ compiler (e.g.GCC 11), and CUDA for GPU support.
 All of these are standard packages and can be easily isntalled, if not already there.
 
 To use the install_all.sh script, the user needs to provide three command line arguments:
- -g: either 'yes' or 'no', enables GPU support
- -m: the absolute path to a directory with the GERLUMPH maps (can be dummy if not used)
- -s: the absolute path to the directory where all the third party libraries will be installed
+ - -g: either 'yes' or 'no', enables GPU support
+ - -m: the absolute path to a directory with the GERLUMPH maps (can be dummy if not used)
+ - -s: the absolute path to the directory where all the third party libraries will be installed
+ 
 The first two arguments are relevant only for the microlensing part of the code, but they have to be specified anyway (one can set '-g no' and provide any directory as a path to maps if microlensing is not relevant for their simulations).
 Also, these two arguments can be changed at any time, requiring only the re-compillation of the gerlumph++ library (see its [README](https://github.com/gvernard/gerlumphpp) on how to achieve this).
 The third argument should be a directory anywhere in the system where the third lbraries will be installed.
 MOLET will eventually be linked to the libraries installed by this script, even if some or all of them (unlikely) already exist in the system.  
-Pointing to different libraries is a somewhat advanced task, which the users are advised not to undertake unless they are familiar with installing software through autotools (the './configure, make, make install' way).  
+Pointing to different libraries is a somewhat advanced task, which the users are advised not to undertake unless they are familiar with installing software through autotools (the './configure, make, make install' way).
+*Note*: If the installation produces errors, then you can edit the script, e.g. comment out the part that downloads the source files for the libraries, and re-run it to debug.
 
-Once the script has finished its lengthy task, it will have produced a './configure' command with the right options that link the installed libraries to MOLET.
+Once the script has finished its dull but necessary task, it will have produced a './configure' command with the right options that link the installed libraries to MOLET.
 Here is an example of what this will look like:
 
 ```
@@ -121,7 +130,7 @@ python plot_light_curves.py /full/path/to/simulation/dir/ mock_<index_in>_<index
 
 to produce a plot similar to the following one:
 
-![Alt text](plotting/example_observed_lc.png?raw=true "Example observed light curves")
+![Alt text](plotting/light_curves.png?raw=true "Example observed light curves")
 
 
 
