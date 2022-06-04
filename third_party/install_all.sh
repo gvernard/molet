@@ -28,72 +28,76 @@ LIBDIR=$SCRIPT_DIR/libraries
 SRCDIR=$SCRIPT_DIR/src
 
 
-mkdir $LIBDIR
-mkdir $SRCDIR
+mkdir -p $LIBDIR
+mkdir -p $SRCDIR
 cd $SRCDIR
 
-# Install gerlumphpp and dependencies
+
+
+# Download, extract, and rename all the external libraries
+#########################################################################################################
+wget ftp://ftp.fftw.org/pub/fftw/fftw-3.3.8.tar.gz && tar -xvf fftw-3.3.8.tar.gz && mv fftw-3.3.8 fftw3
+wget http://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio-3.47.tar.gz && tar -xvf cfitsio-3.47.tar.gz && mv cfitsio-3.47 cfitsio 
+wget https://heasarc.gsfc.nasa.gov/fitsio/CCfits-2.5/CCfits-2.5.tar.gz && tar -xvf CCfits-2.5.tar.gz
+wget --no-check-certificate https://sourceforge.net/projects/libpng/files/libpng16/1.6.37/libpng-1.6.37.tar.gz && tar -xvf libpng-1.6.37.tar.gz && mv libpng-1.6.37 libpng
+wget https://gmplib.org/download/gmp/gmp-6.1.2.tar.xz && tar -xvf gmp-6.1.2.tar.xz && mv gmp-6.1.2 gmp
+wget http://www.mpfr.org/mpfr-4.0.2/mpfr-4.0.2.tar.gz && tar -xvf mpfr-4.0.2.tar.gz && mv mpfr-4.0.2 mpfr
+wget https://boostorg.jfrog.io/artifactory/main/release/1.66.0/source/boost_1_66_0.tar.gz && tar -xvf boost_1_66_0.tar.gz && mv boost_1_66_0 boost
+wget https://github.com/CGAL/cgal/archive/releases/CGAL-4.11.2.tar.gz && tar -xvf CGAL-4.11.2.tar.gz && mv CGAL-4.11.2 cgal
+wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-1.5.tar.gz && tar -xvf jq-1.5.tar.gz && mv jq-1.5 jq
+wget https://www.sqlite.org/2022/sqlite-autoconf-3380500.tar.gz && tar -xvf sqlite-autoconf-3380500.tar.gz && mv sqlite-autoconf-3380500 sqlite3
+git clone https://github.com/open-source-parsers/jsoncpp.git
+git clone https://github.com/gvernard/vkl_lib.git
+git clone https://github.com/gvernard/gerlumphpp.git
+
+
+
+# Install all libraries
 #########################################################################################################
 # Install fftw
-wget ftp://ftp.fftw.org/pub/fftw/fftw-3.3.8.tar.gz \
-    &&	tar -xvf fftw-3.3.8.tar.gz \
-    &&	mv fftw-3.3.8 fftw \
-    &&	cd fftw \
+cd fftw3 \
     &&	./configure --prefix=$LIBDIR/fftw --enable-shared \
     &&	make CFLAGS=-fPIC \
     &&	make install \
     &&  cd $SRCDIR
 
 # Install cfitsio
-wget http://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio-3.47.tar.gz \
-    &&	tar -xvf cfitsio-3.47.tar.gz \
-    &&	mv cfitsio-3.47 cfitsio \
-    &&	cd cfitsio \
+cd cfitsio \
     &&	./configure --prefix=$LIBDIR/cfitsio \
     &&	make \
     &&	make install \
     &&  cd $SRCDIR
 	
 # Install CCfits
-wget https://heasarc.gsfc.nasa.gov/fitsio/CCfits-2.5/CCfits-2.5.tar.gz \
-    &&	tar -xvf CCfits-2.5.tar.gz \
-    &&	cd CCfits \
+cd CCfits \
     &&	./configure --prefix=$LIBDIR/CCfits --with-cfitsio=$LIBDIR/cfitsio \
     &&	make \
     &&	make install \
     &&  cd $SRCDIR
 
 # Install libpng
-wget --no-check-certificate https://sourceforge.net/projects/libpng/files/libpng16/1.6.37/libpng-1.6.37.tar.gz \
-    &&	tar -xvf libpng-1.6.37.tar.gz \
-    &&	cd libpng-1.6.37 \
+cd libpng \
     &&	./configure --prefix=$LIBDIR/libpng \
     &&	make check \
     &&	make install \
     &&  cd $SRCDIR
 
 # Install gmp
-wget https://gmplib.org/download/gmp/gmp-6.1.2.tar.xz \
-    &&	tar -xvf gmp-6.1.2.tar.xz \
-    &&	cd gmp-6.1.2 \
+cd gmp \
     &&	./configure --prefix=$LIBDIR/gmp \
     &&	make \
     &&	make install \
     &&  cd $SRCDIR
 
 # Install mpfr
-wget http://www.mpfr.org/mpfr-4.0.2/mpfr-4.0.2.tar.gz \
-    &&	tar -xvf mpfr-4.0.2.tar.gz \
-    &&	cd mpfr-4.0.2 \
+cd mpfr \
     &&	./configure --with-gmp=$LIBDIR/gmp --prefix=$LIBDIR/mpfr \
     &&	make \
     &&	make install \
     &&  cd $SRCDIR
 
 # Install boost
-wget https://boostorg.jfrog.io/artifactory/main/release/1.66.0/source/boost_1_66_0.tar.gz \
-    &&	tar -xvf boost_1_66_0.tar.gz \
-    &&	cd boost_1_66_0 \
+cd boost \
     &&	./bootstrap.sh --with-libraries=thread \
     &&	./b2 --prefix=$LIBDIR/boost install \
     &&  cd $SRCDIR
@@ -108,12 +112,9 @@ wget https://boostorg.jfrog.io/artifactory/main/release/1.66.0/source/boost_1_66
 #     &&  cd $SRCDIR
 
 # Install CGAL
-wget https://github.com/CGAL/cgal/archive/releases/CGAL-4.11.2.tar.gz \
-    &&	tar -xvf CGAL-4.11.2.tar.gz \
-    &&	cd cgal-releases-CGAL-4.11.2 \
-    &&	mkdir build_CGAL \
+cd cgal \
+    &&	mkdir -p build_CGAL \
     &&	cd build_CGAL \
-	   #    &&	$LIBDIR/cmake/bin/cmake \
     &&  cmake \
 	    -DGMP_INCLUDE_DIR=$LIBDIR/gmp/include \
 	    -DGMP_LIBRARIES=$LIBDIR/gmp/lib \
@@ -127,11 +128,9 @@ wget https://github.com/CGAL/cgal/archive/releases/CGAL-4.11.2.tar.gz \
     &&  cd $SRCDIR
 
 # Install jsoncpp
-git clone https://github.com/open-source-parsers/jsoncpp.git \
-    &&	cd jsoncpp \
+cd jsoncpp \
     &&	mkdir -p build \
     &&	cd build \
-	   #    &&	$LIBDIR/cmake/bin/cmake \
     &&  cmake \
 	    -DCMAKE_BUILD_TYPE=release \
 	    -DBUILD_SHARED_LIBS=ON \
@@ -144,9 +143,7 @@ git clone https://github.com/open-source-parsers/jsoncpp.git \
     &&  cd $SRCDIR
 
 # Install jq
-wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-1.5.tar.gz \
-    &&	tar -xvf jq-1.5.tar.gz \
-    &&	cd jq-1.5 \
+cd jq \
     &&  autoreconf -i \
     && ./configure --disable-maintainer-mode --prefix=$LIBDIR/jq \
     &&	make \
@@ -154,17 +151,14 @@ wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-1.5.tar.gz \
     &&  cd $SRCDIR
 
 # Install sqlite3
-wget https://www.sqlite.org/2022/sqlite-autoconf-3380500.tar.gz \
-    &&	tar -xvf sqlite-autoconf-3380500.tar.gz \
-    &&	cd sqlite-autoconf-3380500 \
+cd sqlite3 \
     && ./configure --prefix=$LIBDIR/sqlite3 \
     &&	make \
     &&  make install \
     &&  cd $SRCDIR
 
 # Install vkl_lib
-git clone https://github.com/gvernard/vkl_lib.git \
-    &&	cd vkl_lib \
+cd vkl_lib \
     &&  autoreconf -i \
     &&	./configure --prefix=$LIBDIR/vkl_lib/ --with-external=$LIBDIR/ \
     &&  make \
@@ -172,8 +166,7 @@ git clone https://github.com/gvernard/vkl_lib.git \
     &&  cd $SRCDIR
 
 # Install gerlumphpp
-git clone https://github.com/gvernard/gerlumphpp.git \
-    &&	cd gerlumphpp \
+cd gerlumphpp \
     &&  autoreconf -i \
     &&  ./configure --prefix=$LIBDIR/gerlumphpp/ --with-map-path=$MAP_PATH --with-external=$LIBDIR/ --enable-gpu=$WITH_GPU \
     &&  make \
