@@ -38,7 +38,7 @@ AC_DEFUN([AC_INSTALLATION_INSTRUCTIONS],
 AC_ARG_WITH([jq],
     [AS_HELP_STRING([--with-jq=prefix],[give the path to the jq program binary file.])],
     [
-	AC_SUBST(AM_JQ,${withval})
+	AC_SUBST(AM_JQ,${withval}/bin/jq)
     ],
     [
 	AC_PATH_PROG(AM_JQ,jq,[no],[path=$PATH])
@@ -93,7 +93,7 @@ AC_ARG_WITH([jsoncpp],
     [AS_HELP_STRING([--with-jsoncpp=prefix],[give the path to the jsoncpp library and header files.])],
     [
 	ac_new_CPPFLAGS+=" -I${withval}/include"
-	ac_new_LDFLAGS+=" -L${withval}/lib64 -Wl,-rpath -Wl,${withval}/lib"
+	ac_new_LDFLAGS+=" -L${withval}/lib64 -Wl,-rpath -Wl,${withval}/lib64"
 	ac_new_LIBS+=" -ljsoncpp"
     ],
     [
