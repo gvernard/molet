@@ -77,7 +77,7 @@ Here is an example of what this will look like:
 ```
 
 where '/path/to/libraries/' will corredpond to the directory the user passed as argument to the install_all.sh script. 
-Switching to the root installation directory of MOLET and running this command followed by the usual 'make, make install' will complete the installation.
+Switching to the root installation directory of MOLET and running 'autoreconf -i' followed by this command and the usual 'make, make install' will complete the installation.
 MOLET can be run now, and the code can even be modified by the user and recompiled using just 'make, make install' at the root directory.
 The './configure' command needs to be run only once during installation to link the libraries - only if the location of the libraries changes it will have to be modified accordingly (i.e. with the new paths provided as options) and rerun.
 

@@ -175,7 +175,7 @@ echo $configure | cat > ${MY_PATH}/configure_command.txt
 
 echo ""
 echo $(tput setaf 2)Success! Third-party libraries have been installed$(tput sgr0) - but check above anyway for any missed errors
-echo "Run 'cd ..' and then the following command to configure MOLET (also saved in $(tput smul)configure_command.txt$(tput rmul)):"
+echo "Run 'cd ..; autoreconf -i' and then the following command to configure MOLET (also saved in $(tput smul)${MY_PATH}/configure_command.txt$(tput rmul)):"
 echo ""
 echo $(tput setaf 1)$configure$(tput sgr0)
 echo ""

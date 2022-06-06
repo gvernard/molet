@@ -7,10 +7,10 @@ out_path=$2
 json_maps=`grep -o '^[^//]*' ${out_path}output/gerlumph_maps.json`
 
 missing=()
-Nq=`echo $json_maps | jq '. | length'`
+Nq=`echo $json_maps | @AM_JQ@ '. | length'`
 for (( q=0; q<$Nq; q++ ))
 do  
-    id=`echo $json_maps | jq ".[$q].id " | sed -e 's/^"//' -e 's/"$//'`
+    id=`echo $json_maps | @AM_JQ@ ".[$q].id " | @SED@ -e 's/^"//' -e 's/"$//'`
     if [ $id != "none" ]
     then
 	mydir=${map_path}$id

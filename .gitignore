@@ -8,6 +8,8 @@ bin
 /third_party/libraries
 /third_party/src
 /third_party/configure_command.txt
+/checks/check_map_files.sh
+/combine_light/setup_dirs.sh
 
 /instrument_modules/KeckAOk_true
 /instrument_modules/aymericCAM

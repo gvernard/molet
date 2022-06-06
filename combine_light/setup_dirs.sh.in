@@ -7,35 +7,35 @@ out_path=$3
 
 myinput=`grep -o '^[^//]*' $infile`
 
-instrument_name=`echo $myinput | jq '.instruments[0].name' | sed -e 's/^"//' -e 's/"$//'`
+instrument_name=`echo $myinput | @AM_JQ@ '.instruments[0].name' | @SED@ -e 's/^"//' -e 's/"$//'`
 
 
 #### Find and set number of intrinsic light curves (Nin)
-lc_in_type=`echo $myinput | jq '.point_source.variability.intrinsic.type' | sed -e 's/^"//' -e 's/"$//'`
+lc_in_type=`echo $myinput | @AM_JQ@ '.point_source.variability.intrinsic.type' | @SED@ -e 's/^"//' -e 's/"$//'`
 if [ $lc_in_type = "custom" ]
 then
     lc_in_file=${in_path}"input_files/"${instrument_name}"_LC_intrinsic.json"
 else
     lc_in_file=${out_path}"output/"${instrument_name}"_LC_intrinsic.json"
 fi
-Nin=`cat $lc_in_file | jq ". | length"`
+Nin=`cat $lc_in_file | @AM_JQ@ ". | length"`
 
 
 
 
 #### Find and set number of extrinsic light curves (Nex)
-lc_ex_type=`echo $myinput | jq '.point_source.variability.extrinsic.type' | sed -e 's/^"//' -e 's/"$//'`
+lc_ex_type=`echo $myinput | @AM_JQ@ '.point_source.variability.extrinsic.type' | @SED@ -e 's/^"//' -e 's/"$//'`
 if [ $lc_ex_type = "custom" ]
 then
     lc_ex_file=${in_path}"input_files/"${instrument_name}"_LC_extrinsic.json"
 else
     lc_ex_file=${out_path}"output/"${instrument_name}"_LC_extrinsic.json"
 fi
-Nq=`cat $lc_ex_file | jq ". | length"`
+Nq=`cat $lc_ex_file | @AM_JQ@ ". | length"`
 
 for (( q=0; q<$Nq; q++ ))
 do  
-    len=`cat $lc_ex_file | jq ".[$q] | length"`
+    len=`cat $lc_ex_file | @AM_JQ@ ".[$q] | length"`
     if [ $len -gt 0 ]
     then
 	Nex=$len
