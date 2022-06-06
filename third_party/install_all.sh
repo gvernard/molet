@@ -43,7 +43,7 @@ wget --no-check-certificate https://sourceforge.net/projects/libpng/files/libpng
 wget https://gmplib.org/download/gmp/gmp-6.1.2.tar.xz && tar -xvf gmp-6.1.2.tar.xz && mv gmp-6.1.2 gmp
 wget http://www.mpfr.org/mpfr-4.0.2/mpfr-4.0.2.tar.gz && tar -xvf mpfr-4.0.2.tar.gz && mv mpfr-4.0.2 mpfr
 wget https://boostorg.jfrog.io/artifactory/main/release/1.66.0/source/boost_1_66_0.tar.gz && tar -xvf boost_1_66_0.tar.gz && mv boost_1_66_0 boost
-wget https://github.com/CGAL/cgal/archive/releases/CGAL-4.11.2.tar.gz && tar -xvf CGAL-4.11.2.tar.gz && mv CGAL-4.11.2 cgal
+wget https://github.com/CGAL/cgal/archive/releases/CGAL-4.11.2.tar.gz && tar -xvf CGAL-4.11.2.tar.gz && mv cgal-releases-CGAL-4.11.2 cgal
 wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-1.5.tar.gz && tar -xvf jq-1.5.tar.gz && mv jq-1.5 jq
 wget https://www.sqlite.org/2022/sqlite-autoconf-3380500.tar.gz && tar -xvf sqlite-autoconf-3380500.tar.gz && mv sqlite-autoconf-3380500 sqlite3
 git clone https://github.com/open-source-parsers/jsoncpp.git
@@ -102,15 +102,6 @@ cd boost \
     &&	./b2 --prefix=$LIBDIR/boost install \
     &&  cd $SRCDIR
 
-# Install cmake
-# wget https://github.com/Kitware/CMake/archive/refs/tags/v3.15.5.tar.gz \
-#     &&  tar -xvf v3.15.5.tar.gz \
-#     &&  cd CMake-3.15.5 \
-#     &&  ./bootstrap --prefix=$LIBDIR/cmake \
-#     &&	make \
-#     &&	make install \
-#     &&  cd $SRCDIR
-
 # Install CGAL
 cd cgal \
     &&	mkdir -p build_CGAL \
@@ -160,7 +151,7 @@ cd sqlite3 \
 # Install vkl_lib
 cd vkl_lib \
     &&  autoreconf -i \
-    &&	./configure --prefix=$LIBDIR/vkl_lib/ --with-cfitsio=$LIBDIR/cfitsio --with-CCfits=$LIBDIR/CCfits --with-gmp=$LIBDIR/gmp --with-CGAL=$LIBDIR/CGAL --with-jsoncpp=$LIBDIR/jsoncpp \
+    &&	./configure --prefix=$LIBDIR/vkl_lib --with-cfitsio=$LIBDIR/cfitsio --with-CCfits=$LIBDIR/CCfits --with-gmp=$LIBDIR/gmp --with-CGAL=$LIBDIR/CGAL --with-jsoncpp=$LIBDIR/jsoncpp \
     &&  make \
     &&  make install \
     &&  cd $SRCDIR
@@ -174,7 +165,7 @@ cd gerlumphpp \
     &&  cd $SRCDIR
 
 
-configure="./configure --with-jq=${LIBDIR}/jq --with-fftw3=${LIBDIR}/fftw --with-cfitsio=${LIBDIR}/cfitsio --with-CCfits=${LIBDIR}/CCfits --with-gmp=${LIBDIR}/gmp --with-CGAL=${LIBDIR}/CGAL --with-jsconcpp=${LIBDIR}/jsoncpp --with-png=${LIBDIR}/libpng --with-sqlite3=${LIBDIR}/sqlite3 --with-vkl=${LIBDIR}/vkl_lib --with-gerlumph=${LIBDIR}/gerlumphpp"
+configure="./configure --with-jq=${LIBDIR}/jq --with-fftw3=${LIBDIR}/fftw --with-cfitsio=${LIBDIR}/cfitsio --with-CCfits=${LIBDIR}/CCfits --with-jsoncpp=${LIBDIR}/jsoncpp --with-png=${LIBDIR}/libpng --with-sqlite3=${LIBDIR}/sqlite3 --with-vkl=${LIBDIR}/vkl_lib --with-gerlumph=${LIBDIR}/gerlumphpp"
 echo $configure | cat > configure_command.txt
 
 

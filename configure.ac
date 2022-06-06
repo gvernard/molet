@@ -57,7 +57,7 @@ AC_ARG_WITH([fftw3],
     [AS_HELP_STRING([--with-fftw3=prefix],[give the path to the fftw3 library and header files.])],
     [
 	ac_new_CPPFLAGS+=" -I${withval}/include"
-	ac_new_LDFLAGS+=" -L${withval}/lib"
+	ac_new_LDFLAGS+=" -L${withval}/lib -Wl,-rpath -Wl,${withval}/lib"
 	ac_new_LIBS+=" -lfftw3"
     ],
     [
@@ -69,7 +69,7 @@ AC_ARG_WITH([cfitsio],
     [AS_HELP_STRING([--with-cfitsio=prefix],[give the path to the cfitsio library and header files.])],
     [
 	ac_new_CPPFLAGS+=" -I${withval}/include"
-	ac_new_LDFLAGS+=" -L${withval}/lib"
+	ac_new_LDFLAGS+=" -L${withval}/lib -Wl,-rpath -Wl,${withval}/lib"
 	ac_new_LIBS+=" -lcfitsio"
     ],
     [
@@ -81,7 +81,7 @@ AC_ARG_WITH([CCfits],
     [AS_HELP_STRING([--with-CCfits=prefix],[give the path to the CCfits library and header files.])],
     [
 	ac_new_CPPFLAGS+=" -I${withval}/include"
-	ac_new_LDFLAGS+=" -L${withval}/lib"
+	ac_new_LDFLAGS+=" -L${withval}/lib -Wl,-rpath -Wl,${withval}/lib"
 	ac_new_LIBS+=" -lCCfits"
     ],
     [
@@ -89,35 +89,11 @@ AC_ARG_WITH([CCfits],
 	AC_CHECK_HEADERS(CCfits/CCfits.h,[],[AC_MSG_ERROR("you need to have the CCfits header files installed.")])
     ])
 
-AC_ARG_WITH([gmp],
-    [AS_HELP_STRING([--with-gmp=prefix],[give the path to the gmp library and header files.])],
-    [
-	ac_new_CPPFLAGS+=" -I${withval}/include"
-	ac_new_LDFLAGS+=" -L${withval}/lib"
-	ac_new_LIBS+=" -lgmp"
-    ],
-    [
-	AC_CHECK_LIB(gmp,main,[],[AC_INSTALLATION_INSTRUCTIONS(gmp)])
-	AC_CHECK_HEADERS(gmp.h,[],[AC_MSG_ERROR("you need to have the gmp header files installed.")])
-    ])
-
-AC_ARG_WITH([CGAL],
-    [AS_HELP_STRING([--with-CGAL=prefix],[give the path to the CGAL library and header files.])],
-    [
-	ac_new_CPPFLAGS+=" -I${withval}/include"
-	ac_new_LDFLAGS+=" -L${withval}/lib"
-	ac_new_LIBS+=" -lCGAL"
-    ],
-    [
-	AC_CHECK_LIB(CGAL,main,[],[AC_INSTALLATION_INSTRUCTIONS(CGAL)])
-	#AC_CHECK_HEADERS(CGAL/CGAL.h,[],[AC_MSG_ERROR("you need to have the CGAL header files installed.")])
-    ])
-
 AC_ARG_WITH([jsoncpp],
     [AS_HELP_STRING([--with-jsoncpp=prefix],[give the path to the jsoncpp library and header files.])],
     [
 	ac_new_CPPFLAGS+=" -I${withval}/include"
-	ac_new_LDFLAGS+=" -L${withval}/lib"
+	ac_new_LDFLAGS+=" -L${withval}/lib64 -Wl,-rpath -Wl,${withval}/lib"
 	ac_new_LIBS+=" -ljsoncpp"
     ],
     [
@@ -129,7 +105,7 @@ AC_ARG_WITH([png],
     [AS_HELP_STRING([--with-png=prefix],[give the path to the png library and header files.])],
     [
 	ac_new_CPPFLAGS+=" -I${withval}/include"
-	ac_new_LDFLAGS+=" -L${withval}/lib"
+	ac_new_LDFLAGS+=" -L${withval}/lib -Wl,-rpath -Wl,${withval}/lib"
 	ac_new_LIBS+=" -lpng"
     ],
     [
@@ -141,7 +117,7 @@ AC_ARG_WITH([sqlite3],
     [AS_HELP_STRING([--with-sqlite3=prefix],[give the path to the sqlite3 library and header files.])],
     [
 	ac_new_CPPFLAGS+=" -I${withval}/include"
-	ac_new_LDFLAGS+=" -L${withval}/lib"
+	ac_new_LDFLAGS+=" -L${withval}/lib -Wl,-rpath -Wl,${withval}/lib"
 	ac_new_LIBS+=" -lsqlite3"
     ],
     [
@@ -153,7 +129,7 @@ AC_ARG_WITH([vkl],
     [AS_HELP_STRING([--with-vkl=prefix],[give the path to the vkl library and header files.])],
     [
 	ac_new_CPPFLAGS+=" -I${withval}/include"
-	ac_new_LDFLAGS+=" -L${withval}/lib"
+	ac_new_LDFLAGS+=" -L${withval}/lib -Wl,-rpath -Wl,${withval}/lib"
 	ac_new_LIBS+=" -lvkl"
     ],
     [
@@ -165,7 +141,7 @@ AC_ARG_WITH([gerlumph],
     [AS_HELP_STRING([--with-gerlumph=prefix],[give the path to the gerlumph library and header files.])],
     [
 	ac_new_CPPFLAGS+=" -I${withval}/include"
-	ac_new_LDFLAGS+=" -L${withval}/lib"
+	ac_new_LDFLAGS+=" -L${withval}/lib -Wl,-rpath -Wl,${withval}/lib"
 	ac_new_LIBS+=" -lgerlumph"
     ],
     [
