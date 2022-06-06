@@ -159,14 +159,18 @@ cd vkl_lib \
 # Install gerlumphpp
 cd gerlumphpp \
     &&  autoreconf -i \
-    &&  ./configure --prefix=$LIBDIR/gerlumphpp/ --with-map-path=$MAP_PATH --with-cfitsio=$LIBDIR/cfitsio --with-CCfits=$LIBDIR/CCfits --with-png=$LIBDIR/libpng --with-fftw3=$LIBDIR/fftw --enable-gpu=$WITH_GPU \
+    &&  ./configure --prefix=$LIBDIR/gerlumphpp --with-map-path=$MAP_PATH --with-cfitsio=$LIBDIR/cfitsio --with-CCfits=$LIBDIR/CCfits --with-png=$LIBDIR/libpng --with-fftw3=$LIBDIR/fftw --enable-gpu=$WITH_GPU \
     &&  make \
     &&  make install \
     &&  cd $SRCDIR
 
 
-configure="./configure --with-jq=${LIBDIR}/jq --with-fftw3=${LIBDIR}/fftw --with-cfitsio=${LIBDIR}/cfitsio --with-CCfits=${LIBDIR}/CCfits --with-jsoncpp=${LIBDIR}/jsoncpp --with-png=${LIBDIR}/libpng --with-sqlite3=${LIBDIR}/sqlite3 --with-vkl=${LIBDIR}/vkl_lib --with-gerlumph=${LIBDIR}/gerlumphpp"
-echo $configure | cat > configure_command.txt
+# Need to change directory
+MY_PATH=$(dirname "$0")            # relative
+MY_PATH=$(cd "$MY_PATH" && pwd)
+
+configure="./configure --with-jq=${LIBDIR}/jq --with-fftw3=${LIBDIR}/fftw --with-cfitsio=${LIBDIR}/cfitsio --with-CCfits=${LIBDIR}/CCfits --with-gmp=$LIBDIR/gmp --with-CGAL=$LIBDIR/CGAL --with-jsoncpp=${LIBDIR}/jsoncpp --with-png=${LIBDIR}/libpng --with-sqlite3=${LIBDIR}/sqlite3 --with-vkl=${LIBDIR}/vkl_lib --with-gerlumph=${LIBDIR}/gerlumphpp"
+echo $configure | cat > ${MY_PATH}/configure_command.txt
 
 
 echo ""

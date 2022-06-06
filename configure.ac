@@ -137,6 +137,30 @@ AC_ARG_WITH([vkl],
 	AC_CHECK_HEADERS(vkllib.hpp,[],[AC_MSG_ERROR("you need to have the vkl header files installed.")])
     ])
 
+AC_ARG_WITH([gmp],
+    [AS_HELP_STRING([--with-gmp=prefix],[give the path to the gmp library and header files.])],
+    [
+	ac_new_CPPFLAGS+=" -I${withval}/include"
+	ac_new_LDFLAGS+=" -L${withval}/lib -Wl,-rpath -Wl,${withval}/lib"
+	ac_new_LIBS+=" -lgmp"
+    ],
+    [
+	AC_CHECK_LIB(gmp,main,[],[AC_MSG_ERROR("you need to have the gmp library installed.")])
+	AC_CHECK_HEADERS(gmp.h,[],[AC_MSG_ERROR("you need to have the gmp header files installed.")])
+    ])
+
+AC_ARG_WITH([CGAL],
+    [AS_HELP_STRING([--with-CGAL=prefix],[give the path to the CGAL library and header files.])],
+    [
+	ac_new_CPPFLAGS+=" -I${withval}/include"
+	ac_new_LDFLAGS+=" -L${withval}/lib64 -Wl,-rpath -Wl,${withval}/lib64"
+	ac_new_LIBS+=" -lCGAL"
+    ],
+    [
+	AC_CHECK_LIB(CGAL,main,[],[AC_MSG_ERROR("you need to have the CGAL library installed.")])
+	#AC_CHECK_HEADERS(CGAL/CGAL.h,[],[AC_MSG_ERROR("you need to have the CGAL header files installed.")])
+    ])
+
 AC_ARG_WITH([gerlumph],
     [AS_HELP_STRING([--with-gerlumph=prefix],[give the path to the gerlumph library and header files.])],
     [

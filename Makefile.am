@@ -12,7 +12,7 @@ libinstruments_la_SOURCES= \
 	instruments/src/noise.cpp
 libinstruments_la_CXXFLAGS = -std=c++17	-fPIC -g -frounding-math
 libinstruments_la_CPPFLAGS = -Iinstruments/include -DINSTRUMENT_PATH='"@INSTRUMENT_PATH@"'
-libinstruments_la_LIBADD = -lvkl -lfftw3 -ljsoncpp
+libinstruments_la_LIBADD = -lgmp -lCGAL -lvkl -lfftw3 -ljsoncpp
 
 
 
@@ -63,17 +63,17 @@ vkl_fproject_SOURCES = \
 	lensed_extended_source/vkl_fproject/src/fproject.cpp \
 	lensed_extended_source/vkl_fproject/src/caustics.cpp
 vkl_fproject_CPPFLAGS = -Iinstruments/include -Ilensed_extended_source/vkl_fproject/include
-vkl_fproject_LDADD = -linstruments -lvkl -lgfortran -lCCfits -lcfitsio -ljsoncpp
+vkl_fproject_LDADD = -linstruments -lgmp -lCGAL -lvkl -lgfortran -lCCfits -lcfitsio -ljsoncpp
 
 vkl_point_source_SOURCES = \
 	lensed_point_source/vkl_point_source/src/point_source.cpp \
 	lensed_point_source/vkl_point_source/src/polygons.cpp
 vkl_point_source_CPPFLAGS = -Iinstruments/include -Ilensed_point_source/vkl_point_source/include
-vkl_point_source_LDADD = -linstruments -lvkl -lgfortran -lCCfits -lcfitsio -ljsoncpp
+vkl_point_source_LDADD = -linstruments -lgmp -lCGAL -lvkl -lgfortran -lCCfits -lcfitsio -ljsoncpp
 
 vkl_lens_SOURCES = lens_light_mass/vkl_llm/src/lens_light_mass.cpp
 vkl_lens_CPPFLAGS = -Iinstruments/include
-vkl_lens_LDADD = -linstruments -lvkl -lgfortran -lCCfits -lcfitsio -ljsoncpp
+vkl_lens_LDADD = -linstruments -lgmp -lCGAL -lvkl -lgfortran -lCCfits -lcfitsio -ljsoncpp
 
 var_moving_disc_SOURCES = \
 	variability/extrinsic/moving_disc/src/moving_disc.cpp \
@@ -100,7 +100,7 @@ final_combine_light_SOURCES = \
 	combine_light/src/auxiliary_functions.cpp \
 	combine_light/src/mask_functions.cpp
 final_combine_light_CPPFLAGS = -Iinstruments/include -Icombine_light/include
-final_combine_light_LDADD = -linstruments -lvkl -lfftw3 -lCCfits -lcfitsio -ljsoncpp
+final_combine_light_LDADD = -linstruments -lgmp -lCGAL -lvkl -lfftw3 -lCCfits -lcfitsio -ljsoncpp
 
 
 bin_SCRIPTS = molet_driver
