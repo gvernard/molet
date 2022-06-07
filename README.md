@@ -52,10 +52,14 @@ You can find more information on this standard docker usage [here](https://docs.
 
 
 ### Installing manually
+
+#### Prerequisites
+The following packages/programs are required in order to proceed with the installation of MOLET: **CMake**, **Autotools** (for the 'autoreconf' command), an existing **C/C++** compiler (e.g.GCC 11), and **CUDA** (i.e. the nvcc compiler) for GPU support.
+These programs need to be available in the command line but are standard packages that can be easily installed via package managers.
+
+#### Third-party libraries
 MOLET uses third party libraries that must be pre-installed in the system in order to run it.
 For convenience, the list of commands that downloads and installs all these libraries is provided in the *third_party/install_all.sh* script.
-The only requirements to run this script are: CMake, Autotools (for the 'autoreconf' command), an existing C/C++ compiler (e.g.GCC 11), and CUDA for GPU support.
-All of these are standard packages and can be easily isntalled, if not already there.
 
 To use the install_all.sh script, the user needs to provide three command line arguments:
  - -g: either 'yes' or 'no', enables GPU support
@@ -68,6 +72,8 @@ The third argument should be a directory anywhere in the system where the third 
 MOLET will eventually be linked to the libraries installed by this script, even if some or all of them (unlikely) already exist in the system.  
 Pointing to different libraries is a somewhat advanced task, which the users are advised not to undertake unless they are familiar with installing software through autotools (the './configure, make, make install' way).
 *Note*: If the installation produces errors, then you can edit the script, e.g. comment out the part that downloads the source files for the libraries, and re-run it to debug.
+
+#### Installing MOLET
 
 Once the script has finished its dull but necessary task, it will have produced a './configure' command with the right options that link the installed libraries to MOLET.
 Here is an example of what this will look like:
