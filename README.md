@@ -54,7 +54,7 @@ You can find more information on this standard docker usage [here](https://docs.
 ### Installing manually
 
 #### Prerequisites
-The following packages/programs are required in order to proceed with the installation of MOLET: **CMake**, **Autotools** (for the 'autoreconf' command), an existing **C/C++** compiler (e.g.GCC 11), and **CUDA** (i.e. the nvcc compiler) for GPU support.
+The following packages/programs are required in order to proceed with the installation of MOLET: **CMake**, **Autotools** (for the 'autoreconf' command), an existing **C/C++** compiler compatible with the c++17 standard (e.g. GCC version 8 and above should be fine), and **CUDA** (i.e. the nvcc compiler) for GPU support.
 These programs need to be available in the command line but are standard packages that can be easily installed via package managers.
 
 #### Third-party libraries
