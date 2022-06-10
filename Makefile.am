@@ -18,6 +18,7 @@ libinstruments_la_LIBADD = -lgmp -lCGAL -lvkl -lfftw3 -ljsoncpp
 
 
 bin_PROGRAMS = \
+	aux_create_instrument \
 	angular_diameter_distances \
 	check_time_vector \
 	check_initialization \
@@ -33,6 +34,11 @@ bin_PROGRAMS = \
 	var_drw \
 	final_combine_light
 
+
+aux_create_instrument_SOURCES = instruments/src/create_new_instrument.cpp
+aux_create_instrument_CXXFLAGS = -std=c++17 -fPIC -g -frounding-math
+aux_create_instrument_CPPFLAGS = -Iinstruments/include
+aux_create_instrument_LDADD = -linstruments -lcfitsio -lCCfits -ljsoncpp
 
 angular_diameter_distances_SOURCES = \
 	cosmology/angular_diameter_distances/src/angular_diameter_distances.cpp \
@@ -105,3 +111,10 @@ final_combine_light_LDADD = -linstruments -lgmp -lCGAL -lvkl -lfftw3 -lCCfits -l
 
 bin_SCRIPTS = molet_driver
 CLEANFILES = $(bin_SCRIPTS)
+
+
+install-exec-hook:
+	$(abs_top_builddir)/data/initialize_instruments.sh $(abs_top_builddir) 
+
+uninstall-hook:
+	rm -r $(abs_top_builddir)/instrument_modules/*

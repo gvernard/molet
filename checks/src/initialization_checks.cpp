@@ -33,24 +33,6 @@ int main(int argc,char* argv[]){
   fin.close();
 
 
-  // Get the list of existing instruments
-  DIR* modules;
-  struct dirent* ent;
-  std::vector<std::string> molet_instruments;
-  //if( (modules=opendir((molet_home+"instrument_modules/").c_str())) != NULL ){
-  if( (modules=opendir((Instrument::path).c_str())) != NULL ){
-    while( (ent=readdir(modules)) != NULL ){
-      molet_instruments.push_back(ent->d_name);
-      std::cout << ent->d_name << std::endl;
-    }
-    closedir(modules);
-  } else {
-    /* could not open directory */
-    perror("");
-    return 1;
-  }
-
-  
   bool point_source = false;
   if( root.isMember("point_source") ){
     point_source = true;
@@ -68,7 +50,7 @@ int main(int argc,char* argv[]){
   std::vector<std::string> instruments;
   for(int i=0;i<root["instruments"].size();i++){
     std::string name = root["instruments"][i]["name"].asString();    
-    if( std::find(molet_instruments.begin(),molet_instruments.end(),name) != molet_instruments.end() ){
+    if( Instrument::checkInstrumentExists(name) ){
       instruments.push_back(name);
     } else {
       fprintf(stderr,"Instrument %s is unknown! Add it to the modules or change instrument.\n",name.c_str());

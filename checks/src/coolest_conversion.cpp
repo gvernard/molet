@@ -224,7 +224,6 @@ int main(int argc,char* argv[]){
     psf["height"] = root["instrument"]["psf"]["height"];
     new_instrument["psf"] = psf;
     Instrument::createNewInstrument(new_instrument,case_path+"psf.fits");
-    fprintf(stdout,"New instrument '%s' has been created.\n",instrument_name.c_str());
   }
 
   

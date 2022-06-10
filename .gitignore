@@ -11,10 +11,11 @@ bin
 /checks/check_map_files.sh
 /combine_light/setup_dirs.sh
 
-/instrument_modules/KeckAOk_true
-/instrument_modules/aymericCAM
+/instrument_modules/*
 /data/*
 !/data/gerlumph.db
+!/data/initialize_instruments.sh
+!/data/instrument_data
 /plotting/*.png
 
 

@@ -1,0 +1,14 @@
+{
+    "name": "ECAM",
+    "band": "r",
+    "lambda_min": 600,
+    "lambda_max": 725,
+    "resolution": 0.2148,
+    "psf": {
+	"pix_x": 128,
+	"pix_y": 128,
+	"width": 13.7472,
+	"height": 13.7472
+    },
+    "readout": 4 
+}

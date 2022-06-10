@@ -6,6 +6,7 @@
 
 #include "vkllib.hpp"
 #include "json/json.h"
+#include "CCfits/CCfits"
 
 #include "instruments.hpp"
 #include "noise.hpp"
@@ -111,10 +112,25 @@ void Instrument::createNewInstrument(Json::Value specs,std::string path_to_psf){
   dum_noise["type"] = "NoNoise";
   Instrument test(tmp_name,dum_noise);
 
+  std::unique_ptr<CCfits::FITS> pInfile(new CCfits::FITS(Instrument::path + tmp_name + "/psf.fits",CCfits::Read,true));
+  CCfits::PHDU& image = pInfile->pHDU();
+  int Nax1(image.axis(0));
+  int Nax2(image.axis(1));
+  if( Nax1 != specs["psf"]["pix_x"].asInt() ){
+    fprintf(stderr,"Given number of pixels in the X dimension does not correspond to the fits image!\n");
+    return;
+  }
+  if( Nax2 != specs["psf"]["pix_y"].asInt() ){
+    fprintf(stderr,"Given number of pixels in the Y dimension does not correspond to the fits image!\n");
+    return;
+  }
+
+    
   // If the instrument can be created (i.e. no error above) then copy to the right directory
   std::string dir_name = specs["name"].asString() + "-" + specs["band"].asString();
   std::filesystem::copy(Instrument::path + tmp_name,Instrument::path + dir_name);
   std::filesystem::remove_all(Instrument::path + tmp_name);
+  fprintf(stdout,"New instrument '%s' has been created.\n",dir_name.c_str());
 }
 
 
