@@ -140,6 +140,18 @@ to produce a plot similar to the following one:
 
 
 
+## Adding new instruments
+
+A few basic examples of instruments (i.e. a psf, some resolution, bandwidth, etc) are provided with MOLET, but the user can easily add their own.
+From the root installation directory, the user needs to run:
+```
+./bin/aux_create_instrument /path/to/instrument/specs.json /path/to/instrument/psf.fits
+```
+passing the path to a .json and .fits files that contain the information on the instrument.
+Examples of such files can be found in data/instrument_data/.
+The .fits file is just an image of the PSF, but its dimensions (physical and in pixels) need to be provided in the specs.json file.  
+
+
 
 ## Note on using magnification maps
 
