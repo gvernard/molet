@@ -30,6 +30,7 @@ bin_PROGRAMS = \
 	vkl_lens \
 	var_moving_disc \
 	var_expanding_supernova \
+	var_variable_moving_source \
 	var_match_to_gerlumph \
 	var_drw \
 	final_combine_light
@@ -90,6 +91,10 @@ var_moving_disc_LDADD = -linstruments -lgerlumph -lCCfits -lcfitsio -lpng -ljson
 var_expanding_supernova_SOURCES = variability/extrinsic/expanding_supernova/src/expanding_supernova.cpp
 var_expanding_supernova_CPPFLAGS = -Iinstruments/include
 var_expanding_supernova_LDADD = -linstruments -lgerlumph -lCCfits -lcfitsio -lpng -ljsoncpp
+
+var_variable_moving_source_SOURCES = variability/extrinsic/variable_moving_source/src/variable_moving_source.cpp
+var_variable_moving_source_CPPFLAGS = -Iinstruments/include
+var_variable_moving_source_LDADD = -linstruments -lgerlumph -lCCfits -lcfitsio -lpng -ljsoncpp
 
 var_match_to_gerlumph_SOURCES = variability/extrinsic/match_to_gerlumph/src/match_to_gerlumph.cpp
 var_match_to_gerlumph_CPPFLAGS = -Ivariability/extrinsic/match_to_gerlumph/include

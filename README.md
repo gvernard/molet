@@ -5,7 +5,7 @@ This is a collection of software creating simulated galaxy-galaxy lenses as a fu
 
 
 
-## Install
+## Installing
 
 There are two different ways to setup a working installation of MOLET.
 The quickest is by using the docker provided images, however, the docker virtualization makes the computations signigicantly slower.
@@ -90,7 +90,7 @@ The './configure' command needs to be run only once during installation to link 
 
 
 
-## Run
+## Running
 The main script calling the various programms and managing input and output files is *molet_driver.sh*.
 Each simulation is contained in a single directory that needs to include a *.json* input file, an *input_files* directory and the eventual output.
 

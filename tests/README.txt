@@ -8,3 +8,4 @@ Here is the summary of all the examples included:
 "test_5"  -  Same as 'test_0' but now the point source is removed and there are gridded lens potential perturbations present.
 "test_6"  -  A test case originally designed to compare conventions with lenstronomy. No point source.
 "test_7"  -  Same as 'test_6' with an additional sub-halo.
+"test_8"  -  Same as 'test 2' but instead of the 'moving_disc' variability model we have the new 'variable_moving_source' model.

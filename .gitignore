@@ -33,6 +33,10 @@ Makefile.in
 /ylwrap
 .deps/
 .dirstamp
+.libs
+*.o
+*.lo
+*.la
 
 # http://www.gnu.org/software/autoconf
 
