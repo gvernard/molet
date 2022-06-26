@@ -13,7 +13,7 @@ lc_ex_type=`echo $myinput | @AM_JQ@ '.point_source.variability.extrinsic.type' |
 
 
 #### Find and set number of intrinsic light curves (Nin)
-if [ $lc_ex_type != "variable_moving_source" ]
+if [ $lc_ex_type != "moving_variable_source" ]
 then
     if [ $lc_in_type = "custom" ]
     then

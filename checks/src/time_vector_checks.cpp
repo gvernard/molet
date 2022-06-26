@@ -10,8 +10,10 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <filesystem>
 
 #include "json/json.h"
+#include "CCfits/CCfits"
 
 #include "gerlumph.hpp"
 #include "instruments.hpp"
@@ -30,15 +32,7 @@ int main(int argc,char* argv[]){
   std::string in_path = argv[2];
   std::string out_path = argv[3];
 
-  bool unmicro = false;
-  if( root["point_source"]["variability"].isMember("unmicro") ){
-    unmicro = true;
-  }
 
-  bool supernova = false;
-  if( root["point_source"]["source_type"].asString() == "supernova" ){
-    supernova = true;
-  }
 
 
   // Read the multiple images' parameters from JSON to get the maximum time delay
@@ -89,192 +83,24 @@ int main(int argc,char* argv[]){
   
 
 
+  std::string ex_type = root["point_source"]["variability"]["extrinsic"]["type"].asString();
+  std::string in_type = root["point_source"]["variability"]["intrinsic"]["type"].asString();
+
   
-  //=============================================== Perform various checks ================================================      
-  if( supernova ){
+  // Check intrinsic light curves
+  //================================================================================================================
+  if( ex_type != "moving_variable_source" ){
 
-    std::string intrinsic_path;
-    if( root["point_source"]["variability"]["intrinsic"]["type"].asString() == "custom" ){
-      intrinsic_path = in_path+"input_files/";
-    } else {
-      intrinsic_path = out_path+"output/";
-    }
-
-    // Check intrinsic light curves
-    std::vector<double> duration(names.size());
-    for(int n=0;n<names.size();n++){
-      std::string iname = names[n];      
-      Json::Value json_intrinsic;
-      fin.open(intrinsic_path+iname+"_LC_intrinsic.json",std::ifstream::in);
-      fin >> json_intrinsic;
-      fin.close();
-      
-      // Loop for all different realizations of intrinsic light curves
-      std::vector<double> dur;
-      for(int i=0;i<json_intrinsic.size();i++){
-	int Ntime = json_intrinsic[i]["time"].size();
-	double tin_min = json_intrinsic[i]["time"][0].asDouble();
-	double tin_max = json_intrinsic[i]["time"][Ntime-1].asDouble();
-	dur.push_back( tin_max-tin_min );
-	if( tobs_min > (tin_min-td_max) ){
-	  fprintf(stderr,"To include intrinsic light curve %d, an earlier starting time by at least %f days is required for instrument %s!\n",i,tobs_min-(tin_min-td_max),iname.c_str());
-	  check = true;
-	}
-	if( tobs_max < (tin_max+1) ){
-	  fprintf(stderr,"To include intrinsic light curve %d, a later ending observing time by at least %f day is required in instrument %s!\n",i,(tin_max+1)-tobs_max,iname.c_str());
-	  check = true;
-	}	
-      }
-
-      if( dur.size()>1 ){
-	for(int i=0;i<dur.size();i++){
-	  if( dur[i-1] != dur[i] ){
-	    fprintf(stderr,"The length of all the intrinsic light curves for the %s instrument MUST be the same. Currently the length of light curve %d is different!\n",iname.c_str(),i);
-	    check = true;
-	  }
-	}
-      }
-      duration[n] = dur[0];
-    }
-
-    // Check custom extrinsic light curves for SN
-    std::string ex_type = root["point_source"]["variability"]["extrinsic"]["type"].asString();
-    if( ex_type == "custom" ){
-      std::string extrinsic_path = in_path+"input_files/";
-
-      for(int n=0;n<names.size();n++){
-	std::string iname = names[n];      
-	Json::Value json_extrinsic;
-	fin.open(extrinsic_path+iname+"_LC_extrinsic.json",std::ifstream::in);
-	fin >> json_extrinsic;
-	fin.close();
-	std::cout << duration[n] << std::endl;
-
-	for(int q=0;q<json_extrinsic.size();q++){
-	  if( json_extrinsic[q].size() > 0 ){
-	    for(int i=0;i<json_extrinsic[q].size();i++){
-	      if( json_extrinsic[q][i]["time"][0].asDouble() != 1.0 ){
-		fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must begin at time=1, i.e. on the first day of the explosion.\n",i,iname.c_str());
-		check = true;
-	      }
-	      int Ntime = json_extrinsic[q][i]["time"].size();
-	      if( json_extrinsic[q][i]["time"][Ntime-1].asDouble() < duration[n] ){
-		fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must have a longer duration than the corresponding intrinsic light curve(s), viz. %f days.\n",i,iname.c_str(),duration[n]);
-		check = true;
-	      }
-	    }
-	  }
-	  //if( json_extrinsic[i]["signal"][0] != 1.0 ){
-	  //  fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must have a magnification of 1 at time=0.\n",i,iname.c_str());
-	  //  check = true;
-	  //}
-	}
-      }
-
-    } else if( ex_type == "expanding_supernova" ){
-      double cutoff_fac = root["point_source"]["variability"]["extrinsic"]["size_cutoff"].asDouble();  // in Rein
-      if( cutoff_fac > 7.0 ){
-	fprintf(stderr,"Cutoff size for the largest supernova profile too big. Consider reducing it below 7 Einstein radii.\n");
-	check = true;
-      }
-
-      double v_expand  = root["point_source"]["variability"]["extrinsic"]["v_expand"].asDouble();     // in 10^5 km/s
-
-      Json::Value cosmo;
-      fin.open(out_path+"output/angular_diameter_distances.json",std::ifstream::in);
-      fin >> cosmo;
-      fin.close();
-      double Dl  = cosmo[0]["Dl"].asDouble();
-      double Ds  = cosmo[0]["Ds"].asDouble();
-      double Dls = cosmo[0]["Dls"].asDouble();
-      double M   = root["point_source"]["variability"]["extrinsic"]["microlens_mass"].asDouble();
-      double Rein = 13.5*sqrt(M*Dls*Ds/Dl); // in 10^14 cm
-
-      // Loop over the intrinsic light curve duration in each filter
-      for(int i=0;i<duration.size();i++){
-	double R_max = duration[i]*v_expand*8.64/Rein; // the numerator is in 10^14 cm
-	if( R_max > cutoff_fac ){
-	  fprintf(stderr,"Maximum physical size of the supernova in instrument %s is above the cutoff size of %f Einstein radii.\n",names[i].c_str(),cutoff_fac);
-	  check = true;
-	}
-      }
-    }
-
-
-    // Print convolution information for the standard GERLUMPH map resolution.
-
-  } else {
-  //=======================================================================================================================    
-    std::string intrinsic_path;
-    if( root["point_source"]["variability"]["intrinsic"]["type"].asString() == "custom" ){
-      intrinsic_path = in_path+"input_files/";
-    } else {
-      intrinsic_path = out_path+"output/";
-    }
-    std::string extrinsic_path;
-    if( root["point_source"]["variability"]["extrinsic"]["type"].asString() == "custom" ){
-      extrinsic_path = in_path+"input_files/";
-    } else {
-      extrinsic_path = out_path+"output/";
-    }
-    std::string unmicro_path;
-    if( unmicro ){
-      if( root["point_source"]["variability"]["unmicro"]["type"].asString() == "custom" ){
-	unmicro_path = in_path+"input_files/";
-      } else {
-	unmicro_path = out_path+"output/";
-      }
-    }
-
-    // Quick loop to check if the accretion dize does not become too large for some wavelength, e.g. above several Rein
-    if( root["point_source"]["variability"]["extrinsic"]["type"].asString() != "variable_moving_source" ){
-      Json::Value::Members json_members = root["point_source"]["variability"]["extrinsic"]["profiles"].getMemberNames();
-      std::map<std::string,std::string> main_map; // size should be json_members.size()+2
-      for(int i=0;i<json_members.size();i++){
-	main_map.insert( std::pair<std::string,std::string>(json_members[i],root["point_source"]["variability"]["extrinsic"]["profiles"][json_members[i]].asString()) );
-      }
-      main_map.insert( std::pair<std::string,std::string>("rhalf","") );
-      
-      std::vector<double> rhalfs(names.size());
-      for(int i=0;i<names.size();i++){
-	if( main_map["type"] == "vector" ){
-	  rhalfs[i] = root["point_source"]["variability"]["extrinsic"]["profiles"]["rhalf"][i].asDouble();
-	} else {
-	  rhalfs[i] = BaseProfile::getSize(main_map,lrest[i]);
-	}
-      }
-      
-      Json::Value cosmo;
-      fin.open(out_path+"output/angular_diameter_distances.json",std::ifstream::in);
-      fin >> cosmo;
-      fin.close();
-      double Dl  = cosmo[0]["Dl"].asDouble();
-      double Ds  = cosmo[0]["Ds"].asDouble();
-      double Dls = cosmo[0]["Dls"].asDouble();
-      double M   = root["point_source"]["variability"]["extrinsic"]["microlens_mass"].asDouble();
-      double Rein = 13.5*sqrt(M*Dls*Ds/Dl); // in 10^14 cm
-      for(int i=0;i<names.size();i++){
-	if( rhalfs[i]/Rein > 7 ){
-	  fprintf(stderr,"Accretion disc size for instrument %s is too big. Consider reducing rest wavelength %f so that the disc becomes smaller than 7 Einstein radii.\n",names[i].c_str(),lrest[i]);
-	  check = true;	
-	}
-      }
-    } else {
-      // Check accretion disc sizes here
-    }
-    
-      
-    for(int n=0;n<names.size();n++){
-      std::string iname = names[n];
-      
+    if( in_type == "custom" ){
       // Check if all intrinsic light curves begin at t < tobs_min - td_max
       // and that the maximum observational time is at least equal to the maximum intrinsic time (in the observer's frame).
-      Json::Value json_intrinsic;
-      if( root["point_source"]["variability"]["extrinsic"]["type"].asString() != "variable_moving_source" ){
-	fin.open(intrinsic_path+iname+"_LC_intrinsic.json",std::ifstream::in);
+      for(int n=0;n<names.size();n++){
+	std::string iname = names[n];      
+	Json::Value json_intrinsic;
+	fin.open(in_path+"input_files/"+iname+"_LC_intrinsic.json",std::ifstream::in);
 	fin >> json_intrinsic;
 	fin.close();
-	
+		
 	for(int i=0;i<json_intrinsic.size();i++){
 	  if( json_intrinsic[i]["time"][0].asDouble() > (tobs_min-td_max) ){
 	    fprintf(stderr,"Instrument %s: Intrinsic light curve %d requires an earlier starting time by at least %f days!\n",iname.c_str(),i,json_intrinsic[i]["time"][0].asDouble() - (tobs_min-td_max));
@@ -288,30 +114,233 @@ int main(int argc,char* argv[]){
 	}
       }
 
-      // Check custom extrinsic light curves, they must extend from below tobs_min to above tobs_max
-      if( root["point_source"]["variability"]["extrinsic"]["type"].asString() == "custom" ){
-	Json::Value json_extrinsic;
-	fin.open(extrinsic_path+iname+"_LC_extrinsic.json",std::ifstream::in);
-	fin >> json_extrinsic;
-	fin.close();
-	
-	for(int q=0;q<json_extrinsic.size();q++){
-	  if( json_extrinsic[q].size() > 0 ){
-	    for(int i=0;i<json_extrinsic[q].size();i++){
-	      if( json_extrinsic[q][i]["time"][0] > tobs_min ){
-		fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must have a starting time earlier than the minimum observing time, viz. <%f days.\n",i,iname.c_str(),tobs_min);
-		check = true;
-	      }
-	      int Ntime = json_extrinsic[q][i]["time"].size();
-	      if( json_extrinsic[q][i]["time"][Ntime-1] < tobs_max ){
-		fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must have a later ending time than the maximum observing time, viz. >%f days.\n",i,iname.c_str(),tobs_max);
-		check = true;
-	      }
+    } else {
+
+      // Perform checks for intrinsic on-the-fly model, e.g. DRW
+
+    }
+
+  }
+
+  
+
+
+  
+  // Perform checks per extrinsic variability model
+  //================================================================================================================
+  if( ex_type == "custom" ){
+
+    // Check custom extrinsic light curves, they must extend from below tobs_min to above tobs_max
+    for(int n=0;n<names.size();n++){
+      std::string iname = names[n];      
+      Json::Value json_extrinsic;
+      fin.open(in_path+"input_files/"+iname+"_LC_extrinsic.json",std::ifstream::in);
+      fin >> json_extrinsic;
+      fin.close();
+
+      for(int q=0;q<json_extrinsic.size();q++){
+	if( json_extrinsic[q].size() > 0 ){
+	  for(int i=0;i<json_extrinsic[q].size();i++){
+	    if( json_extrinsic[q][i]["time"][0] > tobs_min ){
+	      fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must have a starting time earlier than the minimum observing time, viz. <%f days.\n",i,iname.c_str(),tobs_min);
+	      check = true;
+	    }
+	    int Ntime = json_extrinsic[q][i]["time"].size();
+	    if( json_extrinsic[q][i]["time"][Ntime-1] < tobs_max ){
+	      fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must have a later ending time than the maximum observing time, viz. >%f days.\n",i,iname.c_str(),tobs_max);
+	      check = true;
 	    }
 	  }
 	}
       }
+    }
+
+  //=======================================================================================================================
+  } else if( ex_type == "expanding_source" ){
+
+    double cutoff_fac = root["point_source"]["variability"]["extrinsic"]["size_cutoff"].asDouble();  // in Rein
+    if( cutoff_fac > 7.0 ){
+      fprintf(stderr,"Cutoff size for the largest source profile too big. Consider reducing it below 7 Einstein radii.\n");
+      check = true;
+    }
+    
+    double v_expand  = root["point_source"]["variability"]["extrinsic"]["v_expand"].asDouble();     // in 10^5 km/s
+    
+    Json::Value cosmo;
+    fin.open(out_path+"output/angular_diameter_distances.json",std::ifstream::in);
+    fin >> cosmo;
+    fin.close();
+    double Dl  = cosmo[0]["Dl"].asDouble();
+    double Ds  = cosmo[0]["Ds"].asDouble();
+    double Dls = cosmo[0]["Dls"].asDouble();
+    double M   = root["point_source"]["variability"]["extrinsic"]["microlens_mass"].asDouble();
+    double Rein = 13.5*sqrt(M*Dls*Ds/Dl); // in 10^14 cm
+    
+    // Loop over the maximum extent of the observations in each filter
+    for(int n=0;n<names.size();n++){
+      double R_max = tmaxs[n]*v_expand*8.64/Rein; // the numerator is in 10^14 cm
+      if( R_max > cutoff_fac ){
+	fprintf(stderr,"Maximum physical size of the source in instrument %s is above the cutoff size of %f Einstein radii.\n",names[n].c_str(),cutoff_fac);
+	check = true;
+      }
+    }
+
+    // Print convolution information for the standard GERLUMPH map resolution.
+
+  //=======================================================================================================================
+  } else if( ex_type == "moving_variable_source" ){
+
+
+    for(int n=0;n<names.size();n++){
+      if( root["point_source"]["variability"]["extrinsic"].isMember(names[n]) ){
+
+	if( !root["point_source"]["variability"]["extrinsic"][names[n]].isMember("pixSize") ){
+	  fprintf(stderr,"Pixel size for instrument %s is not given.\n",names[n].c_str());
+	  check = true;
+	}
+
+	int Nx,Ny;
+	if( root["point_source"]["variability"]["extrinsic"][names[n]].isMember("Nx") && root["point_source"]["variability"]["extrinsic"][names[n]].isMember("Ny") ){
+	  Nx = root["point_source"]["variability"]["extrinsic"][names[n]]["Nx"].asInt();
+	  Ny = root["point_source"]["variability"]["extrinsic"][names[n]]["Ny"].asInt();
+	  if( Nx != Ny ){
+	    fprintf(stderr,"Width and height of the source snapshots for instrument %s must be equal (square profile).\n",names[n].c_str());
+	    check = true;
+	  }
+	} else {
+	  fprintf(stderr,"Width and height of the source snapshots in pixels for instrument %s is not given.\n",names[n].c_str());
+	  check = true;
+	}
+
+	// Check timestep vector compared to the observed time vector of the instrument and the time delay. All times are in days in the observer's frame.
+	int Nsteps = root["point_source"]["variability"]["extrinsic"][names[n]]["time"].size();
+	double tmax_source = root["point_source"]["variability"]["extrinsic"][names[n]]["time"][Nsteps - 1].asDouble();
+	if( tmax_source < (tmaxs[n] - tmins[n] + td_max) ){
+	  fprintf(stderr,"Maximum timestep (%f) for instrument %s must be larger than the duration of the observation + the longest time delay, viz. >%f days.\n",tmax_source,names[n].c_str(),tmaxs[n]-tmins[n]+td_max);
+	  check = true;
+	}
+	
+
+	// Check snapshot number and names
+	std::vector<std::string> fnames;
+	std::vector<std::string> paths;
+	for(const auto& entry : std::filesystem::directory_iterator(in_path+"input_files/vs_"+names[n]) ){
+	  std::filesystem::path p(entry);
+	  fnames.push_back(p.stem());
+	  paths.push_back(p);
+	}
+	int Nsnapshots = fnames.size();
+
+	if( Nsnapshots != Nsteps ){
+	  fprintf(stderr,"Number of timesteps (%d) and number of snapshots (%d) for instrument %s do not match.\n",Nsteps,Nsnapshots,names[n].c_str());
+	  check = true;
+	} else {
+
+	  // Check that snapshot names are sequential
+	  std::vector<std::string> seq(Nsteps);
+	  char str[11];
+	  for(int i=0;i<Nsteps;i++){
+	    int dum = sprintf(str,"%04d",i);
+	    seq[i] = str;
+	  }
+	  std::vector<std::string> diff;
+	  std::sort(fnames.begin(),fnames.end());
+	  std::set_difference(seq.begin(),seq.end(),fnames.begin(),fnames.end(),std::inserter(diff,diff.begin()));
+
+	  if( diff.size() > 0 ){
+	    // Report missing timesteps 
+	    fprintf(stderr,"The snapshot names for instrument %s must be in a sequence. The following timesteps are missing:\n",names[n].c_str());
+	    for(int i=0;i<diff.size();i++){
+	      fprintf(stderr," %s",diff[i].c_str());
+	    }
+	    fprintf(stderr,"\n");
+	    check = true;
+	  } else {
+	    // Read the fits headers and make sure the agree with the given width and height
+	    for(int i=0;i<Nsteps;i++){
+	      std::unique_ptr<CCfits::FITS> pInfile(new CCfits::FITS(paths[i],CCfits::Read,true));
+	      CCfits::PHDU& image = pInfile->pHDU();
+	      image.readAllKeys();
+	      int fNy = image.axis(0);
+	      int fNx = image.axis(1);
+	      if( fNx != Nx || fNy != Ny ){
+		fprintf(stderr,"The dimensions of snapshot %s (%dx%d) for instrument %s do not match the given ones (%dx%d).\n",fnames[i].c_str(),fNx,fNy,names[n].c_str(),Nx,Ny);
+		check = true;
+	      }
+	    }
+	  }
+	  
+	}	
+	
+      } else {
+	fprintf(stderr,"Variability properties for instrument %s are not given.\n",names[n].c_str());
+	check = true;
+      }      
+    }
+
+  //=======================================================================================================================
+  } else if( ex_type == "moving_fixed_source" ){
+
+    // Quick loop to check if the accretion dize does not become too large for some wavelength, e.g. above several Rein
+    Json::Value::Members json_members = root["point_source"]["variability"]["extrinsic"]["profiles"].getMemberNames();
+    std::map<std::string,std::string> main_map; // size should be json_members.size()+2
+    for(int i=0;i<json_members.size();i++){
+      main_map.insert( std::pair<std::string,std::string>(json_members[i],root["point_source"]["variability"]["extrinsic"]["profiles"][json_members[i]].asString()) );
+    }
+    main_map.insert( std::pair<std::string,std::string>("rhalf","") );
+    
+    std::vector<double> rhalfs(names.size());
+    for(int i=0;i<names.size();i++){
+      if( main_map["type"] == "vector" ){
+	rhalfs[i] = root["point_source"]["variability"]["extrinsic"]["profiles"]["rhalf"][i].asDouble();
+      } else {
+	rhalfs[i] = BaseProfile::getSize(main_map,lrest[i]);
+      }
+    }
       
+    Json::Value cosmo;
+    fin.open(out_path+"output/angular_diameter_distances.json",std::ifstream::in);
+    fin >> cosmo;
+    fin.close();
+    double Dl  = cosmo[0]["Dl"].asDouble();
+    double Ds  = cosmo[0]["Ds"].asDouble();
+    double Dls = cosmo[0]["Dls"].asDouble();
+    double M   = root["point_source"]["variability"]["extrinsic"]["microlens_mass"].asDouble();
+    double Rein = 13.5*sqrt(M*Dls*Ds/Dl); // in 10^14 cm
+    for(int i=0;i<names.size();i++){
+      if( rhalfs[i]/Rein > 7 ){
+	fprintf(stderr,"Accretion disc size for instrument %s is too big. Consider reducing rest wavelength %f so that the disc becomes smaller than 7 Einstein radii.\n",names[i].c_str(),lrest[i]);
+	check = true;	
+      }
+    }
+
+  //=======================================================================================================================
+  } else {
+    fprintf(stderr,"Unknown variability model: %s\n",ex_type.c_str());
+    fprintf(stderr,"Allowed options are:");
+    fprintf(stderr," - custom");
+    fprintf(stderr," - expanding_source");
+    fprintf(stderr," - moving_fixed_source");
+    fprintf(stderr," - moving_variable_source");
+    check = true;
+  }
+
+
+
+    
+    /*
+    std::string unmicro_path;
+    if( unmicro ){
+      if( root["point_source"]["variability"]["unmicro"]["type"].asString() == "custom" ){
+	unmicro_path = in_path+"input_files/";
+      } else {
+	unmicro_path = out_path+"output/";
+      }
+    }
+
+    for(int n=0;n<names.size();n++){
+      std::string iname = names[n];
+            
       // Check unmicrolensed light curves
       if( unmicro ){
 	Json::Value json_unmicro;
@@ -319,7 +348,7 @@ int main(int argc,char* argv[]){
 	fin >> json_unmicro;
 	fin.close();
 	
-	if( json_unmicro.size() != json_intrinsic.size() && root["point_source"]["variability"]["extrinsic"]["type"].asString() != "variable_moving_source" ){
+	if( json_unmicro.size() != json_intrinsic.size() ){
 	  fprintf(stderr,"Instrument %s: Number of intrinsic (%d) and unmicrolensed (%d) light curves should be the same!\n",iname.c_str(),json_intrinsic.size(),json_unmicro.size());
 	  check = true;
 	}
@@ -337,10 +366,10 @@ int main(int argc,char* argv[]){
 	  }
 	}    
       }
-
     }
+    */
     
-  }
+ 
   //=======================================================================================================================    
 
   

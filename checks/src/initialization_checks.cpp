@@ -164,7 +164,7 @@ int main(int argc,char* argv[]){
     } else {
       // Check if mean_mags match the given instruments
       for(int i=0;i<instruments.size();i++){
-	if( !root["point_source"]["variability"]["intrinsic"]["mean_mag"].isMember(instruments[i]) && root["point_source"]["variability"]["extrinsic"]["type"].asString() != "variable_moving_source" ){
+	if( !root["point_source"]["variability"]["intrinsic"]["mean_mag"].isMember(instruments[i]) && root["point_source"]["variability"]["extrinsic"]["type"].asString() != "moving_variable_source" ){
 	  fprintf(stderr,"Intrinsic mean magnitude not provided for instrument %s!\n",instruments[i].c_str());
 	  check = true;
 	}

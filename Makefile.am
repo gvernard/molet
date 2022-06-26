@@ -28,9 +28,9 @@ bin_PROGRAMS = \
 	vkl_fproject \
 	vkl_point_source \
 	vkl_lens \
-	var_moving_disc \
-	var_expanding_supernova \
-	var_variable_moving_source \
+	var_moving_fixed_source \
+	var_expanding_source \
+	var_moving_variable_source \
 	var_match_to_gerlumph \
 	var_drw \
 	final_combine_light
@@ -48,8 +48,9 @@ angular_diameter_distances_CPPFLAGS = -Icosmology/angular_diameter_distances/inc
 angular_diameter_distances_LDADD = -ljsoncpp
 
 check_time_vector_SOURCES = checks/src/time_vector_checks.cpp
+check_time_vector_CXXFLAGS = -std=c++17
 check_time_vector_CPPFLAGS = -Iinstruments/include
-check_time_vector_LDADD = -linstruments -lgerlumph -lpng -ljsoncpp
+check_time_vector_LDADD = -linstruments -lcfitsio -lCCfits -lgerlumph -lpng -ljsoncpp
 
 check_initialization_SOURCES = checks/src/initialization_checks.cpp
 check_initialization_CPPFLAGS = -Iinstruments/include
@@ -82,19 +83,19 @@ vkl_lens_SOURCES = lens_light_mass/vkl_llm/src/lens_light_mass.cpp
 vkl_lens_CPPFLAGS = -Iinstruments/include
 vkl_lens_LDADD = -linstruments -lgmp -lCGAL -lvkl -lgfortran -lCCfits -lcfitsio -ljsoncpp
 
-var_moving_disc_SOURCES = \
-	variability/extrinsic/moving_disc/src/moving_disc.cpp \
-	variability/extrinsic/moving_disc/src/auxiliary_functions.cpp
-var_moving_disc_CPPFLAGS = -Iinstruments/include -Ivariability/extrinsic/moving_disc/include
-var_moving_disc_LDADD = -linstruments -lgerlumph -lCCfits -lcfitsio -lpng -ljsoncpp
+var_moving_fixed_source_SOURCES = \
+	variability/extrinsic/moving_fixed_source/src/moving_fixed_source.cpp \
+	variability/extrinsic/moving_fixed_source/src/auxiliary_functions.cpp
+var_moving_fixed_source_CPPFLAGS = -Iinstruments/include -Ivariability/extrinsic/moving_fixed_source/include
+var_moving_fixed_source_LDADD = -linstruments -lgerlumph -lCCfits -lcfitsio -lpng -ljsoncpp
 
-var_expanding_supernova_SOURCES = variability/extrinsic/expanding_supernova/src/expanding_supernova.cpp
-var_expanding_supernova_CPPFLAGS = -Iinstruments/include
-var_expanding_supernova_LDADD = -linstruments -lgerlumph -lCCfits -lcfitsio -lpng -ljsoncpp
+var_expanding_source_SOURCES = variability/extrinsic/expanding_source/src/expanding_source.cpp
+var_expanding_source_CPPFLAGS = -Iinstruments/include
+var_expanding_source_LDADD = -linstruments -lgerlumph -lCCfits -lcfitsio -lpng -ljsoncpp
 
-var_variable_moving_source_SOURCES = variability/extrinsic/variable_moving_source/src/variable_moving_source.cpp
-var_variable_moving_source_CPPFLAGS = -Iinstruments/include
-var_variable_moving_source_LDADD = -linstruments -lgerlumph -lCCfits -lcfitsio -lpng -ljsoncpp
+var_moving_variable_source_SOURCES = variability/extrinsic/moving_variable_source/src/moving_variable_source.cpp
+var_moving_variable_source_CPPFLAGS = -Iinstruments/include
+var_moving_variable_source_LDADD = -linstruments -lgerlumph -lCCfits -lcfitsio -lpng -ljsoncpp
 
 var_match_to_gerlumph_SOURCES = variability/extrinsic/match_to_gerlumph/src/match_to_gerlumph.cpp
 var_match_to_gerlumph_CPPFLAGS = -Ivariability/extrinsic/match_to_gerlumph/include

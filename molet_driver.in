@@ -177,12 +177,31 @@ then
 	cmd=$molet_home"checks/check_map_files.sh "$map_path" "$out_path
 	myprocess "$msg" "$cmd" "$log_file"
 
-	if [ $ex_type = moving_disc ]
+	if [ $ex_type = moving_fixed_source ]
 	then
-	    msg="Getting 'moving_disc' microlensing variability for each image..."
-	    cmd=$molet_home"bin/var_moving_disc "$infile" "$out_path
+	    msg="Getting 'moving_fixed_source' microlensing variability for each image..."
+	    cmd=$molet_home"bin/var_moving_fixed_source "$infile" "$out_path
 	    myprocess "$msg" "$cmd" "$log_file"
-	elif [ $ex_type = expanding_supernova ]
+	elif [ $ex_type = moving_variable_source ]
+	then
+	    # cmd=$molet_home"bin/check_confirm_convolutions "$infile" "$out_path
+	    # eval "$cmd"
+	    # exit_code=$?
+	    
+	    # if [ "$exit_code" -ne "0" ]
+	    # then
+	    # 	echo "Quitting MOLET..."
+	    # 	exit
+	    # else
+	    # 	msg="Getting 'expanding_source' microlensing variability for each image..."
+	    # 	cmd=$molet_home"bin/var_expanding_source "$infile" "$out_path
+	    # 	myprocess "$msg" "$cmd" "$log_file"
+	    # fi	    
+	    msg="Getting 'moving_variable_source' microlensing variability for each image..."
+	    cmd=$molet_home"bin/var_moving_variable_source "$infile" "$in_path" "$out_path
+	    myprocess "$msg" "$cmd" "$log_file"	    
+
+	elif [ $ex_type = expanding_source ]
 	then
 	    cmd=$molet_home"bin/check_confirm_convolutions "$infile" "$out_path
 	    eval "$cmd"
@@ -193,8 +212,8 @@ then
 		echo "Quitting MOLET..."
 		exit
 	    else
-		msg="Getting 'expanding_supernova' microlensing variability for each image..."
-		cmd=$molet_home"bin/var_expanding_supernova "$infile" "$out_path
+		msg="Getting 'expanding_source' microlensing variability for each image..."
+		cmd=$molet_home"bin/var_expanding_source "$infile" "$out_path
 		myprocess "$msg" "$cmd" "$log_file"
 	    fi
 	fi  

@@ -157,7 +157,7 @@
     	    }
     	//     "extrinsic": {
     	//     	"microlens_mass": 1,
-    	//     	"type": "moving_disc",
+    	//     	"type": "moving_fixed_source",
     	//     	"Nex": 100,
     	//     	"pars": {
     	//     	    "sigma_pec_l": 250,
