@@ -7,6 +7,7 @@
 
 #include "json/json.h"
 
+#include "vkllib.hpp"
 #include "gerlumph.hpp"
 #include "instruments.hpp"
 #include "noise.hpp"
@@ -73,7 +74,7 @@ int main(int argc,char* argv[]){
   double Rein = 13.5*sqrt(M*Dls*Ds/Dl); // in 10^14 cm
 
   // Create total velocity vectors
-  velocityComponents vel(Nlc);
+  gerlumph::velocityComponents vel(Nlc);
   std::vector<double> vtot(Nlc);
   std::vector<double> phi_vtot(Nlc);
   double ra  = root["point_source"]["variability"]["extrinsic"]["pars"]["ra"].asDouble();
@@ -105,9 +106,66 @@ int main(int argc,char* argv[]){
   
   
   // Create light curve collection
-  LightCurveCollection mother(Nlc);
+  gerlumph::LightCurveCollection mother(Nlc);
 
   //================= END:INITIALIZE =======================
+
+
+
+
+
+
+  //=============== BEGIN:GET INTRINSIC LIGHT CURVE =======================
+  std::map<std::string,std::string> profile_parameter_map;
+  profile_parameter_map["shape"] = "custom";
+  profile_parameter_map["incl"] = std::to_string(0.0);
+  profile_parameter_map["orient"] = std::to_string(0.0);
+  for(int k=0;k<Nfilters;k++){
+    std::string instrument_name = root["instruments"][k]["name"].asString();
+
+    // Start loop over images
+    profile_parameter_map["profPixSizePhys"] = root["point_source"]["variability"]["extrinsic"][instrument_name]["pixSize"].asString();
+    profile_parameter_map["pixSizePhys"] = profile_parameter_map["profPixSizePhys"];
+
+    Json::Value lc;
+    Json::Value time;
+    Json::Value signal;
+    int Nsnapshots = root["point_source"]["variability"]["extrinsic"][instrument_name]["time"].size();
+    for(int jj=0;jj<Nsnapshots;jj++){
+      char timestep[11];
+      int dum = sprintf(timestep,"%04d",jj);
+      profile_parameter_map["filename"] = in_path+"input_files/vs_"+instrument_name+"/"+timestep+".fits";      
+      gerlumph::BaseProfile* profile = gerlumph::FactoryProfile::getInstance()->createProfileFromPars(profile_parameter_map);
+
+      time.append( root["point_source"]["variability"]["extrinsic"][instrument_name]["time"][jj] );
+
+      double sum = 0.0;
+      for(int i=0;i<profile->Ny;i++){
+	for(int j=0;j<profile->Nx;j++){
+	  sum += profile->data[i*profile->Nx+j];
+	}
+      }
+      signal.append( sum*pow(root["point_source"]["variability"]["extrinsic"][instrument_name]["pixSize"].asDouble(),2) );
+      //std::cout << jj << " " << sum << std::endl;
+    }
+
+    lc["time"]    = time;
+    lc["signal"]  = signal;
+
+    Json::Value lcs;
+    lcs.append(lc);
+    
+    std::ofstream file_in_filter(output+instrument_name+"_LC_intrinsic.json");
+    file_in_filter << lcs;
+    file_in_filter.close();
+  }
+      
+  //================= END:GET INTRINSIC LIGHT CURVE =======================
+
+
+
+
+
 
 
 
@@ -127,9 +185,9 @@ int main(int argc,char* argv[]){
       maps_locs.append(Json::Value(Json::arrayValue));
       
     } else {
-      MagnificationMap map(maps[m]["id"].asString(),Rein);
+      gerlumph::MagnificationMap map(maps[m]["id"].asString(),Rein);
 
-      // Get maximum profile offset by reading the first profile in each filter
+      // Get maximum profile offset
       int maxOffset = 0;
       for(int k=0;k<Nfilters;k++){
 	std::string instrument_name = root["instruments"][k]["name"].asString();
@@ -153,8 +211,8 @@ int main(int argc,char* argv[]){
 	std::string instrument_name = root["instruments"][k]["name"].asString();
 
 	// set convolution kernel
-	EffectiveMap emap(maxOffset,&map);
-	Kernel kernel(map.Nx,map.Ny);
+	gerlumph::EffectiveMap emap(maxOffset,&map);
+	gerlumph::Kernel kernel(map.Nx,map.Ny);
 	
 	// Set light curves
 	mother.setEmap(&emap);
@@ -170,6 +228,7 @@ int main(int argc,char* argv[]){
 	std::vector<double> sinphi(mother.Ncurves);
 	for (int jj=0;jj<Nsnapshots;jj++){
 	  len_frac[jj] = jtime[jj].asDouble()/tmax;
+	  std::cout << len_frac[jj] << " " << jtime[jj] << " " << tmax << std::endl;
 	}
 	mother.setLightCurves(len_frac,length,cosphi,sinphi);
 
@@ -181,8 +240,8 @@ int main(int argc,char* argv[]){
 	  char timestep[11];
 	  int dum = sprintf(timestep,"%04d",jj);
 	  profile_parameter_map["filename"] = in_path+"input_files/vs_"+instrument_name+"/"+timestep+".fits";
+	  gerlumph::BaseProfile* profile = gerlumph::FactoryProfile::getInstance()->createProfileFromPars(profile_parameter_map);
 	  
-	  BaseProfile* profile = FactoryProfile::getInstance()->createProfileFromPars(profile_parameter_map);
 	  kernel.setKernel(profile);
 	  map.convolve(&kernel,&emap);
 	  mother.sampleLightCurveTimestep(jj,len_frac,length,cosphi,sinphi);
@@ -198,7 +257,7 @@ int main(int argc,char* argv[]){
 	  Json::Value dsignal;
 	  double t_interval = 11574/vtot[i]; // 11574 = 1/86400 * 10^9, first term from [day] in [s], second from 10^14 cm pixel size
 	  for(int j=0;j<mother.lightCurves[i]->Nsamples;j++){
-	    time.append(mother.lightCurves[i]->t[j]*t_interval + tobs_min); // light curve is originally in units of 10^14 cm
+	    time.append(jtime[j].asDouble() + tobs_min); // light curve is originally in units of 10^14 cm
 	    signal.append(mother.lightCurves[i]->m[j]);
 	    dsignal.append(mother.lightCurves[i]->dm[j]);
 	  }

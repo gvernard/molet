@@ -78,7 +78,7 @@ void Instrument::common_constructor(Json::Value noise_pars){
   int pix_y  = specs["psf"]["pix_y"].asInt();
   int width  = specs["psf"]["width"].asDouble();
   int height = specs["psf"]["height"].asDouble();
-  this->original_psf = new RectGrid(pix_x,pix_y,0,width,0,height,full_path+"psf.fits");
+  this->original_psf = new vkl::RectGrid(pix_x,pix_y,0,width,0,height,full_path+"psf.fits");
 
   this->noise = FactoryNoiseModel::getInstance()->createNoiseModel(noise_pars,this);
 }
@@ -160,7 +160,7 @@ std::string Instrument::getName(){
 }
 
 
-void Instrument::interpolatePSF(RectGrid* grid){
+void Instrument::interpolatePSF(vkl::RectGrid* grid){
   //    double newPixSize  = (mydata->xmax - mydata->xmin)/mydata->Nj;
   double newPixSize  = (grid->width)/(grid->Nx);
   double origPixSize = this->original_psf->width/this->original_psf->Nx;
@@ -188,7 +188,7 @@ void Instrument::interpolatePSF(RectGrid* grid){
   //double newh    = this->original_psf->height;
   double yoffset = (this->original_psf->height - newh)/2.0;
   
-  this->scaled_psf = new RectGrid(newNx,newNy,0,neww,0,newh);
+  this->scaled_psf = new vkl::RectGrid(newNx,newNy,0,neww,0,newh);
   //std::cout << grid->width << std::endl;
   //std::cout << this->original_psf->width << std::endl;
   //std::cout << neww << std::endl;
@@ -204,7 +204,7 @@ void Instrument::interpolatePSF(RectGrid* grid){
     for(int j=0;j<this->scaled_psf->Nx;j++){
       double x = this->scaled_psf->center_x[j];
       double val = this->original_psf->interp2d_bilinear(x,y,this->original_psf->z);
-      //this->scaled_psf->z[i*this->scaled_psf->Nx+j] = (this->original_psf->RectGrid::interp2d)(x,y,this->original_psf->z);
+      //this->scaled_psf->z[i*this->scaled_psf->Nx+j] = (this->original_psf->vkl::RectGrid::interp2d)(x,y,this->original_psf->z);
       this->scaled_psf->z[i*this->scaled_psf->Nx+j] = val;
       sum += val;
     }
@@ -282,7 +282,7 @@ void Instrument::cropPSF(double threshold){
 
   double psf_pix_size_x = this->scaled_psf->width/this->scaled_psf->Nx;
   double psf_pix_size_y = this->scaled_psf->height/this->scaled_psf->Ny;
-  this->cropped_psf = new RectGrid(Ncropx,Ncropy,0,Ncropx*psf_pix_size_x,0,Ncropy*psf_pix_size_y);
+  this->cropped_psf = new vkl::RectGrid(Ncropx,Ncropy,0,Ncropx*psf_pix_size_x,0,Ncropy*psf_pix_size_y);
   for(int i=0;i<this->cropped_psf->Nz;i++){
     this->cropped_psf->z[i] = blur[i];
   }
@@ -305,7 +305,7 @@ void Instrument::createKernel(int Nx,int Ny){
 }
 
 
-void Instrument::convolve(RectGrid* grid){
+void Instrument::convolve(vkl::RectGrid* grid){
   int Nx = grid->Nx;
   int Ny = grid->Ny;
 
@@ -345,7 +345,7 @@ void Instrument::convolve(RectGrid* grid){
 }
 
 
-offsetPSF Instrument::offsetPSFtoPosition(double x,double y,RectGrid* grid){
+offsetPSF Instrument::offsetPSFtoPosition(double x,double y,vkl::RectGrid* grid){
   int Nx_img   = grid->Nx;
   int Ny_img   = grid->Ny;
   int Nx_psf   = this->cropped_psf->Nx;
@@ -432,13 +432,13 @@ offsetPSF Instrument::offsetPSFtoPosition(double x,double y,RectGrid* grid){
 
 void Instrument::replacePSF(std::string path_to_file){
   // the new PSF must have exactly the same dimensions and number of pixels as the one it is replacing
-  RectGrid* temp = this->original_psf;
-  this->original_psf = new RectGrid(this->original_psf->Nx,this->original_psf->Ny,0,this->original_psf->width,0,this->original_psf->height,path_to_file);
+  vkl::RectGrid* temp = this->original_psf;
+  this->original_psf = new vkl::RectGrid(this->original_psf->Nx,this->original_psf->Ny,0,this->original_psf->width,0,this->original_psf->height,path_to_file);
   delete(temp);
 }
 
 
-void Instrument::preparePSF(RectGrid* grid,double ratio){
+void Instrument::preparePSF(vkl::RectGrid* grid,double ratio){
   delete(this->scaled_psf);
   delete(this->cropped_psf);
   delete(this->kernel);

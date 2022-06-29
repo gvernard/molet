@@ -7,6 +7,6 @@
 
 int filterMaxVelTot(std::vector<double> vtot);
 double dateDifference(std::string start,std::string end);
-BaseProfile* createProfileFromJson(Json::Value profile,double pixSizePhys);
+gerlumph::BaseProfile* createProfileFromJson(Json::Value profile,double pixSizePhys);
 
 #endif /* AUXILIARY_HPP */

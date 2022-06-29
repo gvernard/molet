@@ -11,8 +11,6 @@
 #include "vkllib.hpp"
 #include "instruments.hpp"
 
-
-
 int main(int argc,char* argv[]){
 
   /*
@@ -51,13 +49,13 @@ int main(int argc,char* argv[]){
   const Json::Value jlens = root["lenses"][0];
 
   // Initialize mass model collection
-  CollectionMassModels mass_collection = JsonParsers::parse_mass_model(jlens["mass_model"],input);
+  vkl::CollectionMassModels mass_collection = vkl::JsonParsers::parse_mass_model(jlens["mass_model"],input);
 
   // Scale dpsi mass models if necessary
   for(int k=0;k<jlens["mass_model"].size();k++){
     if( jlens["mass_model"][k]["pars"].isMember("scale_factor") ){
       double scale_factor = jlens["mass_model"][k]["pars"]["scale_factor"].asDouble();
-      Pert* pert = static_cast<Pert*> (mass_collection.models[k]);
+      vkl::Pert* pert = static_cast<vkl::Pert*> (mass_collection.models[k]);
       for(int m=0;m<pert->Sm;m++){
 	pert->z[m] *= scale_factor;
       }
@@ -93,8 +91,8 @@ int main(int argc,char* argv[]){
     if( ymax_tmp > ymax ){ ymax = ymax_tmp; }
   }
   
-  std::vector<RectGrid*> planes;
-  RectGrid* img = new RectGrid(20,20,xmin,xmax,ymin,ymax);
+  std::vector<vkl::RectGrid*> planes;
+  vkl::RectGrid* img = new vkl::RectGrid(20,20,xmin,xmax,ymin,ymax);
   planes.push_back(img);
   std::vector<double> xc;
   std::vector<double> yc;
@@ -170,7 +168,7 @@ int main(int argc,char* argv[]){
       }
       planes.resize(xc_tmp.size());
       for(int p=0;p<planes.size();p++){
-	RectGrid* img = new RectGrid(10,10,xc_tmp[p]-rc_tmp[p],xc_tmp[p]+rc_tmp[p],yc_tmp[p]-rc_tmp[p],yc_tmp[p]+rc_tmp[p]);
+	vkl::RectGrid* img = new vkl::RectGrid(10,10,xc_tmp[p]-rc_tmp[p],xc_tmp[p]+rc_tmp[p],yc_tmp[p]-rc_tmp[p],yc_tmp[p]+rc_tmp[p]);
 	planes[p] = img;
       }
       //std::cout << "Zooming in... (planes " << planes.size() << ")" <<  std::endl;

@@ -4,8 +4,7 @@
 #include <cstdlib>
 #include <string>
 #include <vector>
-
-class RectGrid;
+#include "vkllib.hpp"
 
 class Contour {
 public:
@@ -18,8 +17,8 @@ public:
 };
 
 void outputContours(std::vector<Contour> contours,std::string filepath);
-std::vector<Contour> mooreNeighborTracing(RectGrid* image);
-void padImage(RectGrid* image,RectGrid* paddedImage,double paddingColor);
+std::vector<Contour> mooreNeighborTracing(vkl::RectGrid* image);
+void padImage(vkl::RectGrid* image,vkl::RectGrid* paddedImage,double paddingColor);
 
 
 #endif /* CAUSTICS_HPP */

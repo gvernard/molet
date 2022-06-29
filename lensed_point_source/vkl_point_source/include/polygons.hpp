@@ -2,9 +2,7 @@
 #define TRIANGLES_HPP
 
 #include <vector>
-
-class RectGrid;
-class CollectionMassModels;
+#include "vkllib.hpp"
 
 struct point {
   double x;
@@ -27,9 +25,9 @@ struct itriangle {
 };
 
 
-std::vector<triangle> imagePlaneToTriangles(RectGrid* image);
-std::vector<itriangle> imagePlaneToTriangleIndices(RectGrid* image);
-void deflectTriangles(const std::vector<triangle>& triangles_in,std::vector<triangle>& triangles_out,CollectionMassModels* mycollection);
+std::vector<triangle> imagePlaneToTriangles(vkl::RectGrid* image);
+std::vector<itriangle> imagePlaneToTriangleIndices(vkl::RectGrid* image);
+void deflectTriangles(const std::vector<triangle>& triangles_in,std::vector<triangle>& triangles_out,vkl::CollectionMassModels* mycollection);
 bool pointInTriangle(point p0,point p1,point p2,point p3);
 double determinant3x3(std::vector<double> row1,std::vector<double> row2,std::vector<double> row3);
 void circumcircle(point A,point B,point C,double& xc,double& xy,double& r);

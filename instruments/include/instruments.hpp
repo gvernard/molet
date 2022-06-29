@@ -3,8 +3,8 @@
 
 #include <string>
 #include "json/json.h"
+#include "vkllib.hpp"
 
-class RectGrid;
 class BaseNoise;
 
 class offsetPSF {
@@ -28,9 +28,9 @@ public:
   double readout;    // in electrons
   double ZP;
   
-  RectGrid* original_psf = NULL;
-  RectGrid* scaled_psf   = NULL;
-  RectGrid* cropped_psf  = NULL;
+  vkl::RectGrid* original_psf = NULL;
+  vkl::RectGrid* scaled_psf   = NULL;
+  vkl::RectGrid* cropped_psf  = NULL;
   double* kernel         = NULL;
   BaseNoise* noise       = NULL;
 
@@ -43,14 +43,14 @@ public:
   static void createNewInstrument(Json::Value pars,std::string path_to_psf);
   static double getResolution(std::string name);
   std::string getName();
-  void interpolatePSF(RectGrid* grid);
+  void interpolatePSF(vkl::RectGrid* grid);
   void cropPSF(double threshold);
   void createKernel(int Nx,int Ny);
-  void convolve(RectGrid* grid);
-  offsetPSF offsetPSFtoPosition(double x,double y,RectGrid* grid);
+  void convolve(vkl::RectGrid* grid);
+  offsetPSF offsetPSFtoPosition(double x,double y,vkl::RectGrid* grid);
 
   void replacePSF(std::string path_to_file);
-  void preparePSF(RectGrid* grid,double ratio);
+  void preparePSF(vkl::RectGrid* grid,double ratio);
   double sumPSF(offsetPSF* psf_offset);
 };
 

@@ -100,14 +100,14 @@ int main(int argc,char* argv[]){
     int res_y = static_cast<int>(ceil((ymax-ymin)/mycam.resolution));
     int super_res_x = 10*res_x;
     int super_res_y = 10*res_y;
-    RectGrid supersim(super_res_x,super_res_y,xmin,xmax,ymin,ymax);    
+    vkl::RectGrid supersim(super_res_x,super_res_y,xmin,xmax,ymin,ymax);    
 
     // Get the psf in super-resolution, crop it, and create convolution kernel
     mycam.preparePSF(&supersim,0.999);
-    FitsInterface::writeFits(mycam.scaled_psf->Nx,mycam.scaled_psf->Ny,mycam.scaled_psf->z,out_path + "output/supersampled_psf.fits");
+    vkl::FitsInterface::writeFits(mycam.scaled_psf->Nx,mycam.scaled_psf->Ny,mycam.scaled_psf->z,out_path + "output/supersampled_psf.fits");
 
     // Create base image (lens light and extended lensed source)
-    RectGrid obs_base = createObsBase(&mycam,&supersim,res_x,res_y,out_path); // remember, the units are electrons/(s arcsec^2)
+    vkl::RectGrid obs_base = createObsBase(&mycam,&supersim,res_x,res_y,out_path); // remember, the units are electrons/(s arcsec^2)
 
     // Assign noise grid
     mycam.noise->setGrid(&obs_base);
@@ -135,7 +135,7 @@ int main(int argc,char* argv[]){
       std::vector<std::string> keys{"xmin","xmax","ymin","ymax"};
       std::vector<std::string> values{std::to_string(obs_base.xmin),std::to_string(obs_base.xmax),std::to_string(obs_base.ymin),std::to_string(obs_base.ymax)};
       std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
-      FitsInterface::writeFits(obs_base.Nx,obs_base.Ny,obs_base.z,keys,values,descriptions,out_path + "output/OBS_" + instrument_name + ".fits");
+      vkl::FitsInterface::writeFits(obs_base.Nx,obs_base.Ny,obs_base.z,keys,values,descriptions,out_path + "output/OBS_" + instrument_name + ".fits");
 
     } else {
 
@@ -144,20 +144,20 @@ int main(int argc,char* argv[]){
       for(int t=0;t<instrument["time"].size();t++){
 	tobs.push_back(instrument["time"][t].asDouble());
       }
-      bool supernova = false;
-      if( root["point_source"]["source_type"].asString() == "supernova" ){
-	supernova = true;
-      }
+
+      std::string ex_type = root["point_source"]["variability"]["extrinsic"]["type"].asString();
+      
       
 
-      //======================================== Intrinsic variability ========================================================            
+      //======================================== Intrinsic variability ========================================================
+      std::vector<LightCurve*> LC_intrinsic;
       // Read intrinsic light curve(s) from JSON and apply conversions: from rest frame to observer's frame, from mag to intensity and scale if needed.
       Json::Value intrinsic_lc_json = readLightCurvesJson("intrinsic",root["point_source"]["variability"]["intrinsic"]["type"].asString(),instrument_name,in_path,out_path);
       double scale_factor = 1.0;
       if( root["point_source"]["variability"]["intrinsic"].isMember("scale_factor") ){
 	scale_factor = root["point_source"]["variability"]["intrinsic"]["scale_factor"].asDouble();
-      } 
-      std::vector<LightCurve*> LC_intrinsic = conversions(intrinsic_lc_json,zs,scale_factor);
+      }
+      LC_intrinsic = conversions(intrinsic_lc_json,zs,scale_factor);
       //=======================================================================================================================
 
       
@@ -234,23 +234,21 @@ int main(int argc,char* argv[]){
 
 
 
-      
+
       // Loop over intrinsic light curves
       //0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=
       for(int lc_in=0;lc_in<LC_intrinsic.size();lc_in++){
 	// Loop over extrinsic light curves
 	//0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=
 	for(int lc_ex=0;lc_ex<N_ex;lc_ex++){ // use the first multiple image to get the number of extrinsic light curves
-
+	  
 	  // Output directory
 	  //char buffer[15];
 	  char buffer[30];
 	  sprintf(buffer,"mock_%04d_%04d",lc_in,lc_ex);
 	  std::string mock = buffer;
 	  std::cout << mock << std::endl;
-
-
-	  
+	    
 	  // *********************** Product: Observed continuous and sampled light curves ***********************
 	  // cont_LC and samp_LC contain the light curves for ALL the images (i.e. with or without microlensing).
 	  // The first is based on the continuous time, tcont, and the second on the observed (sampled) time, tobs.
@@ -260,9 +258,9 @@ int main(int argc,char* argv[]){
 	    cont_LC[q] = new LightCurve(tcont);
 	    samp_LC[q] = new LightCurve(tobs);
 	  }
-
-	  if( supernova ){
-
+	    
+	  if( ex_type == "expanding_source" ){
+	      
 	    // Images with microlensing: Combine extrinsic and intrinsic light curves with the given time delay at the same starting time
 	    for(int i=0;i<images_micro.size();i++){
 	      int q = images_micro[i];
@@ -271,7 +269,7 @@ int main(int argc,char* argv[]){
 	      combineSupernovaInExSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],cont_LC[q]);
 	      combineSupernovaInExSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],samp_LC[q]);
 	    }
-
+	      
 	    // Images without microlensing: Just shift the intrinsic light curve by the time delay
 	    for(int i=0;i<images_no_micro.size();i++){
 	      int q = images_no_micro[i];
@@ -280,9 +278,9 @@ int main(int argc,char* argv[]){
 	      justSupernovaInSignal(td,macro_mag,tcont,LC_intrinsic[lc_in],cont_LC[q]);
 	      justSupernovaInSignal(td,macro_mag,tobs,LC_intrinsic[lc_in],samp_LC[q]);
 	    }	    
-	    
-	  } else {
-	    
+	      
+	  } else if( ex_type == "moving_fixed_source" ){
+	      
 	    // Calculate the combined light curve for each image with microlensing
 	    for(int i=0;i<images_micro.size();i++){
 	      int q = images_micro[i];
@@ -296,7 +294,7 @@ int main(int argc,char* argv[]){
 		combineInExSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],samp_LC[q]);
 	      }
 	    }
-	    
+	      
 	    // Calculate the combined light curve for each image that doesn't have any microlensing
 	    for(int i=0;i<images_no_micro.size();i++){
 	      int q = images_no_micro[i];
@@ -306,14 +304,40 @@ int main(int argc,char* argv[]){
 		combineInUnSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_unmicro[lc_in],cont_LC[q]);
 		combineInUnSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_unmicro[lc_in],samp_LC[q]);
 	      } else {
-		justInSignal(td,macro_mag,tcont,LC_intrinsic[lc_in],cont_LC[q]);
-		justInSignal(td,macro_mag,tobs,LC_intrinsic[lc_in],samp_LC[q]);
+		justOneSignal(td,macro_mag,tcont,LC_intrinsic[lc_in],cont_LC[q]);
+		justOneSignal(td,macro_mag,tobs,LC_intrinsic[lc_in],samp_LC[q]);
 	      }
 	    }
+	      
+	  } else if( ex_type == "moving_variable_source" ){
 
+	    // Calculate the combined light curve for each image with microlensing
+	    for(int i=0;i<images_micro.size();i++){
+	      int q = images_micro[i];
+	      double td = td_max - images[q]["dt"].asDouble();
+	      double macro_mag = abs(images[q]["mag"].asDouble());
+	      justOneSignal(td,macro_mag,tcont,LC_extrinsic[q][lc_ex],cont_LC[q]);
+	      justOneSignal(td,macro_mag,tobs,LC_extrinsic[q][lc_ex],samp_LC[q]);
+	    }
+
+	    // Calculate the combined light curve for each image that doesn't have any microlensing
+ 	    for(int i=0;i<images_no_micro.size();i++){
+	      int q = images_no_micro[i];
+	      double td = td_max - images[q]["dt"].asDouble();
+	      double macro_mag = abs(images[q]["mag"].asDouble());
+	      justOneSignal(td,macro_mag,tcont,LC_intrinsic[lc_in],cont_LC[q]);
+	      justOneSignal(td,macro_mag,tobs,LC_intrinsic[lc_in],samp_LC[q]);
+	    }
+
+	  } else {
+	      
+	    // This is not really needed because it should have been taken care of in the checks.
+	    fprintf(stderr,"Unknown variability model: %s\n",ex_type.c_str());
+	    return 1;
+	      
 	  }
-
-	  
+	    
+	    
 	  // Write json light curves and clean up
 	  outputLightCurvesJson(cont_LC,out_path+mock+"/"+instrument_name+"_LC_continuous.json");
 	  outputLightCurvesJson(samp_LC,out_path+mock+"/"+instrument_name+"_LC_sampled.json");
@@ -322,66 +346,26 @@ int main(int argc,char* argv[]){
 	    // we don't delete samp_LC yet because it is needed in case of outputing cutouts
 	  }
 	  // *********************** End of product **************************************************************
-
-	  
+	    
+	    
 	  // *********************** Product: Observed sampled cut-outs (images) *****************************
 	  if( root["point_source"]["output_cutouts"].asBool() ){
-	    RectGrid* ptr_obs_base = &obs_base;
-
-	    // Create list of PSF file names +++++++++++++++++++	    
-	    //std::vector<std::string> psf_fnames = getFileNames(tobs,argv[4]); // user-provided function to get the file names of the PSFs as a function of timestep t
-	    //++++++++++++++++++++++++++++++++++++++++++++++++++	    
-	    
-	    for(int t=0;t<tobs.size();t++){
-
-	      // Time-dependent PSF goes here ++++++++++++++++++++
-	      // //std::cout << psf_fnames[t] << std::endl;
-	      // mycam.replacePSF(psf_fnames[t]);
-	      // mycam.preparePSF(&supersim,0.999);
-	      // for(int q=0;q<instrument_list.size();q++){
-	      // 	PSFoffsets[q] = instrument_list[q]->offsetPSFtoPosition(images[q]["x"].asDouble(),images[q]["y"].asDouble(),&supersim);
-	      // }
-	      // for(int q=0;q<instrument_list.size();q++){
-	      // 	psf_partial_sums[q] = instrument_list[q]->sumPSF(&PSFoffsets[q]);
-	      // }
-	      // RectGrid obs_base_t = createObsBase(&mycam,&supersim,res_x,res_y,out_path);
-	      // ptr_obs_base = &obs_base_t;
-	      //++++++++++++++++++++++++++++++++++++++++++++++++++
-	      
-	      
-	      // construct a vector with the point source brightness in each image at the given time step
-	      std::vector<double> image_signal(images.size());
-	      for(int q=0;q<images.size();q++){
-		image_signal[q] = samp_LC[q]->signal[t];
-	      }
-	      RectGrid obs_pp_light = createPointSourceLight(&supersim,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y);
-
-	      // Adding a simple time-dependent noise here, no need to save the noise realizations
-	      mycam.noise->initializeFromData(&obs_pp_light);
-	      mycam.noise->calculateNoise();
-	      mycam.noise->addNoise(&obs_pp_light);
-	
-	      char buffer[100];
-	      sprintf(buffer,"%s%s/OBS_%s_%03d.fits",out_path.c_str(),mock.c_str(),instrument_name.c_str(),t);
-	      std::string fname(buffer);
-	      writeCutout(cutout_scale,&obs_pp_light,ptr_obs_base,fname);
-	    }
-
+	    writeAllCutouts(tobs,images,samp_LC,&supersim,&mycam,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y,mock,instrument_name,cutout_scale,out_path);
 	  }
 	  // *********************** End of product **************************************************	    
-
-	  // Do some cleanup
+	    
 	  for(int q=0;q<images.size();q++){
 	    delete(samp_LC[q]);
 	  }
-
-	  //std::cout << "done" << std::endl;
 	}
 	// Loop over extrinsic light curves ends here
 	//0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=
       }
       // Loop over intrinsic light curves ends here
       //0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=
+	
+      
+	
 
       
 
@@ -389,7 +373,7 @@ int main(int argc,char* argv[]){
       if( !root["point_source"]["output_cutouts"].asBool() ){
 	// For each image we use the same brightness value: the t=0 value of the first intrinsic light curve (no time delay, no microlensing)
 	std::vector<double> image_signal(images.size(),LC_intrinsic[0]->signal[0]);
-	RectGrid obs_pp_light = createPointSourceLight(&supersim,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y);
+	vkl::RectGrid obs_pp_light = createPointSourceLight(&supersim,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y);
 	
 	// Adding time-dependent noise here
 	mycam.noise->initializeFromData(&obs_pp_light);
@@ -400,7 +384,7 @@ int main(int argc,char* argv[]){
 	// Finalize output (e.g convert to magnitudes) and write
 	std::string fname = out_path+"output/OBS_"+instrument_name+"_static.fits";
 	writeCutout(cutout_scale,&obs_pp_light,&obs_base,fname);
-	//FitsInterface::writeFits(obs_base.Nx,obs_base.Ny,obs_base.z,fname);
+	//vkl::FitsInterface::writeFits(obs_base.Nx,obs_base.Ny,obs_base.z,fname);
       }
       // *********************** End of product ************************************************************************
 

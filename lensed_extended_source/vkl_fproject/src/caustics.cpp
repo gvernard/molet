@@ -35,7 +35,7 @@ void outputContours(std::vector<Contour> contours,std::string filepath){
   file_contours.close();
 }
 
-std::vector<Contour> mooreNeighborTracing(RectGrid* image){
+std::vector<Contour> mooreNeighborTracing(vkl::RectGrid* image){
   /*
    * This algorithm is called Moore Neighbor Tracing
    * An explanation of the algorithm can be found here:
@@ -55,11 +55,11 @@ std::vector<Contour> mooreNeighborTracing(RectGrid* image){
   int Ny  = image->Ny;
   
   // Need to start by padding the image by 1 pixel
-  RectGrid paddedImage(Nx+2,Ny+2,image->xmin-image->step_x,image->xmax+image->step_x,image->ymin-image->step_y,image->ymax+image->step_y);
+  vkl::RectGrid paddedImage(Nx+2,Ny+2,image->xmin-image->step_x,image->xmax+image->step_x,image->ymin-image->step_y,image->ymax+image->step_y);
   padImage(image,&paddedImage,EMPTY);
   
   // Allocate a new image as a 1D array
-  RectGrid borderImage = paddedImage;
+  vkl::RectGrid borderImage = paddedImage;
   
   // Set entire image to EMPTY
   for(int y=0;y<(Ny+2);y++){
@@ -153,7 +153,7 @@ std::vector<Contour> mooreNeighborTracing(RectGrid* image){
  * Pads an image represented by a 1D pixel array with 1 pixel with a color
  * specified by paddingColor
  */
-void padImage(RectGrid* image,RectGrid* paddedImage,double paddingColor){
+void padImage(vkl::RectGrid* image,vkl::RectGrid* paddedImage,double paddingColor){
   for(int x=0;x<image->Nx+2;x++){
     for(int y=0;y<image->Ny+2;y++){
       if( x == 0 || y == 0 || x == image->Nx+1 || y == image->Ny+1 ){

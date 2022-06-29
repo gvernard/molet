@@ -3,7 +3,7 @@
 #include "gerlumph.hpp"
 
 int main(){
-  MagnificationMap mymap;
+  gerlumph::MagnificationMap mymap;
   std::string path = mymap.printMapPath();
   std::cout << path << std::endl;  
   return 0;

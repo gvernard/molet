@@ -81,7 +81,7 @@ int main(int argc,char* argv[]){
     } else {
       // Create sampling time (map dependent)
       // Here we compute the time vector so that at each timestep the area of a circle with the given r1/2 (=v_expand*t) is ff% larger than before.
-      double pixSizePhys = MagnificationMap::getPixSizePhys(maps[m]["id"].asString(),Rein);
+      double pixSizePhys = gerlumph::MagnificationMap::getPixSizePhys(maps[m]["id"].asString(),Rein);
       std::vector<double> time{1}; // in days
       std::vector<double> rhalfs{1*v_expand*8.64}; // in 10^14 cm
       int i = 0;

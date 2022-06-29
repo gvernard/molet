@@ -113,15 +113,15 @@ int main(int argc,char* argv[]){
       maps_locs.append(Json::Value(Json::arrayValue));
       
     } else {
-      MagnificationMap map(maps[m]["id"].asString(),Rein);
+      gerlumph::MagnificationMap map(maps[m]["id"].asString(),Rein);
       
       // Get maximum profile offset
-      UniformDisc* maxprofile = new UniformDisc(map.pixSizePhys,rhalf_max,incl,orient);
+      gerlumph::UniformDisc* maxprofile = new gerlumph::UniformDisc(map.pixSizePhys,rhalf_max,incl,orient);
       int maxOffset = (int) ceil(maxprofile->Nx/2);
       delete(maxprofile);
       
       // Create fixed locations. This, in fact, is map independent but we need to do it here because it requires maxOffset to be known
-      FixedLocationCollection fixed(Nfixed,map.Nx - 2*maxOffset,map.Ny - 2*maxOffset);
+      gerlumph::FixedLocationCollection fixed(Nfixed,map.Nx - 2*maxOffset,map.Ny - 2*maxOffset);
       fixed.createGridLocations();
 
       Json::Value image;
@@ -136,10 +136,10 @@ int main(int argc,char* argv[]){
 
       for(int t=0;t<Ntime;t++){
 	double rhalf = times_rhalfs[0][m]["rhalfs"][t].asDouble(); // half light radius in 10^14cm
-	UniformDisc profile(map.pixSizePhys,rhalf,incl,orient); // shape of the brightness profile
+	gerlumph::UniformDisc profile(map.pixSizePhys,rhalf,incl,orient); // shape of the brightness profile
 
-	EffectiveMap emap(maxOffset,&map);
-	Kernel kernel(map.Nx,map.Ny);
+	gerlumph::EffectiveMap emap(maxOffset,&map);
+	gerlumph::Kernel kernel(map.Nx,map.Ny);
 	kernel.setKernel(&profile);
 	map.convolve(&kernel,&emap);
 	

@@ -120,7 +120,8 @@ CLEANFILES = $(bin_SCRIPTS)
 
 
 install-exec-hook:
-	$(abs_top_builddir)/data/initialize_instruments.sh $(abs_top_builddir) 
+	$(abs_top_builddir)/data/initialize_instruments.sh $(abs_top_builddir)
+	rm $(bin_PROGRAMS)
 
 uninstall-hook:
 	rm -r $(abs_top_builddir)/instrument_modules/*

@@ -7,6 +7,7 @@
 
 #include "json/json.h"
 
+#include "vkllib.hpp"
 #include "gerlumph.hpp"
 #include "auxiliary_functions.hpp"
 #include "instruments.hpp"
@@ -74,7 +75,7 @@ int main(int argc,char* argv[]){
   double Rein = 13.5*sqrt(M*Dls*Ds/Dl); // in 10^14 cm
 
   // Create total velocity vectors
-  velocityComponents vel(Nlc);
+  gerlumph::velocityComponents vel(Nlc);
   std::vector<double> vtot(Nlc);
   std::vector<double> phi_vtot(Nlc);
   double ra  = root["point_source"]["variability"]["extrinsic"]["pars"]["ra"].asDouble();
@@ -100,7 +101,7 @@ int main(int argc,char* argv[]){
   double tobs_min = tobs_json["tobs_min"].asDouble();
   
   // Create light curve collection
-  LightCurveCollection mother(Nlc);
+  gerlumph::LightCurveCollection mother(Nlc);
 
   // Get rest wavelength at the middle of each instrument's range
   std::vector<double> lrest(Nfilters);
@@ -126,7 +127,7 @@ int main(int argc,char* argv[]){
     if( main_map["type"] == "vector" ){
       rhalfs[k] = root["point_source"]["variability"]["extrinsic"]["profiles"]["rhalf"][k].asDouble();
     } else {
-      rhalfs[k] = BaseProfile::getSize(main_map,lrest[k]);
+      rhalfs[k] = gerlumph::BaseProfile::getSize(main_map,lrest[k]);
     }
     main_map["rhalf"] = std::to_string(rhalfs[k]);
     profile_parameter_map[k] = main_map;
@@ -151,13 +152,13 @@ int main(int argc,char* argv[]){
       maps_locs.append(Json::Value(Json::arrayValue));
       
     } else {
-      MagnificationMap map(maps[m]["id"].asString(),Rein);
+      gerlumph::MagnificationMap map(maps[m]["id"].asString(),Rein);
 
       // Read profiles. Has to be done separately for each map because of the possibly different map.pixSizePhys
-      std::vector<BaseProfile*> profiles(Nfilters);
+      std::vector<gerlumph::BaseProfile*> profiles(Nfilters);
       for(int k=0;k<Nfilters;k++){
 	profile_parameter_map[k]["pixSizePhys"] = std::to_string(map.pixSizePhys);
-	profiles[k] = FactoryProfile::getInstance()->createProfileFromHalfRadius(profile_parameter_map[k]);
+	profiles[k] = gerlumph::FactoryProfile::getInstance()->createProfileFromHalfRadius(profile_parameter_map[k]);
       }
 
       // Get maximum profile offset
@@ -166,8 +167,8 @@ int main(int argc,char* argv[]){
       Json::Value image;
       for(int k=0;k<Nfilters;k++){
 	// set convolution kernel
-	EffectiveMap emap(maxOffset,&map);
-	Kernel kernel(map.Nx,map.Ny);
+	gerlumph::EffectiveMap emap(maxOffset,&map);
+	gerlumph::Kernel kernel(map.Nx,map.Ny);
 	
 	// Set light curves
 	mother.setEmap(&emap);

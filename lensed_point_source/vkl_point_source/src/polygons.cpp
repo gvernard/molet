@@ -5,7 +5,7 @@
 #include "imagePlane.hpp"
 
 
-std::vector<triangle> imagePlaneToTriangles(RectGrid* image){
+std::vector<triangle> imagePlaneToTriangles(vkl::RectGrid* image){
   std::vector<triangle> triangles;
 
   for(int i=0;i<image->Ny-1;i++){
@@ -33,7 +33,7 @@ std::vector<triangle> imagePlaneToTriangles(RectGrid* image){
 }
 
 
-std::vector<itriangle> imagePlaneToTriangleIndices(RectGrid* image){
+std::vector<itriangle> imagePlaneToTriangleIndices(vkl::RectGrid* image){
   std::vector<itriangle> itriangles;
 
   for(int i=0;i<image->Ny-1;i++){
@@ -61,7 +61,7 @@ std::vector<itriangle> imagePlaneToTriangleIndices(RectGrid* image){
 }
 
 
-void deflectTriangles(const std::vector<triangle>& triangles_in,std::vector<triangle>& triangles_out,CollectionMassModels* mycollection){
+void deflectTriangles(const std::vector<triangle>& triangles_in,std::vector<triangle>& triangles_out,vkl::CollectionMassModels* mycollection){
   for(int i=0;i<triangles_in.size();i++){
     mycollection->all_defl(triangles_in[i].a.x,triangles_in[i].a.y,triangles_out[i].a.x,triangles_out[i].a.y);
     mycollection->all_defl(triangles_in[i].b.x,triangles_in[i].b.y,triangles_out[i].b.x,triangles_out[i].b.y);
@@ -186,7 +186,7 @@ void findBarycenter(int len,double* x,double* y,double& xc,double& yc){
 
 
 
-std::vector<triangle> srcTriangles(int Ni,int Nj,double w,double h,double* x,double* y,CollectionMassModels* mycollection){
+std::vector<triangle> srcTriangles(int Ni,int Nj,double w,double h,double* x,double* y,vkl::CollectionMassModels* mycollection){
 
   triangle dum;
   std::vector<triangle> triangles;

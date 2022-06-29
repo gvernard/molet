@@ -111,7 +111,7 @@
 	    "extrinsic": {
 		"microlens_mass": 1,
 		"type": "moving_variable_source",
-		"Nex": 100,
+		"Nex": 1,
 		"pars": {
 		    "sigma_pec_l": 250,
 		    "sigma_pec_s": 250,
@@ -123,7 +123,7 @@
 		    "time": [
 			0, 30, 60, 90, 120, 200
 		    ],
-		    "pixSize": 1.0,
+		    "pixSize": 1.4,
 		    "Nx": 300,
 		    "Ny": 300
 		}

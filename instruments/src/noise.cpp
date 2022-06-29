@@ -32,14 +32,14 @@ std::vector<double> BaseNoise::getBoxMullerVector(int N){
   return z;
 }
 
-void BaseNoise::addNoise(RectGrid* mydata){
+void BaseNoise::addNoise(vkl::RectGrid* mydata){
   for(int i=0;i<mydata->Nz;i++){
     mydata->z[i] += this->noise_realization->z[i];
   }
 }
 
 void BaseNoise::outputNoiseRealization(std::string output,std::string instrument_name){
-  FitsInterface::writeFits(this->noise_realization->Nx,this->noise_realization->Ny,this->noise_realization->z,output + instrument_name + "_noise_realization.fits");
+  vkl::FitsInterface::writeFits(this->noise_realization->Nx,this->noise_realization->Ny,this->noise_realization->z,output + instrument_name + "_noise_realization.fits");
 }
 // END: BaseNoise =================================
 
@@ -59,12 +59,12 @@ PoissonNoise::~PoissonNoise(){
   delete(sigma_map);
 }
 
-void PoissonNoise::setGrid(RectGrid* obs_grid){
-  this->noise_realization = new RectGrid(obs_grid->Nx,obs_grid->Ny,obs_grid->xmin,obs_grid->xmax,obs_grid->ymin,obs_grid->ymax);
-  this->sigma_map = new RectGrid(obs_grid->Nx,obs_grid->Ny,obs_grid->xmin,obs_grid->xmax,obs_grid->ymin,obs_grid->ymax);
+void PoissonNoise::setGrid(vkl::RectGrid* obs_grid){
+  this->noise_realization = new vkl::RectGrid(obs_grid->Nx,obs_grid->Ny,obs_grid->xmin,obs_grid->xmax,obs_grid->ymin,obs_grid->ymax);
+  this->sigma_map = new vkl::RectGrid(obs_grid->Nx,obs_grid->Ny,obs_grid->xmin,obs_grid->xmax,obs_grid->ymin,obs_grid->ymax);
 }
 
-void PoissonNoise::initializeFromData(RectGrid* mydata){
+void PoissonNoise::initializeFromData(vkl::RectGrid* mydata){
   for(int i=0;i<mydata->Nz;i++){
     double electrons = mydata->z[i];//*this->texp;
     double sigma = sqrt(electrons/this->texp + this->Ibg);
@@ -81,7 +81,7 @@ void PoissonNoise::calculateNoise(){
 
 void PoissonNoise::outputNoiseProperties(std::string output,std::string instrument_name){
   this->outputNoiseRealization(output,instrument_name);
-  FitsInterface::writeFits(this->sigma_map->Nx,this->sigma_map->Ny,this->sigma_map->z,output + instrument_name + "_sigma_map.fits");
+  vkl::FitsInterface::writeFits(this->sigma_map->Nx,this->sigma_map->Ny,this->sigma_map->z,output + instrument_name + "_sigma_map.fits");
 
   Json::Value json_obj;
   json_obj["type"] = "PoissonNoise";
@@ -101,11 +101,11 @@ UniformGaussian::UniformGaussian(double sn): BaseNoise(1){
   this->sn = sn;
 }
 
-void UniformGaussian::setGrid(RectGrid* obs_grid){
-  this->noise_realization = new RectGrid(obs_grid->Nx,obs_grid->Ny,obs_grid->xmin,obs_grid->xmax,obs_grid->ymin,obs_grid->ymax);
+void UniformGaussian::setGrid(vkl::RectGrid* obs_grid){
+  this->noise_realization = new vkl::RectGrid(obs_grid->Nx,obs_grid->Ny,obs_grid->xmin,obs_grid->xmax,obs_grid->ymin,obs_grid->ymax);
 }
 
-void UniformGaussian::initializeFromData(RectGrid* mydata){
+void UniformGaussian::initializeFromData(vkl::RectGrid* mydata){
   double maxdata = *std::max_element(mydata->z,mydata->z+mydata->Nz);
   this->sigma = maxdata/this->sn;
 }

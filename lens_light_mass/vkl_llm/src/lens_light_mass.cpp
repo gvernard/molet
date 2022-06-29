@@ -57,7 +57,7 @@ int main(int argc,char* argv[]){
     double ZP = root["instruments"][k]["ZP"].asDouble();
     int super_res_x = 10*( static_cast<int>(ceil((xmax-xmin)/res)) );
     int super_res_y = 10*( static_cast<int>(ceil((ymax-ymin)/res)) );
-    RectGrid mylight(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
+    vkl::RectGrid mylight(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
     
     Json::Value all_lenses;
     for(int i=0;i<root["lenses"].size();i++){
@@ -65,7 +65,7 @@ int main(int argc,char* argv[]){
 	all_lenses.append(root["lenses"][i]["light_profile"][name][j]);
       }
     }
-    CollectionProfiles light_collection = JsonParsers::parse_profile(all_lenses,ZP,input);
+    vkl::CollectionProfiles light_collection = vkl::JsonParsers::parse_profile(all_lenses,ZP,input);
 
     for(int i=0;i<mylight.Ny;i++){
       for(int j=0;j<mylight.Nx;j++){
@@ -77,7 +77,7 @@ int main(int argc,char* argv[]){
     std::vector<std::string> keys{"xmin","xmax","ymin","ymax"};
     std::vector<std::string> values{std::to_string(mylight.xmin),std::to_string(mylight.xmax),std::to_string(mylight.ymin),std::to_string(mylight.ymax)};
     std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
-    FitsInterface::writeFits(mylight.Nx,mylight.Ny,mylight.z,keys,values,descriptions,output + name + "_lens_light_super.fits");
+    vkl::FitsInterface::writeFits(mylight.Nx,mylight.Ny,mylight.z,keys,values,descriptions,output + name + "_lens_light_super.fits");
 
     /*
     // Confirm that the total brightness is conserved (by numerical integration)
@@ -121,12 +121,12 @@ int main(int argc,char* argv[]){
 	}
       }
     }
-    CollectionProfiles compact_collection = JsonParsers::parse_profile(all_compact,input);
+    vkl::CollectionProfiles compact_collection = vkl::JsonParsers::parse_profile(all_compact,input);
 
     // Create overall kappa_star field
     double xmin,xmax,ymin,ymax;
     compact_collection.getExtent(xmin,xmax,ymin,ymax);
-    RectGrid kappa_star(300,300,xmin,xmax,ymin,ymax);
+    vkl::RectGrid kappa_star(300,300,xmin,xmax,ymin,ymax);
     for(int i=0;i<kappa_star.Ny;i++){
       for(int j=0;j<kappa_star.Nx;j++){
 	double value = 0.0;
@@ -140,7 +140,7 @@ int main(int argc,char* argv[]){
     std::vector<std::string> keys{"xmin","xmax","ymin","ymax"};
     std::vector<std::string> values{std::to_string(kappa_star.xmin),std::to_string(kappa_star.xmax),std::to_string(kappa_star.ymin),std::to_string(kappa_star.ymax)};
     std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
-    FitsInterface::writeFits(kappa_star.Nx,kappa_star.Ny,kappa_star.z,keys,values,descriptions,output + "lens_kappa_star_super.fits");      
+    vkl::FitsInterface::writeFits(kappa_star.Nx,kappa_star.Ny,kappa_star.z,keys,values,descriptions,output + "lens_kappa_star_super.fits");      
     
     // Read the image parameters
     Json::Value images;

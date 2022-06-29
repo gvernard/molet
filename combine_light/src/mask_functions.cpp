@@ -11,7 +11,7 @@
 
 #include "vkllib.hpp"
 
-void createMask(RectGrid* mydata,double smear,double threshold,std::string outfile){
+void createMask(vkl::RectGrid* mydata,double smear,double threshold,std::string outfile){
   //=============== BEGIN:INITIALIZATION =======================
   double img_max = 0.0;
   for(int i=0;i<mydata->Nz;i++){
@@ -19,7 +19,7 @@ void createMask(RectGrid* mydata,double smear,double threshold,std::string outfi
       img_max = mydata->z[i];
     }
   }
-  RectGrid* image = new RectGrid(mydata->Nx,mydata->Ny,mydata->xmin,mydata->xmax,mydata->ymin,mydata->ymax);
+  vkl::RectGrid* image = new vkl::RectGrid(mydata->Nx,mydata->Ny,mydata->xmin,mydata->xmax,mydata->ymin,mydata->ymax);
   double threshold_brightness = img_max*threshold;
   for(int i=0;i<mydata->Nz;i++){  
     if( mydata->z[i] > threshold_brightness ){
@@ -107,7 +107,7 @@ void createMask(RectGrid* mydata,double smear,double threshold,std::string outfi
 
 
   //=============== BEGIN:CREATE KERNEL =======================
-  RectGrid blur = *image;
+  vkl::RectGrid blur = *image;
   int Nx = image->Nx;
   int Ny = image->Ny;
 
@@ -213,7 +213,7 @@ void createMask(RectGrid* mydata,double smear,double threshold,std::string outfi
     }
   }
 
-  FitsInterface::writeFits(image->Nx,image->Ny,image->z,outfile);
+  vkl::FitsInterface::writeFits(image->Nx,image->Ny,image->z,outfile);
   delete(image);
   //================= END:OUTPUT =======================
 }

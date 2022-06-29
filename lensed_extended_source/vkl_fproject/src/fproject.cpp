@@ -49,13 +49,13 @@ int main(int argc,char* argv[]){
   Json::Value jlens = root["lenses"][0];
 
   // Initialize mass model collection
-  CollectionMassModels mass_collection = JsonParsers::parse_mass_model(jlens["mass_model"],input);
+  vkl::CollectionMassModels mass_collection = vkl::JsonParsers::parse_mass_model(jlens["mass_model"],input);
   
   // Scale dpsi mass models if necessary
   for(int k=0;k<jlens["mass_model"].size();k++){
     if( jlens["mass_model"][k]["pars"].isMember("scale_factor") ){
       double scale_factor = jlens["mass_model"][k]["pars"]["scale_factor"].asDouble();
-      Pert* pert = static_cast<Pert*> (mass_collection.models[k]);
+      vkl::Pert* pert = static_cast<vkl::Pert*> (mass_collection.models[k]);
       for(int m=0;m<pert->Sm;m++){
 	pert->z[m] *= scale_factor;
       }
@@ -70,7 +70,7 @@ int main(int argc,char* argv[]){
   // Calculate detA
   double xmin,xmax,ymin,ymax;
   mass_collection.getExtent(xmin,xmax,ymin,ymax);
-  RectGrid detA(300,300,xmin,xmax,xmin,xmax);
+  vkl::RectGrid detA(300,300,xmin,xmax,xmin,xmax);
   for(int i=0;i<detA.Ny;i++){
     for(int j=0;j<detA.Nx;j++){
       double mydet = mass_collection.detJacobian(detA.center_x[j],detA.center_y[i]);
@@ -113,7 +113,7 @@ int main(int argc,char* argv[]){
   std::vector<std::string> keys{"xmin","xmax","ymin","ymax"};
   std::vector<std::string> values{std::to_string(detA.xmin),std::to_string(detA.xmax),std::to_string(detA.ymin),std::to_string(detA.ymax)};
   std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
-  FitsInterface::writeFits(detA.Nx,detA.Ny,detA.z,keys,values,descriptions,output + "detA.fits");
+  vkl::FitsInterface::writeFits(detA.Nx,detA.Ny,detA.z,keys,values,descriptions,output + "detA.fits");
   outputContours(contours,output+"criticals.json");
   outputContours(caustics,output+"caustics.json");
   //================= END:GET CRITICAL LINES AND CAUSTICS =======================
@@ -133,10 +133,10 @@ int main(int argc,char* argv[]){
     double ZP = root["instruments"][k]["ZP"].asDouble();
     int super_res_x = 10*( static_cast<int>(ceil((xmax-xmin)/resolution)) );
     int super_res_y = 10*( static_cast<int>(ceil((ymax-ymin)/resolution)) );
-    RectGrid mysim(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
+    vkl::RectGrid mysim(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
 
     // Create the source
-    CollectionProfiles profile_collection = JsonParsers::parse_profile(root["source"]["light_profile"][name],ZP,input);
+    vkl::CollectionProfiles profile_collection = vkl::JsonParsers::parse_profile(root["source"]["light_profile"][name],ZP,input);
     profile_collection.write_all_profiles(output + name + "_source_super.fits");
     
     // Produce image using ray-shooting 
@@ -151,7 +151,7 @@ int main(int argc,char* argv[]){
     std::vector<std::string> keys{"xmin","xmax","ymin","ymax"};
     std::vector<std::string> values{std::to_string(mysim.xmin),std::to_string(mysim.xmax),std::to_string(mysim.ymin),std::to_string(mysim.ymax)};
     std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
-    FitsInterface::writeFits(mysim.Nx,mysim.Ny,mysim.z,keys,values,descriptions,output + name + "_lensed_image_super.fits");
+    vkl::FitsInterface::writeFits(mysim.Nx,mysim.Ny,mysim.z,keys,values,descriptions,output + name + "_lensed_image_super.fits");
   
     // Super-resolved source image
     profile_collection.write_all_profiles(output + name + "_source_super.fits");

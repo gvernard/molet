@@ -10,6 +10,7 @@
 
 #include "vkllib.hpp"
 #include "instruments.hpp"
+#include "noise.hpp"
 
 // START:LIGHTCURVE ========================================================================================
 LightCurve::LightCurve(const Json::Value lc){
@@ -253,10 +254,10 @@ void combineInUnSignals(double td,double macro_mag,std::vector<double> time,Ligh
   delete(base_unmicro);
 }
 
-void justInSignal(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* target){
-  // === Just one signal: intrinsic
+void justOneSignal(double td,double macro_mag,std::vector<double> time,LightCurve* LC,LightCurve* target){
+  // === Just one signal
   LightCurve* base = new LightCurve(time);
-  LC_intrinsic->interpolate(base,td);
+  LC->interpolate(base,td);
   for(int t=0;t<time.size();t++){
     target->signal[t]  = macro_mag*base->signal[t]; // this line includes only the intrinsic signal and excludes microlensing
     target->dsignal[t] = 0.0;
@@ -281,7 +282,7 @@ void outputLightCurvesJson(std::vector<LightCurve*> lcs,std::string filename){
 
 
 // START:IMAGE MANIPULATION FUNCTION ========================================================================================
-RectGrid createObsBase(Instrument* mycam,RectGrid* supersim,int res_x,int res_y,std::string out_path){
+vkl::RectGrid createObsBase(Instrument* mycam,vkl::RectGrid* supersim,int res_x,int res_y,std::string out_path){
   // supersim is just carrying the resolution and extent of the image.
   std::string name = mycam->getName();
   
@@ -293,21 +294,21 @@ RectGrid createObsBase(Instrument* mycam,RectGrid* supersim,int res_x,int res_y,
   double ymax = supersim->ymax;
   
   // Create the fixed extended lensed light
-  RectGrid* extended = new RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/"+name+"_lensed_image_super.fits");
+  vkl::RectGrid* extended = new vkl::RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/"+name+"_lensed_image_super.fits");
   mycam->convolve(extended);
   //extended->writeImage(output+"psf_lensed_image_super.fits");
   
   // Create the fixed lens galaxy light
-  RectGrid* lens_light = new RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/"+name+"_lens_light_super.fits");
+  vkl::RectGrid* lens_light = new vkl::RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/"+name+"_lens_light_super.fits");
   mycam->convolve(lens_light); // I can comment out this line to avoid convolving with a psf
   //lens_light->writeImage(output+"psf_lens_light_super.fits");  
   
   // Combined light of the observed base image (binned from 'super' to observed resolution)
-  RectGrid* base = new RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax); 
+  vkl::RectGrid* base = new vkl::RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax); 
   for(int i=0;i<base->Nz;i++){
     base->z[i] = lens_light->z[i] + extended->z[i];
   }
-  RectGrid obs_base = base->embeddedNewGrid(res_x,res_y,"integrate");
+  vkl::RectGrid obs_base = base->embeddedNewGrid(res_x,res_y,"integrate");
 
   delete(extended);
   delete(lens_light);
@@ -316,10 +317,10 @@ RectGrid createObsBase(Instrument* mycam,RectGrid* supersim,int res_x,int res_y,
   return obs_base;
 }
 
-RectGrid createPointSourceLight(RectGrid* supersim,std::vector<double> image_signal,std::vector<offsetPSF>& PSFoffsets,std::vector<Instrument*>& instrument_list,std::vector<double>& psf_partial_sums,int res_x,int res_y){
+vkl::RectGrid createPointSourceLight(vkl::RectGrid* supersim,std::vector<double> image_signal,std::vector<offsetPSF>& PSFoffsets,std::vector<Instrument*>& instrument_list,std::vector<double>& psf_partial_sums,int res_x,int res_y){
   // Loop over the truncated PSF (through PSF_offsets) for each image, and add their light to the pp_light image that contains all the point source light.
   // All vectors must have the same size, equal to the number of multiple images.
-  RectGrid pp_light(supersim->Nx,supersim->Ny,supersim->xmin,supersim->xmax,supersim->ymin,supersim->ymax);  // this has to be in intensity units in order to be able to add the different light components
+  vkl::RectGrid pp_light(supersim->Nx,supersim->Ny,supersim->xmin,supersim->xmax,supersim->ymin,supersim->ymax);  // this has to be in intensity units in order to be able to add the different light components
   
   for(int q=0;q<PSFoffsets.size();q++){
     for(int i=0;i<PSFoffsets[q].ni;i++){
@@ -333,12 +334,11 @@ RectGrid createPointSourceLight(RectGrid* supersim,std::vector<double> image_sig
   }
 
   // Bin image from 'super' to observed resolution
-  RectGrid obs_pp_light = pp_light.embeddedNewGrid(res_x,res_y,"additive");
+  vkl::RectGrid obs_pp_light = pp_light.embeddedNewGrid(res_x,res_y,"additive");
   return obs_pp_light;  
 }
 
-
-void writeCutout(std::string cutout_scale,RectGrid* obs_pp_light,RectGrid* obs_base,std::string fname){
+void writeCutout(std::string cutout_scale,vkl::RectGrid* obs_pp_light,vkl::RectGrid* obs_base,std::string fname){
   // Finalize output (e.g convert to magnitudes) and write
   if( cutout_scale == "mag" ){
     for(int i=0;i<obs_pp_light->Nz;i++){
@@ -352,7 +352,53 @@ void writeCutout(std::string cutout_scale,RectGrid* obs_pp_light,RectGrid* obs_b
   std::vector<std::string> keys{"xmin","xmax","ymin","ymax"};
   std::vector<std::string> values{std::to_string(obs_base->xmin),std::to_string(obs_base->xmax),std::to_string(obs_base->ymin),std::to_string(obs_base->ymax)};
   std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
-  FitsInterface::writeFits(obs_pp_light->Nx,obs_pp_light->Ny,obs_pp_light->z,keys,values,descriptions,fname);
+  vkl::FitsInterface::writeFits(obs_pp_light->Nx,obs_pp_light->Ny,obs_pp_light->z,keys,values,descriptions,fname);
+}
+
+
+void writeAllCutouts(std::vector<double> tobs,Json::Value images,std::vector<LightCurve*> samp_LC,vkl::RectGrid* supersim,Instrument* mycam,std::vector<offsetPSF>& PSFoffsets,std::vector<Instrument*>& instrument_list,std::vector<double>& psf_partial_sums,int res_x,int res_y,std::string mock,std::string instrument_name,std::string cutout_scale,std::string out_path){
+  vkl::RectGrid obs_base = createObsBase(mycam,supersim,res_x,res_y,out_path); // remember, the units are electrons/(s arcsec^2)
+
+  vkl::RectGrid* ptr_obs_base = &obs_base;
+
+  // Create list of PSF file names +++++++++++++++++++	    
+  //std::vector<std::string> psf_fnames = getFileNames(tobs,argv[4]); // user-provided function to get the file names of the PSFs as a function of timestep t
+  //++++++++++++++++++++++++++++++++++++++++++++++++++	    
+  
+  for(int t=0;t<tobs.size();t++){
+    
+    // Time-dependent PSF goes here ++++++++++++++++++++
+    // //std::cout << psf_fnames[t] << std::endl;
+    // mycam.replacePSF(psf_fnames[t]);
+    // mycam.preparePSF(&supersim,0.999);
+    // for(int q=0;q<instrument_list.size();q++){
+    // 	PSFoffsets[q] = instrument_list[q]->offsetPSFtoPosition(images[q]["x"].asDouble(),images[q]["y"].asDouble(),&supersim);
+    // }
+    // for(int q=0;q<instrument_list.size();q++){
+    // 	psf_partial_sums[q] = instrument_list[q]->sumPSF(&PSFoffsets[q]);
+    // }
+    // vkl::RectGrid obs_base_t = createObsBase(&mycam,&supersim,res_x,res_y,out_path);
+    // ptr_obs_base = &obs_base_t;
+    //++++++++++++++++++++++++++++++++++++++++++++++++++
+    
+    
+    // construct a vector with the point source brightness in each image at the given time step
+    std::vector<double> image_signal(images.size());
+    for(int q=0;q<images.size();q++){
+      image_signal[q] = samp_LC[q]->signal[t];
+    }
+    vkl::RectGrid obs_pp_light = createPointSourceLight(supersim,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y);
+    
+    // Adding a simple time-dependent noise here, no need to save the noise realizations
+    mycam->noise->initializeFromData(&obs_pp_light);
+    mycam->noise->calculateNoise();
+    mycam->noise->addNoise(&obs_pp_light);
+    
+    char buffer[100];
+    sprintf(buffer,"%s%s/OBS_%s_%03d.fits",out_path.c_str(),mock.c_str(),instrument_name.c_str(),t);
+    std::string fname(buffer);
+    writeCutout(cutout_scale,&obs_pp_light,ptr_obs_base,fname);
+  }
 }
 // END:IMAGE MANIPULATION FUNCTION ==========================================================================================
 
@@ -386,6 +432,9 @@ double TransformPSF::interpolateValue(double x,double y,PSF* mypsf){
   return 1.0;
 }
 // END:TRANSFORM PSF =====================================================================================
+
+
+
 
 
 

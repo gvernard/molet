@@ -5,9 +5,9 @@
 #include <vector>
 
 #include "json/json.h"
+#include "vkllib.hpp"
 
 class PSF;
-class RectGrid;
 class Instrument;
 class offsetPSF;
 
@@ -38,13 +38,13 @@ void justSupernovaInSignal(double td,double macro_mag,std::vector<double> time,L
 void combineInExSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* target);
 void combineInExUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* LC_unmicro,LightCurve* target);
 void combineInUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_unmicro,LightCurve* target);
-void justInSignal(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* target);
+void justOneSignal(double td,double macro_mag,std::vector<double> time,LightCurve* LC,LightCurve* target);
 void outputLightCurvesJson(std::vector<LightCurve*> lcs,std::string filename);
 
-RectGrid createObsBase(Instrument* mycam,RectGrid* supersim,int res_x,int res_y,std::string out_path);
-RectGrid createPointSourceLight(RectGrid* supersim,std::vector<double> image_signal,std::vector<offsetPSF>& PSFoffsets,std::vector<Instrument*>& instrument_list,std::vector<double>& psf_partial_sums,int res_x,int res_y);
-void writeCutout(std::string cutout_scale,RectGrid* obs_pp_light,RectGrid* obs_base,std::string fname);
-
+vkl::RectGrid createObsBase(Instrument* mycam,vkl::RectGrid* supersim,int res_x,int res_y,std::string out_path);
+vkl::RectGrid createPointSourceLight(vkl::RectGrid* supersim,std::vector<double> image_signal,std::vector<offsetPSF>& PSFoffsets,std::vector<Instrument*>& instrument_list,std::vector<double>& psf_partial_sums,int res_x,int res_y);
+void writeCutout(std::string cutout_scale,vkl::RectGrid* obs_pp_light,vkl::RectGrid* obs_base,std::string fname);
+void writeAllCutouts(std::vector<double> tobs,Json::Value images,std::vector<LightCurve*> samp_LC,vkl::RectGrid* supersim,Instrument* mycam,std::vector<offsetPSF>& PSFoffsets,std::vector<Instrument*>& instrument_list,std::vector<double>& psf_partial_sums,int res_x,int res_y,std::string mock,std::string instrument_name,std::string cutout_scale,std::string out_path);
 
 // user provided function for getting the file names of a time dependent PSF
 std::vector<std::string> getFileNames(std::vector<double> tobs,std::string path);

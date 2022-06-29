@@ -15,6 +15,7 @@
 #include "json/json.h"
 #include "CCfits/CCfits"
 
+#include "vkllib.hpp"
 #include "gerlumph.hpp"
 #include "instruments.hpp"
 #include "noise.hpp"
@@ -294,7 +295,7 @@ int main(int argc,char* argv[]){
       if( main_map["type"] == "vector" ){
 	rhalfs[i] = root["point_source"]["variability"]["extrinsic"]["profiles"]["rhalf"][i].asDouble();
       } else {
-	rhalfs[i] = BaseProfile::getSize(main_map,lrest[i]);
+	rhalfs[i] = gerlumph::BaseProfile::getSize(main_map,lrest[i]);
       }
     }
       
