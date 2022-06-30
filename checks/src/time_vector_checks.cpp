@@ -219,8 +219,7 @@ int main(int argc,char* argv[]){
 	if( tmax_source < (tmaxs[n] - tmins[n] + td_max) ){
 	  fprintf(stderr,"Maximum timestep (%f) for instrument %s must be larger than the duration of the observation + the longest time delay, viz. >%f days.\n",tmax_source,names[n].c_str(),tmaxs[n]-tmins[n]+td_max);
 	  check = true;
-	}
-	
+	}	
 
 	// Check snapshot number and names
 	std::vector<std::string> fnames;

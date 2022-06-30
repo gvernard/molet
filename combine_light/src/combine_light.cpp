@@ -157,7 +157,7 @@ int main(int argc,char* argv[]){
       if( root["point_source"]["variability"]["intrinsic"].isMember("scale_factor") ){
 	scale_factor = root["point_source"]["variability"]["intrinsic"]["scale_factor"].asDouble();
       }
-      LC_intrinsic = conversions(intrinsic_lc_json,zs,scale_factor);
+      LC_intrinsic = conversions(intrinsic_lc_json,zs,scale_factor,mycam.ZP);
       //=======================================================================================================================
 
       
@@ -172,7 +172,7 @@ int main(int argc,char* argv[]){
 	if( root["point_source"]["variability"]["unmicro"].isMember("scale_factor") ){
 	  scale_factor = root["point_source"]["variability"]["unmicro"]["scale_factor"].asDouble();
 	} 
-	LC_unmicro = conversions(unmicro_lc_json,zs,scale_factor);
+	LC_unmicro = conversions(unmicro_lc_json,zs,scale_factor,mycam.ZP);
       }
       //=======================================================================================================================            
 
@@ -259,27 +259,26 @@ int main(int argc,char* argv[]){
 	    samp_LC[q] = new LightCurve(tobs);
 	  }
 	    
-	  if( ex_type == "expanding_source" ){
+	    // // Images with microlensing: Combine extrinsic and intrinsic light curves with the given time delay at the same starting time
+	    // for(int i=0;i<images_micro.size();i++){
+	    //   int q = images_micro[i];
+	    //   double td = td_max - images[q]["dt"].asDouble();
+	    //   double macro_mag = abs(images[q]["mag"].asDouble());
+	    //   combineSupernovaInExSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],cont_LC[q]);
+	    //   combineSupernovaInExSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],samp_LC[q]);
+	    // }
 	      
-	    // Images with microlensing: Combine extrinsic and intrinsic light curves with the given time delay at the same starting time
-	    for(int i=0;i<images_micro.size();i++){
-	      int q = images_micro[i];
-	      double td = td_max - images[q]["dt"].asDouble();
-	      double macro_mag = abs(images[q]["mag"].asDouble());
-	      combineSupernovaInExSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],cont_LC[q]);
-	      combineSupernovaInExSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],samp_LC[q]);
-	    }
-	      
-	    // Images without microlensing: Just shift the intrinsic light curve by the time delay
-	    for(int i=0;i<images_no_micro.size();i++){
-	      int q = images_no_micro[i];
-	      double td = td_max - images[q]["dt"].asDouble();
-	      double macro_mag = abs(images[q]["mag"].asDouble());
-	      justSupernovaInSignal(td,macro_mag,tcont,LC_intrinsic[lc_in],cont_LC[q]);
-	      justSupernovaInSignal(td,macro_mag,tobs,LC_intrinsic[lc_in],samp_LC[q]);
-	    }	    
-	      
-	  } else if( ex_type == "moving_fixed_source" ){
+	    // // Images without microlensing: Just shift the intrinsic light curve by the time delay
+	    // for(int i=0;i<images_no_micro.size();i++){
+	    //   int q = images_no_micro[i];
+	    //   double td = td_max - images[q]["dt"].asDouble();
+	    //   double macro_mag = abs(images[q]["mag"].asDouble());
+	    //   justSupernovaInSignal(td,macro_mag,tcont,LC_intrinsic[lc_in],cont_LC[q]);
+	    //   justSupernovaInSignal(td,macro_mag,tobs,LC_intrinsic[lc_in],samp_LC[q]);
+	    // }	    
+
+
+	  if( ex_type == "custom" || ex_type == "expanding_source" || ex_type == "moving_fixed_source" ){
 	      
 	    // Calculate the combined light curve for each image with microlensing
 	    for(int i=0;i<images_micro.size();i++){

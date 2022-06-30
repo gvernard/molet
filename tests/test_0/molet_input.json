@@ -34,7 +34,7 @@
             ],
 
 	    "light_profile": {
-		"testCAM": [
+		"testCAM-i": [
 		    {
 			"type": "sersic",
 			"pars": {
@@ -79,7 +79,7 @@
 	"redshift": 2.03,
 
 	"light_profile": {
-	    "testCAM": [
+	    "testCAM-i": [
 		{
 		    "type": "gauss",
 		    "pars": {
@@ -129,7 +129,7 @@
     
     "instruments": [
 	{
-	    "name": "testCAM",
+	    "name": "testCAM-i",
 	    "field-of-view_xmin": -1.75,
 	    "field-of-view_xmax": 1.75,
 	    "field-of-view_ymin": -1.75,
