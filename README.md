@@ -153,6 +153,36 @@ The .fits file is just an image of the PSF, but its dimensions (physical and in 
 
 
 
+## Microlensing (extrinsic) variability models
+
+### Moving source
+
+Coming soon
+
+### Expanding source
+
+Coming soon
+
+### Moving variable source
+
+This is an extension of the 'moving source' model, where the source profile that is crossing a magnification map is allowed to vary as well.
+This is actually implicitly happening in the case of the 'moving source' model through the intrinsic variability of the source: the time-dependent brightness shifts dictated by the intrinsic variability light curve are the same for all the pixels of an otherwise unchanged brightness profile.
+Here, the source profile is allowed to change in shape, size, features, etc, as it moves through the magnification map.
+
+**Input:** The user needs to provide a sequence of snapshots of the source per instrument, given as sequentially named, 4-character long .fits files, e.g. 0000.fits, 0001.fits, etc.
+The brightness needs to be in units of flux, matching the provided instrument specification (through the zero-point magnitude).
+In addition, the following parameters need to be provided, per instrument:
+- time: an array of time values in days in the observer's frame, starting from 0. Its length has to match the number of provided snapshots.
+- Nx,Ny: the number of pixels in the x and y directions. Must be the same (square) for all the brightness profiles.
+- pixSize: the pixel size in 10<sup>14</sup> cm. Must be the same for all the brightness profiles.
+
+**Output:** The intrinsic variability curve is calculated by the provided snapshots.
+
+An example is given in [test_6](tests/test_6/molet_input.json).
+
+
+
+
 ## Note on using magnification maps
 
 ### Using GERLUMPH maps
