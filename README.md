@@ -172,7 +172,7 @@ Here, the source profile is allowed to change in shape, size, features, etc, as 
 **Input:** The user needs to provide a sequence of snapshots of the source per instrument, given as sequentially named, 4-character long .fits files, e.g. 0000.fits, 0001.fits, etc.
 The brightness needs to be in units of flux, matching the provided instrument specification (through the zero-point magnitude).
 In addition, the following parameters need to be provided, per instrument:
-- time: an array of time values in days in the observer's frame, starting from 0. Its length has to match the number of provided snapshots.
+- time: an array of time values in days in the observer's frame, starting from 0. Its length has to match the number of provided snapshots. The time span must cover at least the period of observations + the maximum time delay of the system.
 - Nx,Ny: the number of pixels in the x and y directions. Must be the same (square) for all the brightness profiles.
 - pixSize: the pixel size in 10<sup>14</sup> cm. Must be the same for all the brightness profiles.
 
