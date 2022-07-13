@@ -127,15 +127,23 @@ ARG DUMMY_DATE=2011-11-04
 #########################################################################################################
 # Install vkl_lib
 RUN cd $LIBDIR \
-	&&	git clone https://github.com/gvernard/vkl_lib.git \
-	&&	cd vkl_lib \
-	&&	make
+    &&	git clone https://github.com/gvernard/vkl_lib.git \
+    &&  mkdir -p $LIBDIR/vkl_lib \
+    &&  cd vkl_lib \
+    &&  autoreconf -i \
+    &&	./configure --prefix=$LIBDIR/vkl_lib \
+    &&  make \
+    &&  make install
 
 # Install gerlumphpp
 RUN cd $LIBDIR \
-	&&	git clone https://github.com/gvernard/gerlumphpp.git \
-	&&	cd gerlumphpp \
-	&&	make cpu MAP_PATH=/home/gerlumph_maps/
+    &&	git clone https://github.com/gvernard/gerlumphpp.git \
+    &&  mkdir -p $LIBDIR/gerlumphpp \
+    &&	cd gerlumphpp \
+    &&  autoreconf -i \
+    &&  ./configure --prefix=$LIBDIR/gerlumphpp --enable-gpu=no --with-map-path=/home/gerlumph_maps/ \
+    &&  make \
+    &&	make install
 
 ENV CPATH $CPATH:$LIBDIR/vkl_lib/include:$LIBDIR/gerlumphpp/include
 ENV LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/vkl_lib/lib:$LIBDIR/gerlumphpp/lib
@@ -149,9 +157,13 @@ ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$LIBDIR/vkl_lib/lib:$LIBDIR/gerlumphpp/lib
 # Install MOLET
 #########################################################################################################
 RUN cd /home \
-	&&	git clone https://github.com/gvernard/molet.git \
-	&&	cd molet \
-	&&	make all
+    &&	git clone https://github.com/gvernard/molet.git \
+    &&	cd molet \
+    &&  mkdir instrument_modules \
+    &&  autoreconf -i \
+    &&  ./configure \
+    &&	make \
+    &&  make install
 #########################################################################################################
 
 RUN rm -r -f $SRCDIR

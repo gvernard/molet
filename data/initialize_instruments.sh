@@ -1,5 +1,7 @@
 #!/bin/bash
 
+mkdir -p $builddir/instrument_modules
+
 builddir=$1
 search_dir=$builddir/data/instrument_data
 for entry in "$search_dir"/*.json
