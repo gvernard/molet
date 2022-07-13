@@ -14,9 +14,13 @@ ARG DUMMY_DATE=2011-11-04
 # Install MOLET
 #########################################################################################################
 RUN cd /home \
-	&&	git clone https://github.com/gvernard/molet.git \
-	&&	cd molet \
-	&&	make all
+    &&	git clone https://github.com/gvernard/molet.git \
+    &&	cd molet \
+    &&  mkdir instrument_modules \
+    &&  autoreconf -i \
+    &&  ./configure \
+    &&	make \
+    &&  make install
 #########################################################################################################
 
 WORKDIR /home/molet

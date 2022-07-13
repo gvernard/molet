@@ -126,8 +126,7 @@ ARG DUMMY_DATE=2011-11-04
 # Install 'gerlumphpp' and 'vkl_lib' libraries
 #########################################################################################################
 # Install vkl_lib
-RUN cd $LIBDIR \
-    &&	git clone https://github.com/gvernard/vkl_lib.git \
+RUN git clone https://github.com/gvernard/vkl_lib.git \
     &&  mkdir -p $LIBDIR/vkl_lib \
     &&  cd vkl_lib \
     &&  autoreconf -i \
@@ -136,8 +135,7 @@ RUN cd $LIBDIR \
     &&  make install
 
 # Install gerlumphpp
-RUN cd $LIBDIR \
-    &&	git clone https://github.com/gvernard/gerlumphpp.git \
+RUN git clone https://github.com/gvernard/gerlumphpp.git \
     &&  mkdir -p $LIBDIR/gerlumphpp \
     &&	cd gerlumphpp \
     &&  autoreconf -i \
