@@ -38,7 +38,6 @@ docker run -it --rm -v </path/to/gerlumph/maps/>:/home/gerlumph_maps:ro gvernard
 ```
 
 which pulls the production docker image of MOLET and runs a container.
-If you want to do some development, i.e. being able to re-compile the code, then use the gvernard/molet:development docker image.
 
 Notice that in the command above the host directory (i.e. outside the docker virtual environment) */path/to/gerlumph/maps/* containing the GERLUMPH maps is mounted in the docker environment as an external volume.
 Because whatever is written inside a docker container is deleted when the container exits, it is recommended to mount an additional volume to hold all the user input and output files (i.e. making a results-directory in your system visible to docker).
@@ -47,8 +46,12 @@ This can be achieved by modifying the above command as follows:
 ```
 docker run -it --rm -v </path/to/gerlumph/maps/>:/home/gerlumph_maps:ro -v </path/to/molet/output/>:/home/molet_output/:rw gvernard/molet:production
 ```
+For the same reason, any instruments installed by the user ([see below](#adding-new-instruments)) will not be saved when the quitting the docker container, and consequently will need to be installed every time (e.g. by running a simple script).
+You can find more information on docker volume usage [here](https://docs.docker.com/storage/volumes/).
 
-You can find more information on this standard docker usage [here](https://docs.docker.com/storage/volumes/).
+If you want to do some development, i.e. being able to re-compile the code, then use the **gvernard/molet:development** docker image.
+The commands to re-compile are **make; make install**, and then just run **./molet_driver** accordingly.
+
 
 
 ### Installing manually
@@ -119,7 +122,7 @@ Inside the tests directory there is a [README](tests/README.txt) file describing
 Each test can be run by typing:
 
 ```
-./molet_driver.sh tests/test_<X>/molet_input.json
+./molet_driver tests/test_<X>/molet_input.json
 ```
 
 The user can move and rename these directories anywhere in their system and use them to build their own simulations (using a mounted volume is encouraged if MOLET is run within docker, see above). 
@@ -137,7 +140,6 @@ python plot_light_curves.py /full/path/to/simulation/dir/ mock_<index_in>_<index
 to produce a plot similar to the following one:
 
 ![Alt text](plotting/light_curves.png?raw=true "Example observed light curves")
-
 
 
 ## Adding new instruments
