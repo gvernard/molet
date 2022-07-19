@@ -104,7 +104,9 @@ int main(int argc,char* argv[]){
 
     // Get the psf in super-resolution, crop it, and create convolution kernel
     mycam.preparePSF(&supersim,0.999);
-    vkl::FitsInterface::writeFits(mycam.scaled_psf->Nx,mycam.scaled_psf->Ny,mycam.scaled_psf->z,out_path + "output/supersampled_psf.fits");
+    //vkl::FitsInterface::writeFits(mycam.scaled_psf->Nx,mycam.scaled_psf->Ny,mycam.scaled_psf->z,out_path + "output/supersampled_psf.fits");
+    //vkl::FitsInterface::writeFits(mycam.cropped_psf->Nx,mycam.cropped_psf->Ny,mycam.cropped_psf->z,out_path + "output/cropped_psf.fits");
+    //vkl::FitsInterface::writeFits(supersim.Nx,supersim.Ny,mycam.kernel,out_path + "output/kernel_psf.fits");
 
     // Create base image (lens light and extended lensed source)
     vkl::RectGrid obs_base = createObsBase(&mycam,&supersim,res_x,res_y,out_path); // remember, the units are electrons/(s arcsec^2)

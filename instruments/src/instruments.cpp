@@ -167,19 +167,13 @@ void Instrument::interpolatePSF(vkl::RectGrid* grid){
   double origPixSize = this->original_psf->width/this->original_psf->Nx;
   
   // Decide on the profile width and height in pixels based on the input profile
-  int newNx,newNy;
-  if( grid->width < this->original_psf->width ){
-    newNx = grid->Nx;
-    newNy = grid->Ny;
-  } else {
-    //newNx = floor( grid->Nx*(0.901*this->original_psf->width)/grid->width );
-    //newNy = floor( grid->Ny*(0.901*this->original_psf->height)/grid->height );
-    //newNx = 10*this->original_psf->Nx;
-    //newNy = 10*this->original_psf->Ny;
-    newNx = ceil(this->original_psf->width/newPixSize);
-    newNy = ceil(this->original_psf->height/newPixSize);
-  }
-
+  //newNx = floor( grid->Nx*(0.901*this->original_psf->width)/grid->width );
+  //newNy = floor( grid->Ny*(0.901*this->original_psf->height)/grid->height );
+  //newNx = 10*this->original_psf->Nx;
+  //newNy = 10*this->original_psf->Ny;
+  int newNx = ceil(this->original_psf->width/newPixSize);
+  int newNy = ceil(this->original_psf->height/newPixSize);
+  
   //double neww    = newNx*newPixSize;
   double neww    = this->original_psf->width;
   double xoffset = (this->original_psf->width - neww)/2.0;
@@ -200,7 +194,7 @@ void Instrument::interpolatePSF(vkl::RectGrid* grid){
       sum += val;
     }
   }
-  
+
   for(int i=0;i<this->scaled_psf->Nz;i++){
     this->scaled_psf->z[i] /= sum;
   }
