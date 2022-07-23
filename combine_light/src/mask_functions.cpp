@@ -9,6 +9,8 @@
 
 #include <fftw3.h>
 
+#include "mask_functions.hpp"
+
 #include "vkllib.hpp"
 
 void createMask(vkl::RectGrid* mydata,double smear,double threshold,std::string outfile){

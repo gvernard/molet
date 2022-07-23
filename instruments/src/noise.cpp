@@ -45,6 +45,13 @@ void BaseNoise::outputNoiseRealization(std::string output,std::string instrument
 
 
 
+// START: NoNoise =================================
+void NoNoise::setGrid(vkl::RectGrid* obs_grid){
+  this->noise_realization = new vkl::RectGrid(obs_grid->Nx,obs_grid->Ny,obs_grid->xmin,obs_grid->xmax,obs_grid->ymin,obs_grid->ymax);
+}
+// END: NoNoise ===================================
+
+
 
 // START: PoissonNoise ============================
 PoissonNoise::PoissonNoise(double texp,double Msb,double zp,double readout,double res): BaseNoise(texp),Msb(Msb),ZP(zp){

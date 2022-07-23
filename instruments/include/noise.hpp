@@ -35,7 +35,7 @@ protected:
 class NoNoise: public BaseNoise {
 public:
   NoNoise(){};
-  void setGrid(vkl::RectGrid* obs_grid){};
+  void setGrid(vkl::RectGrid* obs_grid);
   void initializeFromData(vkl::RectGrid* mydata){};
   void calculateNoise(){};
   void outputNoiseProperties(std::string out_path,std::string instrument_name){};
