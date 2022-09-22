@@ -51,20 +51,25 @@
 	    },
 
 	    "compact_mass_model": [
-		{
-		    "type": "sersic",
-		    "pars": {
-			"x0": 0.0,
-			"y0": 0.0,
-			"pa": -145.0,
-			"q": 0.8,
-			"M_tot": -3,
-			"r_eff": 1.0,
-			"n": 4
-		    }
-		}
+	    	{
+	    	    "type": "sersic",
+	    	    "pars": {
+	    		"x0": 0.0,
+	    		"y0": 0.0,
+	    		"pa": -145.0,
+	    		"q": 0.8,
+	    		"M_tot": -3,
+	    		"r_eff": 1.0,
+	    		"n": 4
+	    	    }
+	    	}
 	    ]
 
+	    // "compact_mass_model":{
+	    // 	"mass_to_light_ratio": 100000.0,
+	    //  "instrument": testCAM
+	    // }
+	    
 	}
     ],
 
@@ -101,51 +106,47 @@
 	}
     },
     
-    
+    "output_options": {
+	"cut_outs": {
+	    "scale": "amp"
+	}
+    },
     
     "point_source": {
-	"x0": -0.05,
-	"y0": 0.05,
-	"output_cutouts": false,
-	"variability": {
-	    "extrinsic": {
-		"type": "moving_variable_source",
-		"microlens_mass": 1,
-		"Nex": 1,
-		"pars": {
-		    "sigma_pec_l": 250,
-		    "sigma_pec_s": 250,
-		    "sigma_disp": 250,
-		    "ra": 340.2,
-		    "dec": 0.0
-		},
-		"testCAM-i": {
-		    "time": [
-			0, 30, 60, 90, 120, 200
-		    ],
-		    "pixSize": 1.4,
-		    "Nx": 300,
-		    "Ny": 300
-		}
-	    }
-	}
+    	"x0": -0.05,
+    	"y0": 0.05,
+    	"output_cutouts": false,
+    	"variability": {
+    	    "intrinsic": {
+    		"type": "custom"
+    	    },
+    	    "extrinsic": {
+    	    	"type": "expanding_source",
+    	    	"microlens_mass": 1,
+    	    	"Nex": 100,
+	    	"fractional_increase": 1.0,
+    	    	"v_expand": 0.1,    // in 10^5 km/s
+	    	"size_cutoff": 6.0, // in Rein
+    	    	"incl": 0,
+    	    	"orient": 0
+    	    }
+    	}
     },
     
     
     "instruments": [
 	{
-	    "ZP": 30.0,
 	    "name": "testCAM-i",
 	    "field-of-view_xmin": -1.75,
-	    "field-of-view_xmax":  1.75,
+	    "field-of-view_xmax": 1.75,
 	    "field-of-view_ymin": -1.75,
-	    "field-of-view_ymax":  1.75,
+	    "field-of-view_ymax": 1.75,
 	    "noise":{
 		"type": "UniformGaussian",
 		"sn": 50
 	    },
-	    "time":[
-		1200.00,1206.99,1214.01,1225.01,1232.98,1239.95,1247.00,1250.95,1253.97,1257.92,1261.96,1266.90,1269.90,1274.90,1277.93,1278.95
+	    "time": [
+		61281,61289.31,61290.25,61291.26,61292.29,61297.24,61299.21,61300.21,61328.14,61335.17
 	    ]
 	}
     ]

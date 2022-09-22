@@ -179,9 +179,9 @@ int main(int argc,char* argv[]){
     
     // Loop over the maximum extent of the observations in each filter
     for(int n=0;n<names.size();n++){
-      double R_max = tmaxs[n]*v_expand*8.64/Rein; // the numerator is in 10^14 cm
-      if( R_max > cutoff_fac ){
-	fprintf(stderr,"Maximum physical size of the source in instrument %s is above the cutoff size of %f Einstein radii.\n",names[n].c_str(),cutoff_fac);
+      double R_max = (tmaxs[n]-tmins[n])*v_expand*8.64; // in 10^14 cm
+      if( R_max/Rein > cutoff_fac ){
+	fprintf(stderr,"Maximum physical size of the source in instrument %s (%f) is above the cutoff size of %f Einstein radii.\n",names[n].c_str(),R_max/Rein,cutoff_fac);
 	check = true;
       }
     }

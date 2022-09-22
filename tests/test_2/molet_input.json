@@ -112,8 +112,8 @@
 		"type": "custom"
 	    },
 	    "extrinsic": {
-		"microlens_mass": 1,
 		"type": "moving_fixed_source",
+		"microlens_mass": 1,
 		"Nex": 100,
 		"pars": {
 		    "sigma_pec_l": 250,
