@@ -109,8 +109,7 @@ var_drw_LDADD = -linstruments -lgerlumph -lfftw3 -lCCfits -lcfitsio -lpng -ljson
 
 final_combine_light_SOURCES = \
 	combine_light/src/combine_light.cpp \
-	combine_light/src/auxiliary_functions.cpp \
-	combine_light/src/mask_functions.cpp
+	combine_light/src/auxiliary_functions.cpp
 final_combine_light_CPPFLAGS = -Iinstruments/include -Icombine_light/include
 final_combine_light_LDADD = -linstruments -lgmp -lCGAL -lvkl -lfftw3 -lCCfits -lcfitsio -ljsoncpp
 
