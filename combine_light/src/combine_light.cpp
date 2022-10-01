@@ -9,7 +9,6 @@
 #include "vkllib.hpp"
 
 #include "auxiliary_functions.hpp"
-#include "mask_functions.hpp"
 #include "instruments.hpp"
 #include "noise.hpp"
 
@@ -159,7 +158,11 @@ int main(int argc,char* argv[]){
       if( root["point_source"]["variability"]["intrinsic"].isMember("scale_factor") ){
 	scale_factor = root["point_source"]["variability"]["intrinsic"]["scale_factor"].asDouble();
       }
-      LC_intrinsic = conversions(intrinsic_lc_json,zs,scale_factor,mycam.ZP);
+      if( ex_type == "expanding_source" ){
+	LC_intrinsic = conversions_SN(intrinsic_lc_json,zs,scale_factor,mycam.ZP,tcont[0],td_max);
+      } else {
+	LC_intrinsic = conversions(intrinsic_lc_json,zs,scale_factor,mycam.ZP);
+      }
       //=======================================================================================================================
 
       
@@ -366,9 +369,6 @@ int main(int argc,char* argv[]){
       //0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=
 	
       
-	
-
-      
 
       // *********************** Product: Just one cutout with only the macromagnification *****************************
       if( !root["point_source"]["output_cutouts"].asBool() ){
@@ -389,6 +389,8 @@ int main(int argc,char* argv[]){
       }
       // *********************** End of product ************************************************************************
 
+
+      
       for(int lc_in=0;lc_in<LC_intrinsic.size();lc_in++){
 	delete(LC_intrinsic[lc_in]);
       }

@@ -132,6 +132,49 @@ std::vector<LightCurve*> conversions(Json::Value lcs_json,double zs,double scale
 }
 
 
+std::vector<LightCurve*> conversions_SN(Json::Value lcs_json,double zs,double scale,double ZP,double tobs_min,double td_max){
+  int N = lcs_json.size();
+  double fac = 1.0 + zs;
+  std::vector<LightCurve*> lcs(N);
+  for(int i=0;i<N;i++){
+
+    // Check starting time of intrinsic light curve
+    if( lcs_json[i]["time"][0] > (tobs_min - td_max) ){
+      // Extend the light curves backwards in time to reach at least "tobs_min - td_max" - the start of the observations minus the maximum time delay.
+
+      // Extend by two entries and make 10 mag dimmer
+      double t00 = tobs_min - td_max - 1;
+      double t01 = lcs_json[i]["time"][0].asDouble() - 0.1;
+      double sig = lcs_json[i]["time"][0].asDouble() + 10;
+
+      Json::Value dum; 
+      dum["time"] = Json::Value(Json::arrayValue);
+      dum["signal"] = Json::Value(Json::arrayValue);
+      dum["dsignal"] = Json::Value(Json::arrayValue);
+      dum["time"].append(t00);
+      dum["time"].append(t01);
+      dum["signal"].append(sig);
+      dum["signal"].append(sig);
+      dum["dsignal"].append(0);
+      dum["dsignal"].append(0);
+      for(int j=0;j<lcs_json[i]["time"].size();j++){
+	dum["time"].append(lcs_json[i]["time"][j]);
+	dum["signal"].append(lcs_json[i]["signal"][j]);
+	dum["dsignal"].append(lcs_json[i]["dsignal"][j]);
+      }
+      lcs_json[i] = dum;
+    }
+
+    lcs[i] = new LightCurve(lcs_json[i]);    
+    for(int j=0;j<lcs[i]->signal.size();j++){
+      lcs[i]->signal[j] = scale*pow(10.0,-0.4*(lcs[i]->signal[j]-ZP)); // Convert from magnitudes to intensities and scale by a factor if necessary
+      //lcs[i]->signal[j] = pow(10.0,-0.4*(lcs[i]->signal[j]+scale)); // Add constant to magnitude (Dmag) and convert from magnitudes to intensities
+      //lcs[i]->time[j] *= fac; // Convert time to the observer's frame
+    }
+  }	
+  return lcs;
+}
+
 void justSupernovaInSignal(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* target){
   // expand intrinsic light curve
   std::vector<double> tmp_time(4+LC_intrinsic->time.size());

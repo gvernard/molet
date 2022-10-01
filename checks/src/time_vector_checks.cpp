@@ -90,7 +90,7 @@ int main(int argc,char* argv[]){
   
   // Check intrinsic light curves
   //================================================================================================================
-  if( ex_type != "moving_variable_source" ){
+  if( ex_type == "moving_fixed_source" ){
 
     if( in_type == "custom" ){
       // Check if all intrinsic light curves begin at t < tobs_min - td_max
@@ -114,85 +114,40 @@ int main(int argc,char* argv[]){
 	  }
 	}
       }
-
     } else {
-
-      // Perform checks for intrinsic on-the-fly model, e.g. DRW
-
+      fprintf(stderr,"Intrinsic variability of a moving fixed source must be given!");
+      check = true;
     }
 
-  }
+  } else if ( ex_type == "expanding_source" ){
 
-  
-
-
-  
-  // Perform checks per extrinsic variability model
-  //================================================================================================================
-  if( ex_type == "custom" ){
-
-    // Check custom extrinsic light curves, they must extend from below tobs_min to above tobs_max
-    for(int n=0;n<names.size();n++){
-      std::string iname = names[n];      
-      Json::Value json_extrinsic;
-      fin.open(in_path+"input_files/"+iname+"_LC_extrinsic.json",std::ifstream::in);
-      fin >> json_extrinsic;
-      fin.close();
-
-      for(int q=0;q<json_extrinsic.size();q++){
-	if( json_extrinsic[q].size() > 0 ){
-	  for(int i=0;i<json_extrinsic[q].size();i++){
-	    if( json_extrinsic[q][i]["time"][0] > tobs_min ){
-	      fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must have a starting time earlier than the minimum observing time, viz. <%f days.\n",i,iname.c_str(),tobs_min);
-	      check = true;
-	    }
-	    int Ntime = json_extrinsic[q][i]["time"].size();
-	    if( json_extrinsic[q][i]["time"][Ntime-1] < tobs_max ){
-	      fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must have a later ending time than the maximum observing time, viz. >%f days.\n",i,iname.c_str(),tobs_max);
-	      check = true;
-	    }
+    if( in_type == "custom" ){
+      // Check if that the maximum observational time is at least equal to the maximum intrinsic time (in the observer's frame) for all light curves.
+      // The onset of the intrinsic light curve is extended appropriately in combine_light.cpp.
+      for(int n=0;n<names.size();n++){
+	std::string iname = names[n];      
+	Json::Value json_intrinsic;
+	fin.open(in_path+"input_files/"+iname+"_LC_intrinsic.json",std::ifstream::in);
+	fin >> json_intrinsic;
+	fin.close();
+		
+	for(int i=0;i<json_intrinsic.size();i++){
+	  int Ntime = json_intrinsic[i]["time"].size();
+	  if( json_intrinsic[i]["time"][Ntime-1].asDouble() < tobs_max ){
+	    fprintf(stderr,"Instrument %s: Intrinsic light curve %d requires a later ending time by at least %f days!\n",iname.c_str(),i, tobs_max - json_intrinsic[i]["time"][Ntime-1].asDouble());
+	    check = true;
 	  }
 	}
       }
-    }
-
-  //=======================================================================================================================
-  } else if( ex_type == "expanding_source" ){
-
-    double cutoff_fac = root["point_source"]["variability"]["extrinsic"]["size_cutoff"].asDouble();  // in Rein
-    if( cutoff_fac > 7.0 ){
-      fprintf(stderr,"Cutoff size for the largest source profile too big. Consider reducing it below 7 Einstein radii.\n");
+    } else {
+      fprintf(stderr,"Intrinsic variability of an expanding source must be given!");
       check = true;
     }
     
-    double v_expand  = root["point_source"]["variability"]["extrinsic"]["v_expand"].asDouble();     // in 10^5 km/s
-    
-    Json::Value cosmo;
-    fin.open(out_path+"output/angular_diameter_distances.json",std::ifstream::in);
-    fin >> cosmo;
-    fin.close();
-    double Dl  = cosmo[0]["Dl"].asDouble();
-    double Ds  = cosmo[0]["Ds"].asDouble();
-    double Dls = cosmo[0]["Dls"].asDouble();
-    double M   = root["point_source"]["variability"]["extrinsic"]["microlens_mass"].asDouble();
-    double Rein = 13.5*sqrt(M*Dls*Ds/Dl); // in 10^14 cm
-    
-    // Loop over the maximum extent of the observations in each filter
-    for(int n=0;n<names.size();n++){
-      double R_max = (tmaxs[n]-tmins[n])*v_expand*8.64; // in 10^14 cm
-      if( R_max/Rein > cutoff_fac ){
-	fprintf(stderr,"Maximum physical size of the source in instrument %s (%f) is above the cutoff size of %f Einstein radii.\n",names[n].c_str(),R_max/Rein,cutoff_fac);
-	check = true;
-      }
-    }
+  } else if ( ex_type == "moving_variable_source" ){
 
-    // Print convolution information for the standard GERLUMPH map resolution.
-
-  //=======================================================================================================================
-  } else if( ex_type == "moving_variable_source" ){
-
-
-    for(int n=0;n<names.size();n++){
+    // NO instrinsic variability here (incorporated in the extrinsic model). The checks happen in the extrinsic part below. 
+        for(int n=0;n<names.size();n++){
       if( root["point_source"]["variability"]["extrinsic"].isMember(names[n]) ){
 
 	if( !root["point_source"]["variability"]["extrinsic"][names[n]].isMember("pixSize") ){
@@ -277,6 +232,83 @@ int main(int argc,char* argv[]){
 	check = true;
       }      
     }
+
+  } else {
+    fprintf(stderr,"Unknown variability model: %s\n",ex_type.c_str());
+    fprintf(stderr,"Allowed options are:");
+    fprintf(stderr," - expanding_source");
+    fprintf(stderr," - moving_fixed_source");
+    fprintf(stderr," - moving_variable_source");
+    check = true;
+  }
+
+
+  
+  // Perform checks related to the microlensing variability model
+  //================================================================================================================
+  if( ex_type == "custom" ){
+
+    // Check custom extrinsic light curves, they must extend from below tobs_min to above tobs_max
+    for(int n=0;n<names.size();n++){
+      std::string iname = names[n];      
+      Json::Value json_extrinsic;
+      fin.open(in_path+"input_files/"+iname+"_LC_extrinsic.json",std::ifstream::in);
+      fin >> json_extrinsic;
+      fin.close();
+
+      for(int q=0;q<json_extrinsic.size();q++){
+	if( json_extrinsic[q].size() > 0 ){
+	  for(int i=0;i<json_extrinsic[q].size();i++){
+	    if( json_extrinsic[q][i]["time"][0] > tobs_min ){
+	      fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must have a starting time earlier than the minimum observing time, viz. <%f days.\n",i,iname.c_str(),tobs_min);
+	      check = true;
+	    }
+	    int Ntime = json_extrinsic[q][i]["time"].size();
+	    if( json_extrinsic[q][i]["time"][Ntime-1] < tobs_max ){
+	      fprintf(stderr,"Custom extrinsic light curve %d for instrument %s must have a later ending time than the maximum observing time, viz. >%f days.\n",i,iname.c_str(),tobs_max);
+	      check = true;
+	    }
+	  }
+	}
+      }
+    }
+
+  //=======================================================================================================================
+  } else if( ex_type == "expanding_source" ){
+
+    double cutoff_fac = root["point_source"]["variability"]["extrinsic"]["size_cutoff"].asDouble();  // in Rein
+    if( cutoff_fac > 7.0 ){
+      fprintf(stderr,"Cutoff size for the largest source profile too big. Consider reducing it below 7 Einstein radii.\n");
+      check = true;
+    }
+    
+    double v_expand  = root["point_source"]["variability"]["extrinsic"]["v_expand"].asDouble();     // in 10^5 km/s
+    
+    Json::Value cosmo;
+    fin.open(out_path+"output/angular_diameter_distances.json",std::ifstream::in);
+    fin >> cosmo;
+    fin.close();
+    double Dl  = cosmo[0]["Dl"].asDouble();
+    double Ds  = cosmo[0]["Ds"].asDouble();
+    double Dls = cosmo[0]["Dls"].asDouble();
+    double M   = root["point_source"]["variability"]["extrinsic"]["microlens_mass"].asDouble();
+    double Rein = 13.5*sqrt(M*Dls*Ds/Dl); // in 10^14 cm
+    
+    // Loop over the maximum extent of the observations in each filter
+    for(int n=0;n<names.size();n++){
+      double R_max = (tmaxs[n]-tmins[n])*v_expand*8.64; // in 10^14 cm
+      if( R_max/Rein > cutoff_fac ){
+	fprintf(stderr,"Maximum physical size of the source in instrument %s (%f) is above the cutoff size of %f Einstein radii.\n",names[n].c_str(),R_max/Rein,cutoff_fac);
+	check = true;
+      }
+    }
+
+    // Print convolution information for the standard GERLUMPH map resolution.
+
+  //=======================================================================================================================
+  } else if( ex_type == "moving_variable_source" ){
+
+    // Check accretion disc size with respect to the map?
 
   //=======================================================================================================================
   } else if( ex_type == "moving_fixed_source" ){
