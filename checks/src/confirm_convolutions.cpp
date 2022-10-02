@@ -61,34 +61,38 @@ int main(int argc,char* argv[]){
   int Nfilters = root["instruments"].size();
 
   // Quantities to be used in determining the half light radii
-  double v_expand  = root["point_source"]["variability"]["extrinsic"]["v_expand"].asDouble();   // velocity in 10^5 km/s
-  double ff        = root["point_source"]["variability"]["extrinsic"]["fractional_increase"].asDouble();  // fractional increase in flux of a uniform disc at each timestep
+  std::vector<double> vels(Nfilters);
+  for(int k=0;k<Nfilters;k++){
+    std::string name = root["instruments"][k]["name"].asString();
+    vels[k] = root["point_source"]["variability"]["extrinsic"]["v_expand"][name].asDouble();   // velocity in 10^5 km/s
+  }
+  double v_expand  = *std::max_element(std::begin(vels),std::end(vels));
+  double ff        = root["point_source"]["variability"]["extrinsic"]["fractional_increase"].asDouble();  // Fractional increase in flux of a uniform disc at each timestep
+  double start     = root["point_source"]["variability"]["extrinsic"]["start"].asDouble();  // Days after explosion to start from
   double cutoff    = root["point_source"]["variability"]["extrinsic"]["size_cutoff"].asDouble();  // Size of the SN profile above which we assume it is too big to be microlensed
   //================= END:INITIALIZE =======================
 
 
   
   //=============== BEGIN:CREATE TIME AND SIZE VECTORS ===============
-  // This part is filter independent because the size of the supernova is assumed to be the same in every filter,
-  // i.e. the SN is growing from a sub-pixel size with the same expansion velocity in all bands.
-  std::vector< std::vector<double> > tot_times(maps.size());
-  std::vector< std::vector<double> > tot_rhalfs(maps.size());
+  // This part is for the fastest filter!!!
+  std::vector< std::vector< double > > rhalfs_per_map(maps.size());
+
   for(int m=0;m<maps.size();m++){
     if( maps[m]["id"].asString() == "none" ){
-      std::vector<double> time; // just an empty vector
-      tot_times[m]  = time;
-      tot_rhalfs[m] = time; // can be the same empty vector
+      std::vector<double> rhalfs; // just an empty vector
+      rhalfs_per_map[m] = rhalfs; // can be the same empty vector
     } else {
       // Create sampling time (map dependent)
       // Here we compute the time vector so that at each timestep the area of a circle with the given r1/2 (=v_expand*t) is ff% larger than before.
       double pixSizePhys = gerlumph::MagnificationMap::getPixSizePhys(maps[m]["id"].asString(),Rein);
-      std::vector<double> time{1}; // in days
-      std::vector<double> rhalfs{1*v_expand*8.64}; // in 10^14 cm
+      std::vector<double> time{start}; // in days
+      std::vector<double> rhalfs{start*v_expand*8.64}; // in 10^14 cm
       int i = 0;
       double t  = time.back();
       int cutoff_pix = (int) ceil(cutoff*Rein/pixSizePhys);
       do{
-	double dt = t*(sqrt(1.0 + ff) - 1.0);
+	double dt = t*(sqrt(1.0 + ff) - start);
 	if( dt < 1.0 ){
 	  dt = 1.0; // Set minimum dt to 1 day
 	}
@@ -101,8 +105,7 @@ int main(int argc,char* argv[]){
 	  rhalfs.push_back(t*v_expand*8.64); // in 10^14 cm
 	}
       } while( t<duration ); // This is an 'until' loop (condition checked at the end) to make sure tobs_max will exist within the final light curve
-      tot_times[m] = time;
-      tot_rhalfs[m] = rhalfs;
+      rhalfs_per_map[m] = rhalfs;
     }
   }
   //================= END:CREATE TIME AND SIZE VECTORS ===============
@@ -110,14 +113,18 @@ int main(int argc,char* argv[]){
 
 
   //=============== BEGIN:REPORT NUMBER OF CONVOLUTIONS AND ASK FOR CONFIRMATION ===============
-  int convs_per_filter = 0;
-  for(int m=0;m<tot_times.size();m++){
-    convs_per_filter += tot_times[m].size();
-  }
   printf(">>>>>> Please pay ATTENTION to the following: <<<<<<\n");
-  printf("   The total number of convolutions will be %d.\n",convs_per_filter);
-  double conv_fac = convs_per_filter/3600.0;
-  printf("   It will approximately take %.2f hours on the CPU and %.2f hours on the GPU.\n",conv_fac*13.0,conv_fac*3.0); // convolution on a CPU lasts 13s and on the GPU 3s (approximate numbers)
+  printf("   The number of convolutions per map is:\n");
+  int convs_tot = 0;
+  for(int m=0;m<maps.size();m++){
+    if( maps[m]["id"].asString() != "none" ){
+      printf(" map %d (%s,%.2f,%.2f,%.2f): %lu\n",m,maps[m]["id"].asString().c_str(),maps[m]["k"].asDouble(),maps[m]["g"].asDouble(),maps[m]["s"].asDouble(),rhalfs_per_map[m].size());
+      convs_tot += rhalfs_per_map[m].size();
+    }
+  }
+  printf("   The total number of convolutions will be %d.\n",convs_tot);
+  double conv_fac = convs_tot/3600.0;
+  printf("   It will approximately take %.2f hours (%d mins) on the CPU and %.2f hours (%d mins) on the GPU.\n",conv_fac*13.0,(int)std::ceil(conv_fac*13.0*60),conv_fac*3.0,(int)std::ceil(conv_fac*3.0*60)); // convolution on a CPU lasts 13s and on the GPU 3s (approximate numbers)
   printf("   (if you want to compille gerlumphpp for GPUs see here: https://github.com/gvernard/gerlumphpp)\n");
   printf("   If that is too long, consider shortening the observing time for each instrument, or increasing the fractional_increase parameter, or decreasing the size_cutoff parameter.\n");
   char choice;
@@ -135,33 +142,23 @@ int main(int argc,char* argv[]){
 
 
   // Write light curves
-  for(int k=0;k<Nfilters;k++){
-    std::string instrument_name = root["instruments"][k]["name"].asString();
-
-    Json::Value time_rhalf;
-    for(int m=0;m<maps.size();m++){
-      Json::Value jobj;
-      if( maps[m]["id"].asString() == "none" ){
-	jobj = Json::Value();
-	jobj["times"] = Json::arrayValue;
-	jobj["rhalfs"] = Json::arrayValue;
-      } else {
-	Json::Value jtime;
-	Json::Value jrhalf;
-	for(int i=0;i<tot_times[m].size();i++){
-	  jtime.append( tot_times[m][i] ); // we must NOT convert to absolute time
-	  jrhalf.append( tot_rhalfs[m][i] );
-	}
-	jobj["times"] = jtime;
-	jobj["rhalfs"] = jrhalf;
+  Json::Value rhalf;
+  for(int m=0;m<maps.size();m++){
+    Json::Value jobj;
+    if( maps[m]["id"].asString() == "none" ){
+      jobj = Json::arrayValue;
+    } else {
+      jobj = Json::arrayValue;
+      for(int i=0;i<rhalfs_per_map[m].size();i++){
+	jobj.append( rhalfs_per_map[m][i] );
       }
-      time_rhalf.append(jobj);
     }
-    
-    std::ofstream file_time_rhalf(output+instrument_name+"_time_rhalf.json");
-    file_time_rhalf << time_rhalf;
-    file_time_rhalf.close();
+    rhalf.append(jobj);
   }
+    
+  std::ofstream file_rhalf(output+"rhalfs_per_map.json");
+  file_rhalf << rhalf;
+  file_rhalf.close();
 
 
   

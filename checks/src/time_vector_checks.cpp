@@ -11,6 +11,7 @@
 #include <string>
 #include <iostream>
 #include <filesystem>
+#include <algorithm>
 
 #include "json/json.h"
 #include "CCfits/CCfits"
@@ -281,9 +282,7 @@ int main(int argc,char* argv[]){
       fprintf(stderr,"Cutoff size for the largest source profile too big. Consider reducing it below 7 Einstein radii.\n");
       check = true;
     }
-    
-    double v_expand  = root["point_source"]["variability"]["extrinsic"]["v_expand"].asDouble();     // in 10^5 km/s
-    
+
     Json::Value cosmo;
     fin.open(out_path+"output/angular_diameter_distances.json",std::ifstream::in);
     fin >> cosmo;
@@ -294,16 +293,19 @@ int main(int argc,char* argv[]){
     double M   = root["point_source"]["variability"]["extrinsic"]["microlens_mass"].asDouble();
     double Rein = 13.5*sqrt(M*Dls*Ds/Dl); // in 10^14 cm
     
-    // Loop over the maximum extent of the observations in each filter
     for(int n=0;n<names.size();n++){
-      double R_max = (tmaxs[n]-tmins[n])*v_expand*8.64; // in 10^14 cm
-      if( R_max/Rein > cutoff_fac ){
-	fprintf(stderr,"Maximum physical size of the source in instrument %s (%f) is above the cutoff size of %f Einstein radii.\n",names[n].c_str(),R_max/Rein,cutoff_fac);
+      if( root["point_source"]["variability"]["extrinsic"]["v_expand"].isMember(names[n]) ){
+	// Loop over the maximum extent of the observations in each filter
+	double R_max = (tmaxs[n]-tmins[n])*root["point_source"]["variability"]["extrinsic"]["v_expand"][names[n]].asDouble()*8.64; // in 10^14 cm
+	if( R_max/Rein > cutoff_fac ){
+	  fprintf(stderr,"Maximum physical size of the source in instrument %s (%f) is above the cutoff size of %f Einstein radii.\n",names[n].c_str(),R_max/Rein,cutoff_fac);
+	  check = true;
+	}
+      } else {
+	fprintf(stderr,"Expansion velocity for instrument %s not found!\n",names[n].c_str());
 	check = true;
       }
     }
-
-    // Print convolution information for the standard GERLUMPH map resolution.
 
   //=======================================================================================================================
   } else if( ex_type == "moving_variable_source" ){

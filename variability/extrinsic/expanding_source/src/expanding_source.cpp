@@ -15,7 +15,8 @@ int main(int argc,char* argv[]){
     - angular_diameter_distances.json
     - gerlumph_maps.json
     - multiple_images.json
-    - <instrument_name>_time_rhalf.json
+    - rhalfs_per_map.json
+    - tobs.json
   */
   
   //=============== BEGIN:INITIALIZE =======================
@@ -69,26 +70,35 @@ int main(int argc,char* argv[]){
   double M   = root["point_source"]["variability"]["extrinsic"]["microlens_mass"].asDouble();
   double Rein = 13.5*sqrt(M*Dls*Ds/Dl); // in 10^14 cm
 
-  // Read times and corresponding half light radii for each filter for each map
-  Json::Value times_rhalfs;
-  for(int k=0;k<Nfilters;k++){  
-    std::string instrument_name = root["instruments"][k]["name"].asString();
-    Json::Value jobj;
-    fin.open(output+instrument_name+"_time_rhalf.json",std::ifstream::in);
-    fin >> jobj;
-    fin.close();
-    times_rhalfs.append(jobj);
+  // Read half light radii for each map
+  Json::Value rhalfs;
+  fin.open(output+"rhalfs_per_map.json",std::ifstream::in); // in 10^14 cm
+  fin >> rhalfs;
+  fin.close();
+
+  // Expansion velocities
+  std::vector<double> v_expand(Nfilters);
+  for(int k=0;k<Nfilters;k++){
+    std::string name = root["instruments"][k]["name"].asString();
+    
   }
+
+  // Read tobs_min and tobs_max
+  Json::Value tobs_json;
+  fin.open(output+"tobs.json",std::ifstream::in);
+  fin >> tobs_json;
+  fin.close();
+  double tobs_max = tobs_json["tobs_max"].asDouble();
+  double tobs_min = tobs_json["tobs_min"].asDouble();
+  double duration = tobs_max - tobs_min;
   
   // Maximum sized profile and consequent maxOffset
   double rhalf_max = 0.0;
-  for(int k=0;k<Nfilters;k++){
-    for(int m=0;m<times_rhalfs[k].size();m++){
-      int size = times_rhalfs[k][m]["rhalfs"].size();
-      if( size > 0 ){
-	if( times_rhalfs[k][m]["rhalfs"][size-1] > rhalf_max ){
-	  rhalf_max = times_rhalfs[k][m]["rhalfs"][size-1].asDouble();
-	}
+  for(int m=0;m<maps.size();m++){
+    int size = rhalfs[m].size();
+    if( size > 0 ){
+      if( rhalfs[m][size-1] > rhalf_max ){
+	rhalf_max = rhalfs[m][size-1].asDouble();
       }
     }
   }
@@ -125,17 +135,17 @@ int main(int argc,char* argv[]){
       fixed.createGridLocations();
 
       Json::Value image;
-      int Ntime = times_rhalfs[0][m]["times"].size();
+      int Nrhalf = rhalfs[m].size();
 
       double** raw_signal  = (double**) malloc(Nfixed*sizeof(double*));
       double** raw_dsignal = (double**) malloc(Nfixed*sizeof(double*));
       for(int f=0;f<Nfixed;f++){
-	raw_signal[f]  = (double*) malloc(Ntime*sizeof(double));
-	raw_dsignal[f] = (double*) malloc(Ntime*sizeof(double));
+	raw_signal[f]  = (double*) malloc(Nrhalf*sizeof(double));
+	raw_dsignal[f] = (double*) malloc(Nrhalf*sizeof(double));
       }
 
-      for(int t=0;t<Ntime;t++){
-	double rhalf = times_rhalfs[0][m]["rhalfs"][t].asDouble(); // half light radius in 10^14cm
+      for(int r=0;r<Nrhalf;r++){
+	double rhalf = rhalfs[m][r].asDouble(); // half light radius in 10^14cm
 	gerlumph::UniformDisc profile(map.pixSizePhys,rhalf,incl,orient); // shape of the brightness profile
 
 	gerlumph::EffectiveMap emap(maxOffset,&map);
@@ -146,8 +156,8 @@ int main(int argc,char* argv[]){
 	fixed.setEmap(&emap);
 	fixed.extract();
 	for(int f=0;f<Nfixed;f++){
-	  raw_signal[f][t]  = fixed.m[f];
-	  raw_dsignal[f][t] = fixed.dm[f];
+	  raw_signal[f][r]  = fixed.m[f];
+	  raw_dsignal[f][r] = fixed.dm[f];
 	}
       }
       
@@ -155,13 +165,25 @@ int main(int argc,char* argv[]){
 	// Store light curve for filter for image
 	std::string instrument_name = root["instruments"][k]["name"].asString();
 	Json::Value lcs;
-	Json::Value jtime = times_rhalfs[k][m]["times"]; // must NOT convert to absolute time	
+
+	// Convert rhalfs to time using the filter's velocity
+	Json::Value jtime;
+	for(int r=0;r<Nrhalf;r++){
+	  double rhalf = rhalfs[m][r].asDouble(); // half light radius in 10^14cm
+	  double v_expand = 8.64*root["point_source"]["variability"]["extrinsic"]["v_expand"][instrument_name].asDouble();   // velocity in 10^14 cm / day
+	  double t = rhalf/v_expand; // in days
+	  jtime.append(t); // must NOT convert to absolute time
+	  if( t > duration ){
+	    break; // Check after assignment to make sure the full duration is included in the light curve
+	  }
+	}
+
 	for(int f=0;f<Nfixed;f++){
 	  Json::Value lc;
 	  Json::Value jsignal;
 	  Json::Value jdsignal;
 
-	  for(int t=0;t<Ntime;t++){
+	  for(int t=0;t<jtime.size();t++){
 	    jsignal.append( raw_signal[f][t] );
 	    jdsignal.append( raw_dsignal[f][t] );
 	  }
