@@ -1,4 +1,5 @@
 molet_driver
+/tests/*/MOLET_RUN/
 /tests/*/output/
 /tests/*/mock_*
 log.txt

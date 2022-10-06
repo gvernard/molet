@@ -52,40 +52,44 @@ molet_home=@MOLET_HOME@"/"
 map_path=`${molet_home}"bin/check_get_map_path"`
 
 
-# A directory named 'input_files' must exist at the same path as the 'molet_input.json' file, even if it is empty!
-if [ ! -d ${in_path}"input_files" ]
-then
-    @MKDIR_P@ ${in_path}"input_files"
-fi
-
-
-# Check if optional output path argument is present
-if [ $# -eq 2 ]
-then
-    out_path=$2
-    i=$((${#out_path}-1))
-    if [ "${out_path:$i:1}" != "/" ]
-    then
-	out_path=${out_path}"/"
-    fi
-else
-    out_path=$in_path
-fi
-if [ ! -d ${out_path}"output" ]
-then
-    @MKDIR_P@ ${out_path}"output"
-fi
-log_file=${out_path}"output/log.txt"
-
-
-
 
 # Step -1:
-# Convert input file from coolest standard if necessary
+# Convert input file from coolest standard if necessary and change execution paths
 ####################################################################################
-msg="Check: conversion from coolest..."
-cmd=$molet_home"bin/check_coolest_conversion "$molet_home" "$in_path" "$infile
-myprocess "$msg" "$cmd" "$log_file"
+if grep -q "COOLEST" $infile
+then
+    # Make run directories first (needed for the log.txt)
+    @MKDIR_P@ ${in_path}MOLET_RUN/
+    @MKDIR_P@ ${in_path}MOLET_RUN/input_files
+    @MKDIR_P@ ${in_path}MOLET_RUN/output
+    log_file=${in_path}MOLET_RUN/output/log.txt
+
+    # Run the conversion
+    msg="Check: conversion from coolest..."
+    cmd=$molet_home"bin/check_coolest_conversion "$molet_home" "$in_path" "$infile
+    myprocess "$msg" "$cmd" "$log_file"
+
+    # Copy the input files
+    cp ${in_path}*.dat ${in_path}*.txt ${in_path}*.fits ${in_path}MOLET_RUN/input_files 2>/dev/null
+    mv ${in_path}molet_input.json ${in_path}MOLET_RUN/molet_input.json
+
+    # Change the input file name, the input path, and the json string for the rest of the script and codes
+    in_path=${in_path}MOLET_RUN/
+    infile=${in_path}/molet_input.json
+    injson=`grep -o '^[^//]*' $infile`
+else
+    # A directory named 'input_files' must exist at the same path as the 'molet_input.json' file, even if it is empty!
+    if [ ! -d ${in_path}"input_files" ]
+    then
+	@MKDIR_P@ ${in_path}"input_files"
+    fi
+    if [ ! -d ${in_path}"output" ]
+    then
+	@MKDIR_P@ ${in_path}"output"
+    fi
+    log_file=${in_path}"output/log.txt"
+fi
+out_path=$in_path
 
 
 

@@ -1,0 +1,206 @@
+{
+    "coordinates_origin": {
+	"dec": "+00d00m00s",
+	"ra": "00h00m00s"
+    },
+    "cosmology": {
+	"H0": 73.0,
+	"Om0": 0.3,
+	"astropy_name": "FlatLambdaCDM"
+    },
+    "instrument": {
+	"band": "F814W",
+	"name": "HST-WFPC2",
+	"pixel_size": 0.1,
+	"psf": {
+	    "description": null,
+	    "pixels": {
+		"field_of_view_x": [0,4.8],
+		"field_of_view_y": [0,4.8],
+		"fits_file": "my_psf_file.fits",
+		"num_pix_x": 74,
+		"num_pix_y": 74
+	    },
+	    "type": "PixelatedPSF"
+	},
+	"readout_noise": 6
+    },
+    "lensing_entities": [
+	{
+	    "mass_model": [
+		{
+		    "parameters": {
+			"gamma_ext": {
+			    "point_estimate": {
+				"value": 0.03
+			    },
+			    "posterior_stats": {
+				"mean": null,
+				"median": null,
+				"percentile_16th": null,
+				"percentile_84th": null
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"phi_ext": {
+			    "point_estimate": {
+				"value": 40
+			    },
+			    "posterior_stats": {
+				"mean": null,
+				"median": null,
+				"percentile_16th": null,
+				"percentile_84th": null
+			    },
+			    "prior": {
+				"type": null
+			    }
+			}
+		    },
+		    "type": "ExternalShear"
+		}
+	    ],
+	    "name": "an external shear",
+	    "redshift": 1,
+	    "type": "external_shear"
+	},
+	{
+	    "light_model": [],
+	    "mass_model": [
+		{
+		    "parameters": {
+			"center_x": {
+			    "point_estimate": {
+				"value": 0.0
+			    },
+			    "posterior_stats": {
+				"mean": null,
+				"median": null,
+				"percentile_16th": null,
+				"percentile_84th": null
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"center_y": {
+			    "point_estimate": {
+				"value": 0.0
+			    },
+			    "posterior_stats": {
+				"mean": null,
+				"median": null,
+				"percentile_16th": null,
+				"percentile_84th": null
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"gamma": {
+			    "point_estimate": {
+				"value": 2.0
+			    },
+			    "posterior_stats": {
+				"mean": null,
+				"median": null,
+				"percentile_16th": null,
+				"percentile_84th": null
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"phi": {
+			    "point_estimate": {
+				"value": -15
+			    },
+			    "posterior_stats": {
+				"mean": null,
+				"median": null,
+				"percentile_16th": null,
+				"percentile_84th": null
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"q": {
+			    "point_estimate": {
+				"value": 0.8
+			    },
+			    "posterior_stats": {
+				"mean": null,
+				"median": null,
+				"percentile_16th": null,
+				"percentile_84th": null
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"theta_E": {
+			    "point_estimate": {
+				"value": 1.3
+			    },
+			    "posterior_stats": {
+				"mean": null,
+				"median": null,
+				"percentile_16th": null,
+				"percentile_84th": null
+			    },
+			    "prior": {
+				"type": null
+			    }
+			}
+		    },
+		    "type": "PEMD"
+		}
+	    ],
+	    "name": "a lens galaxy",
+	    "redshift": 1,
+	    "type": "galaxy"
+	},
+	{
+	    "light_model": [
+		{
+		    "pixels": {
+			"field_of_view_x": [-0.55,0.55],
+			"field_of_view_y": [-0.55,0.55],
+			"fits_file": "my_pixelated_source.fits",
+			"num_pix_x": 442,
+			"num_pix_y": 442
+		    },
+		    "type": "PixelatedRegularGrid"
+		}
+	    ],
+	    "mass_model": [],
+	    "name": "a pixelated source galaxy",
+	    "redshift": 2,
+	    "type": "galaxy"
+	}
+    ],
+    "meta": {},
+    "mode": "MOCK",
+    "observation": {
+	"exposure_time": 2400,
+	"mag_sky_brightness": 22.8,
+	"mag_zero_point": 22.19,
+	"noise": {
+	    "type": "InstrumentalNoise",
+	    "with_readout_noise": true,
+	    "with_sky_shot_noise": true,
+	    "with_target_shot_noise": true
+	},
+	"pixels": {
+	    "field_of_view_x": [-3.1,3.1],
+	    "field_of_view_y": [-3.1,3.1],
+	    "fits_file": "None",
+	    "num_pix_x": null,
+	    "num_pix_y": null
+	}
+    },
+    "standard": "COOLEST"
+}
