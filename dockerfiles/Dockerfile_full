@@ -157,7 +157,6 @@ ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$LIBDIR/vkl_lib/lib:$LIBDIR/gerlumphpp/lib
 RUN cd /home \
     &&	git clone https://github.com/gvernard/molet.git \
     &&	cd molet \
-    &&  mkdir instrument_modules \
     &&  autoreconf -i \
     &&  ./configure \
     &&	make \
