@@ -282,7 +282,7 @@ int main(int argc,char* argv[]){
   std::string noise_type = root["observation"]["noise"]["type"].asString();
   Json::Value noise;
   if( noise_type == "InstrumentalNoise" ){
-    noise["type"] = "Poisson";
+    noise["type"] = "PoissonNoise";
     noise["texp"] = root["observation"]["exposure_time"];
     noise["Msb"]  = root["observation"]["mag_sky_brightness"]; 
   } else if( noise_type == "UniformGaussianNoise" ){

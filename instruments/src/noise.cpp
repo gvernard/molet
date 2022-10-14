@@ -139,6 +139,13 @@ void UniformGaussian::calculateNoise(){
 void UniformGaussian::outputNoiseProperties(std::string output,std::string instrument_name){
   this->outputNoiseRealization(output,instrument_name);
 
+  vkl::RectGrid* sigma_map = new vkl::RectGrid(this->noise_realization->Nx,this->noise_realization->Ny,this->noise_realization->xmin,this->noise_realization->xmax,this->noise_realization->ymin,this->noise_realization->ymax);
+  for(int i=0;i<sigma_map->Nz;i++){
+    sigma_map->z[i] = this->sigma;
+  }
+  vkl::FitsInterface::writeFits(sigma_map->Nx,sigma_map->Ny,sigma_map->z,output + instrument_name + "_sigma_map.fits");
+  delete(sigma_map);
+  
   Json::Value json_obj;
   json_obj["type"] = "UniformGaussian";
   json_obj["sigma"] = this->sigma;
