@@ -87,8 +87,8 @@ int main(int argc,char* argv[]){
   for(int b=0;b<root["instruments"].size();b++){
     const Json::Value instrument = root["instruments"][b];
     std::string instrument_name = root["instruments"][b]["name"].asString();
-    double ZP = root["instruments"][b]["ZP"].asDouble();
-    Instrument mycam(instrument_name,ZP,root["instruments"][b]["noise"]);
+
+    Instrument mycam(instrument_name,root["instruments"][b]["ZP"].asDouble(),root["instruments"][b]["noise"]);
 
     // Set output image plane in super-resolution
     double xmin = root["instruments"][b]["field-of-view_xmin"].asDouble();
@@ -97,8 +97,12 @@ int main(int argc,char* argv[]){
     double ymax = root["instruments"][b]["field-of-view_ymax"].asDouble();
     int res_x = static_cast<int>(ceil((xmax-xmin)/mycam.resolution));
     int res_y = static_cast<int>(ceil((ymax-ymin)/mycam.resolution));
-    int super_res_x = 10*res_x;
-    int super_res_y = 10*res_y;
+    int super_factor = 10;
+    if( root["output_options"].isMember("super_factor") ){
+      super_factor = root["output_options"]["super_factor"].asInt();
+    }
+    int super_res_x = super_factor*res_x;
+    int super_res_y = super_factor*res_y;
     vkl::RectGrid supersim(super_res_x,super_res_y,xmin,xmax,ymin,ymax);    
 
     // Get the psf in super-resolution, crop it, and create convolution kernel

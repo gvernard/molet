@@ -54,9 +54,12 @@ int main(int argc,char* argv[]){
     double ymin = root["instruments"][k]["field-of-view_ymin"].asDouble();
     double ymax = root["instruments"][k]["field-of-view_ymax"].asDouble();
     double res  = Instrument::getResolution(name);
-    double ZP = root["instruments"][k]["ZP"].asDouble();
-    int super_res_x = 10*( static_cast<int>(ceil((xmax-xmin)/res)) );
-    int super_res_y = 10*( static_cast<int>(ceil((ymax-ymin)/res)) );
+    int super_factor = 10;
+    if( root["output_options"].isMember("super_factor") ){
+      super_factor = root["output_options"]["super_factor"].asInt();
+    }
+    int super_res_x = super_factor*( static_cast<int>(ceil((xmax-xmin)/res)) );
+    int super_res_y = super_factor*( static_cast<int>(ceil((ymax-ymin)/res)) );
     vkl::RectGrid mylight(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
     
     Json::Value all_lenses;
@@ -65,7 +68,7 @@ int main(int argc,char* argv[]){
 	all_lenses.append(root["lenses"][i]["light_profile"][name][j]);
       }
     }
-    vkl::CollectionProfiles light_collection = vkl::JsonParsers::parse_profile(all_lenses,ZP,input);
+    vkl::CollectionProfiles light_collection = vkl::JsonParsers::parse_profile(all_lenses,root["instruments"][k]["ZP"].asDouble(),input);
 
     for(int i=0;i<mylight.Ny;i++){
       for(int j=0;j<mylight.Nx;j++){
