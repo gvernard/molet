@@ -114,7 +114,11 @@
 	}
     },
 
-    
+
+    "output_options": {
+	"super_factor": 5
+    },
+
     
     "instruments": [
 	{
