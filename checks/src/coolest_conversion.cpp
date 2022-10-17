@@ -287,7 +287,7 @@ int main(int argc,char* argv[]){
     noise["Msb"]  = root["observation"]["mag_sky_brightness"]; 
   } else if( noise_type == "UniformGaussianNoise" ){
     noise["type"] = "UniformGaussian";
-    noise["sn"] = root["observation"]["noise"]["std_dev"];
+    noise["sigma"] = root["observation"]["noise"]["std_dev"];
   } else if( noise_type == "NoiseMap" ){
     noise["type"] = "NoiseMap";
   } else if( noise_type == "NoiseRealization" ){

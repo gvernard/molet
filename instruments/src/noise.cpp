@@ -104,8 +104,9 @@ void PoissonNoise::outputNoiseProperties(std::string output,std::string instrume
 
 
 // START: UniformGaussian ============================
-UniformGaussian::UniformGaussian(double sn): BaseNoise(1){
+UniformGaussian::UniformGaussian(double sn,double sigma): BaseNoise(1){
   this->sn = sn;
+  this->sigma = sigma;
 }
 
 void UniformGaussian::setGrid(vkl::RectGrid* obs_grid){
@@ -114,7 +115,11 @@ void UniformGaussian::setGrid(vkl::RectGrid* obs_grid){
 
 void UniformGaussian::initializeFromData(vkl::RectGrid* mydata){
   double maxdata = *std::max_element(mydata->z,mydata->z+mydata->Nz);
-  this->sigma = maxdata/this->sn;
+  if( this->sn != 0 ){
+    this->sigma = maxdata/this->sn;
+  } else {
+    this->sn = maxdata/this->sigma;
+  }
 }
   
 void UniformGaussian::calculateNoise(){

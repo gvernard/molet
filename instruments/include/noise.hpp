@@ -46,7 +46,7 @@ public:
   double sn;   // signal to noise ratio
   double sigma;
   double min_noise; // the minimum value of the noise
-  UniformGaussian(double sn);
+  UniformGaussian(double sn,double sigma);
   void setGrid(vkl::RectGrid* obs_grid);
   void initializeFromData(vkl::RectGrid* mydata);
   void calculateNoise();
@@ -83,8 +83,15 @@ public:
     if( type == "NoNoise" ){
       return new NoNoise();
     } else if( type == "UniformGaussian" ){
-      double sn = noise_pars["sn"].asDouble();
-      return new UniformGaussian(sn);
+      double sn = 0.0;
+      double sigma = 0.0;
+      if( noise_pars.isMember("sn") ){
+	sn = noise_pars["sn"].asDouble();
+      }
+      if( noise_pars.isMember("sigma") ){
+	sigma = noise_pars["sigma"].asDouble();
+      }
+      return new UniformGaussian(sn,sigma);
     } else if( type == "PoissonNoise" ){
       double texp = noise_pars["texp"].asDouble();
       double Msb = noise_pars["Msb"].asDouble();
