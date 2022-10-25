@@ -258,7 +258,7 @@ int main(int argc,char* argv[]){
     Json::Value new_instrument;
     new_instrument["name"] = root["instrument"]["name"];
     new_instrument["band"] = root["instrument"]["band"];
-    new_instrument["readout"] = root["instrument"]["readout"];
+    new_instrument["readout"] = root["instrument"]["readout_noise"];
     new_instrument["resolution"] = root["instrument"]["pixel_size"];
     Json::Value psf;
     psf["pix_x"]  = root["instrument"]["psf"]["pixels"]["num_pix_x"];
