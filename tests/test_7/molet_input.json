@@ -13,10 +13,12 @@
 	    
 	    "mass_model": [
 		{
-		    "type": "sie",
+		    "type": "spemd",
 		    "pars": {
 			"theta_E": 1.1,
 			"q": 0.8,
+			"gam": 2,
+			"s": 0.0001,
 			"pa": -145.0,
 			"x0": 0.0,
 			"y0": 0.0

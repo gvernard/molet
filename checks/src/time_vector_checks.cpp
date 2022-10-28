@@ -148,7 +148,7 @@ int main(int argc,char* argv[]){
   } else if ( ex_type == "moving_variable_source" ){
 
     // NO instrinsic variability here (incorporated in the extrinsic model). The checks happen in the extrinsic part below. 
-        for(int n=0;n<names.size();n++){
+    for(int n=0;n<names.size();n++){
       if( root["point_source"]["variability"]["extrinsic"].isMember(names[n]) ){
 
 	if( !root["point_source"]["variability"]["extrinsic"][names[n]].isMember("pixSize") ){
@@ -234,6 +234,8 @@ int main(int argc,char* argv[]){
       }      
     }
 
+  } else if( ex_type == "custom" ){
+    // Do nothing here
   } else {
     fprintf(stderr,"Unknown variability model: %s\n",ex_type.c_str());
     fprintf(stderr,"Allowed options are:");

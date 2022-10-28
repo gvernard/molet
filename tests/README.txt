@@ -9,3 +9,4 @@ Here is the summary of all the examples included:
 "test_4"     -  Same as 'test_0' but now the point source is replaced by an 'expanding_source' and the cadence of the observations is changed.
 "test_5"     -  Same as 'test_0' but now the point source is removed and there are gridded lens potential perturbations present.
 "test_6"     -  Same as 'test 2' but instead of the 'moving_fixed_source' variability model we have the 'moving_variable_source' model.
+"test_7"     -  Same as 'test 0' but instead of the an 'SIE' we use a 'SPEMD' model for the lens mass.
