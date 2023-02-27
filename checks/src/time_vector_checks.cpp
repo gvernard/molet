@@ -91,7 +91,7 @@ int main(int argc,char* argv[]){
   
   // Check intrinsic light curves
   //================================================================================================================
-  if( ex_type == "moving_fixed_source" ){
+  if( ex_type == "moving_fixed_source" || ex_type == "moving_fixed_source_custom" ){
 
     if( in_type == "custom" ){
       // Check if all intrinsic light curves begin at t < tobs_min - td_max
@@ -309,14 +309,106 @@ int main(int argc,char* argv[]){
       }
     }
 
+
+    
   //=======================================================================================================================
   } else if( ex_type == "moving_variable_source" ){
 
     // Check accretion disc size with respect to the map?
 
+
+
+
+  //=======================================================================================================================
+  } else if( ex_type == "moving_fixed_source_custom" ){
+
+    for(int n=0;n<names.size();n++){
+      if( root["point_source"]["variability"]["extrinsic"].isMember(names[n]) ){
+	  
+	if( !root["point_source"]["variability"]["extrinsic"][names[n]].isMember("pixSize") ){
+	  fprintf(stderr,"Pixel size for instrument %s is not given.\n",names[n].c_str());
+	  check = true;
+	}
+	  
+	int Nx,Ny;
+	if( root["point_source"]["variability"]["extrinsic"][names[n]].isMember("Nx") && root["point_source"]["variability"]["extrinsic"][names[n]].isMember("Ny") ){
+	  Nx = root["point_source"]["variability"]["extrinsic"][names[n]]["Nx"].asInt();
+	  Ny = root["point_source"]["variability"]["extrinsic"][names[n]]["Ny"].asInt();
+	  if( Nx != Ny ){
+	    fprintf(stderr,"Width and height of the source snapshots for instrument %s must be equal (square profile).\n",names[n].c_str());
+	    check = true;
+	  }
+	} else {
+	  fprintf(stderr,"Width and height of the source snapshots in pixels for instrument %s is not given.\n",names[n].c_str());
+	  check = true;
+	}
+
+	// Read the fits headers and make sure the agree with the given width and height
+	std::string filepath = in_path+"input_files/cs_"+names[n]+".fits";
+	if( std::filesystem::exists(filepath) ){
+	  std::unique_ptr<CCfits::FITS> pInfile(new CCfits::FITS(filepath,CCfits::Read,true));
+	  CCfits::PHDU& image = pInfile->pHDU();
+	  image.readAllKeys();
+	  int fNy = image.axis(0);
+	  int fNx = image.axis(1);
+	  if( fNx != Nx || fNy != Ny ){
+	    fprintf(stderr,"The dimensions of snapshot %s (%dx%d) for instrument %s do not match the given ones (%dx%d).\n",filepath.c_str(),fNx,fNy,names[n].c_str(),Nx,Ny);
+	    check = true;
+	  }
+	} else {
+	    fprintf(stderr,"The custom profile input file for instrument %s does not exist.\n",names[n].c_str());
+	    check = true;
+	}
+	
+      } else {
+	fprintf(stderr,"Variability properties for instrument %s are not given.\n",names[n].c_str());
+	check = true;
+      }
+
+    }
+
+    if( check != true ){	
+      // Check accretion disc size with respect to the map - it must be possible to create a profile
+      std::map<std::string,std::string> main_map;
+      main_map.insert( std::pair<std::string,std::string>("type","custom") );
+      main_map.insert( std::pair<std::string,std::string>("shape","custom") );
+      main_map.insert( std::pair<std::string,std::string>("pixSizePhys","1") ); // The size of the map pixels is dummy here
+      main_map.insert( std::pair<std::string,std::string>("incl","0") );
+      main_map.insert( std::pair<std::string,std::string>("orient","0") );
+      main_map.insert( std::pair<std::string,std::string>("filename","") );
+      main_map.insert( std::pair<std::string,std::string>("profPixSizePhys","") );
+
+      std::vector<double> rhalfs(names.size());
+      for(int i=0;i<names.size();i++){
+	main_map["filename"] = in_path+"input_files/cs_"+names[i]+".fits";
+	main_map["profPixSizePhys"] = std::to_string( root["point_source"]["variability"]["extrinsic"][names[i]]["pixSize"].asDouble() );
+	gerlumph::BaseProfile* profile = gerlumph::FactoryProfile::getInstance()->createProfileFromPars(main_map);
+	rhalfs[i] = profile->getHalfRadius(); // the second argument is the lrest, which is dummy in this call
+	delete(profile);
+      }
+
+      Json::Value cosmo;
+      fin.open(out_path+"output/angular_diameter_distances.json",std::ifstream::in);
+      fin >> cosmo;
+      fin.close();
+      double Dl  = cosmo[0]["Dl"].asDouble();
+      double Ds  = cosmo[0]["Ds"].asDouble();
+      double Dls = cosmo[0]["Dls"].asDouble();
+      double M   = root["point_source"]["variability"]["extrinsic"]["microlens_mass"].asDouble();
+      double Rein = 13.5*sqrt(M*Dls*Ds/Dl); // in 10^14 cm
+      for(int i=0;i<names.size();i++){
+	if( rhalfs[i]/Rein > 7 ){
+	  fprintf(stderr,"Accretion disc size for instrument %s is too big. Consider reducing rest wavelength %f so that the disc becomes smaller than 7 Einstein radii.\n",names[i].c_str(),lrest[i]);
+	  check = true;	
+	}
+      }
+    }
+    
+
+    
   //=======================================================================================================================
   } else if( ex_type == "moving_fixed_source" ){
-
+      
     // Quick loop to check if the accretion dize does not become too large for some wavelength, e.g. above several Rein
     Json::Value::Members json_members = root["point_source"]["variability"]["extrinsic"]["profiles"].getMemberNames();
     std::map<std::string,std::string> main_map; // size should be json_members.size()+2
@@ -333,7 +425,7 @@ int main(int argc,char* argv[]){
 	rhalfs[i] = gerlumph::BaseProfile::getSize(main_map,lrest[i]);
       }
     }
-      
+    
     Json::Value cosmo;
     fin.open(out_path+"output/angular_diameter_distances.json",std::ifstream::in);
     fin >> cosmo;
@@ -349,6 +441,7 @@ int main(int argc,char* argv[]){
 	check = true;	
       }
     }
+    
 
   //=======================================================================================================================
   } else {
@@ -357,6 +450,7 @@ int main(int argc,char* argv[]){
     fprintf(stderr," - custom");
     fprintf(stderr," - expanding_source");
     fprintf(stderr," - moving_fixed_source");
+    fprintf(stderr," - moving_fixed_source_custom");
     fprintf(stderr," - moving_variable_source");
     check = true;
   }

@@ -31,7 +31,8 @@ int main(int argc,char* argv[]){
   fin >> root;
   fin.close();
 
-  std::string out_path = argv[2];
+  std::string in_path = argv[2];
+  std::string out_path = argv[3];
   std::string output = out_path + "output/";
 
   
@@ -103,6 +104,9 @@ int main(int argc,char* argv[]){
   // Create light curve collection
   gerlumph::LightCurveCollection mother(Nlc);
 
+
+
+
   // Get rest wavelength at the middle of each instrument's range
   std::vector<double> lrest(Nfilters);
   for(int k=0;k<Nfilters;k++){
@@ -112,28 +116,55 @@ int main(int argc,char* argv[]){
   }
 
 
-  // Create profile parameter maps
-  Json::Value::Members json_members = root["point_source"]["variability"]["extrinsic"]["profiles"].getMemberNames();
-  std::map<std::string,std::string> main_map; // size should be json_members.size()+2
-  for(int k=0;k<json_members.size();k++){
-    main_map.insert( std::pair<std::string,std::string>(json_members[k],root["point_source"]["variability"]["extrinsic"]["profiles"][json_members[k]].asString()) );
-  }
-  main_map.insert( std::pair<std::string,std::string>("pixSizePhys","") );
-  main_map.insert( std::pair<std::string,std::string>("rhalf","") );
-  
   std::vector<double> rhalfs(Nfilters);
   std::vector< std::map<std::string,std::string> > profile_parameter_map(Nfilters);
-  for(int k=0;k<Nfilters;k++){
-    if( main_map["type"] == "vector" ){
-      rhalfs[k] = root["point_source"]["variability"]["extrinsic"]["profiles"]["rhalf"][k].asDouble();
-    } else {
-      rhalfs[k] = gerlumph::BaseProfile::getSize(main_map,lrest[k]);
+  if( root["point_source"]["variability"]["extrinsic"]["type"].asString() == "moving_fixed_source_custom" ){
+
+      std::map<std::string,std::string> main_map;
+      main_map.insert( std::pair<std::string,std::string>("type","custom") );
+      main_map.insert( std::pair<std::string,std::string>("shape","custom") );
+      main_map.insert( std::pair<std::string,std::string>("incl","0") );
+      main_map.insert( std::pair<std::string,std::string>("orient","0") );
+      main_map.insert( std::pair<std::string,std::string>("pixSizePhys","1") ); // This is dummy here, but it is set properly in the loop over the maps
+      main_map.insert( std::pair<std::string,std::string>("filename","") );
+      main_map.insert( std::pair<std::string,std::string>("profPixSizePhys","") );
+      main_map.insert( std::pair<std::string,std::string>("rhalf","") );
+
+      for(int k=0;k<Nfilters;k++){
+	std::string name = root["instruments"][k]["name"].asString();
+	main_map["filename"] = in_path+"input_files/cs_"+name+".fits";
+	main_map["profPixSizePhys"] = std::to_string( root["point_source"]["variability"]["extrinsic"][name]["pixSize"].asDouble() );
+	gerlumph::BaseProfile* profile = gerlumph::FactoryProfile::getInstance()->createProfileFromPars(main_map);
+	rhalfs[k] = profile->getHalfRadius();
+	delete(profile);
+	main_map["rhalf"] = std::to_string( rhalfs[k] );
+	profile_parameter_map[k] = main_map;
+      }
+      
+  } else {
+  
+    // Create profile parameter maps
+    Json::Value::Members json_members = root["point_source"]["variability"]["extrinsic"]["profiles"].getMemberNames();
+    std::map<std::string,std::string> main_map; // size should be json_members.size()+2
+    for(int k=0;k<json_members.size();k++){
+      main_map.insert( std::pair<std::string,std::string>(json_members[k],root["point_source"]["variability"]["extrinsic"]["profiles"][json_members[k]].asString()) );
     }
-    main_map["rhalf"] = std::to_string(rhalfs[k]);
-    profile_parameter_map[k] = main_map;
+    main_map.insert( std::pair<std::string,std::string>("pixSizePhys","") );
+    main_map.insert( std::pair<std::string,std::string>("rhalf","") );
+    
+    for(int k=0;k<Nfilters;k++){
+      if( main_map["type"] == "vector" ){
+	rhalfs[k] = root["point_source"]["variability"]["extrinsic"]["profiles"]["rhalf"][k].asDouble();
+      } else {
+	rhalfs[k] = gerlumph::BaseProfile::getSize(main_map,lrest[k]);
+      }
+      main_map["rhalf"] = std::to_string(rhalfs[k]);
+      profile_parameter_map[k] = main_map;
+    }
+    
   }
   //================= END:INITIALIZE =======================
-
+  
 
 
   

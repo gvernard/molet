@@ -287,7 +287,7 @@ int main(int argc,char* argv[]){
 	    // }	    
 
 
-	  if( ex_type == "custom" || ex_type == "expanding_source" || ex_type == "moving_fixed_source" ){
+	  if( ex_type == "custom" || ex_type == "expanding_source" || ex_type == "moving_fixed_source" || ex_type == "moving_fixed_source_custom" ){
 	      
 	    // Calculate the combined light curve for each image with microlensing
 	    for(int i=0;i<images_micro.size();i++){

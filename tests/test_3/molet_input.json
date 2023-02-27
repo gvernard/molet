@@ -49,7 +49,7 @@
 		    }
 		]
 	    },
-	    
+
 	    "compact_mass_model": [
 		{
 		    "type": "sersic",
@@ -101,18 +101,33 @@
 	}
     },
     
-
-
+    
+    
     "point_source": {
 	"x0": -0.05,
 	"y0": 0.05,
-	"output_cutouts": true,
+	"output_cutouts": false,
 	"variability": {
 	    "intrinsic": {
 		"type": "custom"
 	    },
 	    "extrinsic": {
-		"type": "custom"
+		"type": "moving_fixed_source_custom",
+		"microlens_mass": 1,
+		"Nex": 100,
+		"pars": {
+		    "sigma_pec_l": 250,
+		    "sigma_pec_s": 250,
+		    "sigma_disp": 250,
+		    "ra": 340.2,
+		    "dec": 0.0
+		},
+		"testCAM-i": {
+		    "pixSize": 2.3,
+		    "Nx": 227,
+		    "Ny": 227
+		}
+
 	    }
 	}
     },

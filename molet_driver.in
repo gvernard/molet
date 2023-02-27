@@ -181,10 +181,10 @@ then
 	cmd=$molet_home"checks/check_map_files.sh "$map_path" "$out_path
 	myprocess "$msg" "$cmd" "$log_file"
 
-	if [ $ex_type = moving_fixed_source ]
+	if [ $ex_type = moving_fixed_source ] || [ $ex_type = moving_fixed_source_custom ]
 	then
 	    msg="Getting 'moving_fixed_source' microlensing variability for each image..."
-	    cmd=$molet_home"bin/var_moving_fixed_source "$infile" "$out_path
+	    cmd=$molet_home"bin/var_moving_fixed_source "$infile" "$in_path" "$out_path
 	    myprocess "$msg" "$cmd" "$log_file"
 	elif [ $ex_type = moving_variable_source ]
 	then
