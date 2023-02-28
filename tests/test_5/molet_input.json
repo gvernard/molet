@@ -48,21 +48,7 @@
 			}
 		    }
 		],
-		"testCAM-u": [
-		    {
-			"type": "sersic",
-			"pars": {
-			    "x0": 0.0,
-			    "y0": 0.0,
-			    "pa": -145.0,
-			    "q": 0.8,
-			    "M_tot": 17,
-			    "r_eff": 1.0,
-			    "n": 4
-			}
-		    }
-		],
-		"lucasCAM-u": [
+		"ECAM-r": [
 		    {
 			"type": "sersic",
 			"pars": {
@@ -126,32 +112,7 @@
 		    }
 		}
 	    ],
-	    
-	    "testCAM-u": [
-		{
-		    "type": "gauss",
-		    "pars": {
-			"x0": -0.05,
-			"y0": 0.05,
-			"pa": 23.0,
-			"q": 0.64,
-			"M_tot": 22.0,
-			"r_eff": 0.06
-		    }
-		},
-		{
-		    "type": "gauss",
-		    "pars": {
-			"x0": -0.2,
-			"y0": 0.125,
-			"pa": 0.0,
-			"q": 1.0,
-			"M_tot": 22.0,
-			"r_eff": 0.08
-		    }
-		}
-	    ],
-	    "lucasCAM-u": [
+	    "ECAM-r": [
 		{
 		    "type": "gauss",
 		    "pars": {
@@ -198,8 +159,7 @@
     	    	"Nex": 100,
     	    	"v_expand": {
 		    "testCAM-i": 0.1,  // in 10^5 km/s, one entry per instrument
-		    "testCAM-u": 0.2,
-		    "lucasCAM-u": 0.3
+		    "ECAM-r": 0.2
 		}, 
 		"start": 1, // in days
 	    	"fractional_increase": 1.5, // from 0 to some small (<3-5) number
@@ -227,31 +187,17 @@
 	    ]
 	},
 	{
-	    "name": "testCAM-u",
-	    "field-of-view_xmin": -1.75,
-	    "field-of-view_xmax": 1.75,
-	    "field-of-view_ymin": -1.75,
-	    "field-of-view_ymax": 1.75,
+	    "name": "ECAM-r",
+	    "field-of-view_xmin": -7.75,
+	    "field-of-view_xmax": 7.75,
+	    "field-of-view_ymin": -7.75,
+	    "field-of-view_ymax": 7.75,
 	    "noise":{
 		"type": "UniformGaussian",
 		"sn": 50
 	    },
 	    "time": [
 		61283,61284.31,61293.25,61294.26,61297.29,61297.24,61301.21,61304.21,61316.14,61330.17,61331.0
-	    ]
-	},
-	{
-	    "name": "lucasCAM-u",
-	    "field-of-view_xmin": -1.75,
-	    "field-of-view_xmax": 1.75,
-	    "field-of-view_ymin": -1.75,
-	    "field-of-view_ymax": 1.75,
-	    "noise":{
-		"type": "UniformGaussian",
-		"sn": 50
-	    },
-	    "time": [
-		61280,61290.25,61290.26,61291.29,61300.24,61305.21,61306.21,61310.14,61330.17
 	    ]
 	}
     ]

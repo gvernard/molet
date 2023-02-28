@@ -16,7 +16,7 @@ from matplotlib.patches import ConnectionPatch
 
 path = sys.argv[1]
 mock = sys.argv[2]
-
+band_name = sys.argv[3]
 
 # Read main input that produced the mocks
 f          = open(path + "molet_input.json",'r')
@@ -24,7 +24,7 @@ input_str  = f.read()
 input_str  = re.sub(re.compile("/\*.*?\*/",re.DOTALL),"",input_str)
 input_str  = re.sub(re.compile("//.*?\n" ),"",input_str)
 myinput    = json.loads(input_str)
-band_name = myinput["instruments"][0]["name"]
+#band_name = myinput["instruments"][0]["name"]
 
 # Read the multiple images
 f          = open(path + "output/multiple_images.json",'r')
