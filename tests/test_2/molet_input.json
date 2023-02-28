@@ -124,7 +124,7 @@
 		},
 		"profiles": {
 		    "type": "parametric",
-		    "r0": 0.25, // in 10^14 cm
+		    "r0": 3.25, // in 10^14 cm
 		    "l0": 102.68, // in nm
 		    "nu": 1.33,
 		    "shape": "gaussian",
