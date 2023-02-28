@@ -134,7 +134,7 @@ A [visualization program](plotting) that uses python to plot the observed light 
 
 ```
 cd plotting/
-python plot_light_curves.py /full/path/to/simulation/dir/ mock_<index_in>_<index_ex>
+python plot_light_curves.py /full/path/to/simulation/dir/ mock_<index_in>_<index_ex>/ <instrument_name>
 ```
 
 to produce a plot similar to the following one:
