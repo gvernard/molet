@@ -16,7 +16,7 @@ int main(int argc,char* argv[]){
     - gerlumph_maps.json
     - multiple_images.json
     - rhalfs_per_map.json
-    - tobs.json
+    - intrinsic_times.json
   */
   
   //=============== BEGIN:INITIALIZE =======================
@@ -83,14 +83,15 @@ int main(int argc,char* argv[]){
     
   }
 
-  // Read tobs_min and tobs_max
-  Json::Value tobs_json;
-  fin.open(output+"tobs.json",std::ifstream::in);
-  fin >> tobs_json;
+  // Read start and end times per filter
+  Json::Value tins_json;
+  fin.open(output+"intrinsic_times.json",std::ifstream::in);
+  fin >> tins_json;
   fin.close();
-  double tobs_max = tobs_json["tobs_max"].asDouble();
-  double tobs_min = tobs_json["tobs_min"].asDouble();
-  double duration = tobs_max - tobs_min;
+  double tins_min = tins_json["tins_min"].asDouble();
+  double tins_max = tins_json["tins_max"].asDouble();
+  double duration = tins_max - tins_min;
+	
   
   // Maximum sized profile and consequent maxOffset
   double rhalf_max = 0.0;
@@ -172,7 +173,8 @@ int main(int argc,char* argv[]){
 	  double rhalf = rhalfs[m][r].asDouble(); // half light radius in 10^14cm
 	  double v_expand = 8.64*root["point_source"]["variability"]["extrinsic"]["v_expand"][instrument_name].asDouble();   // velocity in 10^14 cm / day
 	  double t = rhalf/v_expand; // in days
-	  jtime.append(t); // must NOT convert to absolute time
+	  jtime.append(t); // Keeping time normalized to 0.
+	  //jtime.append(t + tins_min); // Converting to the intrinsic light curve's time
 	  if( t > duration ){
 	    break; // Check after assignment to make sure the full duration is included in the light curve
 	  }
@@ -182,7 +184,6 @@ int main(int argc,char* argv[]){
 	  Json::Value lc;
 	  Json::Value jsignal;
 	  Json::Value jdsignal;
-
 	  for(int t=0;t<jtime.size();t++){
 	    jsignal.append( raw_signal[f][t] );
 	    jdsignal.append( raw_dsignal[f][t] );

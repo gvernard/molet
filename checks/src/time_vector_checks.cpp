@@ -123,23 +123,48 @@ int main(int argc,char* argv[]){
   } else if ( ex_type == "expanding_source" ){
 
     if( in_type == "custom" ){
-      // Check if that the maximum observational time is at least equal to the maximum intrinsic time (in the observer's frame) for all light curves.
-      // The onset of the intrinsic light curve is extended appropriately in combine_light.cpp.
+      // Check that all the intrinsic light curves per instrument have the same starting and ending time.
+      std::vector<double> tmp_tins_min(names.size());
+      std::vector<double> tmp_tins_max(names.size());
       for(int n=0;n<names.size();n++){
 	std::string iname = names[n];      
 	Json::Value json_intrinsic;
 	fin.open(in_path+"input_files/"+iname+"_LC_intrinsic.json",std::ifstream::in);
 	fin >> json_intrinsic;
 	fin.close();
-		
+
+	std::vector<double> tstart(json_intrinsic.size());	
+	std::vector<double> tend(json_intrinsic.size());	
 	for(int i=0;i<json_intrinsic.size();i++){
-	  int Ntime = json_intrinsic[i]["time"].size();
-	  if( json_intrinsic[i]["time"][Ntime-1].asDouble() < tobs_max ){
-	    fprintf(stderr,"Instrument %s: Intrinsic light curve %d requires a later ending time by at least %f days!\n",iname.c_str(),i, tobs_max - json_intrinsic[i]["time"][Ntime-1].asDouble());
-	    check = true;
-	  }
+	  int N = json_intrinsic[i]["time"].size();
+	  tstart[i] = json_intrinsic[i]["time"][0].asDouble();
+	  tend[i] = json_intrinsic[i]["time"][N-1].asDouble();
 	}
+
+	tmp_tins_min[n] = *std::min_element(tstart.begin(),tstart.end());
+	tmp_tins_max[n] = *std::max_element(tend.begin(),tend.end());
       }
+      double tins_min =  *std::min_element(tmp_tins_min.begin(),tmp_tins_min.end());
+      double tins_max =  *std::max_element(tmp_tins_max.begin(),tmp_tins_max.end());
+
+      // Change tobs limits as needed
+      if( tins_min < tobs_min ){
+	fprintf(stdout,"Extending observing time DOWN to the earliest start of the intrinsic light curves!");
+	tobs_min = tins_min;
+      } 
+      if( tobs_max < (tins_max + td_max) ){
+	fprintf(stdout,"Extending observing time UP to the latest end of the intrinsic light curves + the maximum time delay!");
+	tobs_max = tins_max + td_max;
+      } 
+
+      // Output tmin and tmax (in the observerational frame) of the intrinsic light curves in all instruments
+      Json::Value out;
+      out["tins_min"] = tins_min;
+      out["tins_max"] = tins_max;
+      std::ofstream file_tins(out_path+"output/intrinsic_times.json");
+      file_tins << out;
+      file_tins.close();
+      
     } else {
       fprintf(stderr,"Intrinsic variability of an expanding source must be given!");
       check = true;
@@ -506,10 +531,6 @@ int main(int argc,char* argv[]){
   if( check ){
     return 1;
   }
-
-  
-
-
 
   
   // Output tmin and tmax for the observerational frame in all instruments

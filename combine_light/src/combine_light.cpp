@@ -162,11 +162,7 @@ int main(int argc,char* argv[]){
       if( root["point_source"]["variability"]["intrinsic"].isMember("scale_factor") ){
 	scale_factor = root["point_source"]["variability"]["intrinsic"]["scale_factor"].asDouble();
       }
-      if( ex_type == "expanding_source" ){
-	LC_intrinsic = conversions_SN(intrinsic_lc_json,zs,scale_factor,mycam.ZP,tcont[0],td_max);
-      } else {
-	LC_intrinsic = conversions(intrinsic_lc_json,zs,scale_factor,mycam.ZP);
-      }
+      LC_intrinsic = conversions(intrinsic_lc_json,zs,scale_factor,mycam.ZP);
       //=======================================================================================================================
 
       
@@ -203,7 +199,7 @@ int main(int argc,char* argv[]){
       int N_ex = extrinsic_lc[images_micro[0]].size();
 
       // No need to dilate the time because the effective velocity has length units in the source plane and time in the oberver's frame.
-      // Also, the starting time is tobs_min, so no need to set it either.
+      // Also, the starting time is tobs_min for quasars and tin_min for supernovae, so no need to set it either.
       std::vector< std::vector<LightCurve*> > LC_extrinsic(images.size());
       for(int i=0;i<images_micro.size();i++){
 	int q = images_micro[i];
@@ -287,8 +283,8 @@ int main(int argc,char* argv[]){
 	    // }	    
 
 
-	  if( ex_type == "custom" || ex_type == "expanding_source" || ex_type == "moving_fixed_source" || ex_type == "moving_fixed_source_custom" ){
-	      
+	  if( ex_type == "custom" || ex_type == "moving_fixed_source" || ex_type == "moving_fixed_source_custom" ){
+
 	    // Calculate the combined light curve for each image with microlensing
 	    for(int i=0;i<images_micro.size();i++){
 	      int q = images_micro[i];
@@ -316,7 +312,28 @@ int main(int argc,char* argv[]){
 		justOneSignal(td,macro_mag,tobs,LC_intrinsic[lc_in],samp_LC[q]);
 	      }
 	    }
-	      
+
+	  } else if( ex_type == "expanding_source" ){
+	    std::cout << "HERE" << std::endl;
+	    
+	    // Calculate the combined light curve for each image with microlensing
+	    for(int i=0;i<images_micro.size();i++){
+	      int q = images_micro[i];
+	      double td = images[q]["dt"].asDouble();
+	      double macro_mag = abs(images[q]["mag"].asDouble());
+	      combineSupernovaInExSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],cont_LC[q]);
+	      combineSupernovaInExSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],samp_LC[q]);
+	    }
+	    
+	    // Calculate the combined light curve for each image that doesn't have any microlensing
+	    for(int i=0;i<images_no_micro.size();i++){
+	      int q = images_no_micro[i];
+	      double td = images[q]["dt"].asDouble();
+	      double macro_mag = abs(images[q]["mag"].asDouble());
+	      justSupernovaInSignal(td,macro_mag,tcont,LC_intrinsic[lc_in],cont_LC[q]);
+	      justSupernovaInSignal(td,macro_mag,tobs,LC_intrinsic[lc_in],samp_LC[q]);
+	    }
+	    
 	  } else if( ex_type == "moving_variable_source" ){
 
 	    // Calculate the combined light curve for each image with microlensing

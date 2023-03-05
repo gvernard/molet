@@ -92,7 +92,11 @@ int main(int argc,char* argv[]){
   }
   
   std::vector<vkl::RectGrid*> planes;
-  vkl::RectGrid* img = new vkl::RectGrid(20,20,xmin,xmax,ymin,ymax);
+  double triangle_size = root["point_source"]["triangle_size"].asDouble(); // the largest side of the triangles in arcsec
+  int Nx = std::round( (xmax-xmin)/triangle_size );
+  int Ny = std::round( (ymax-ymin)/triangle_size );
+  
+  vkl::RectGrid* img = new vkl::RectGrid(Nx,Ny,xmin,xmax,ymin,ymax);
   planes.push_back(img);
   std::vector<double> xc;
   std::vector<double> yc;

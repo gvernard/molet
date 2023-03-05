@@ -118,7 +118,7 @@ Json::Value readLightCurvesJson(std::string lc_type,std::string type,std::string
 
 std::vector<LightCurve*> conversions(Json::Value lcs_json,double zs,double scale,double ZP){
   int N = lcs_json.size();
-  double fac = 1.0 + zs;
+  //  double fac = 1.0 + zs;
   std::vector<LightCurve*> lcs(N);
   for(int i=0;i<N;i++){
     lcs[i] = new LightCurve(lcs_json[i]);    
@@ -145,7 +145,7 @@ std::vector<LightCurve*> conversions_SN(Json::Value lcs_json,double zs,double sc
       // Extend by two entries and make 10 mag dimmer
       double t00 = tobs_min - td_max - 1;
       double t01 = lcs_json[i]["time"][0].asDouble() - 0.1;
-      double sig = lcs_json[i]["time"][0].asDouble() + 10;
+      double sig = lcs_json[i]["signal"][0].asDouble() + 10;
 
       Json::Value dum; 
       dum["time"] = Json::Value(Json::arrayValue);
@@ -179,9 +179,12 @@ void justSupernovaInSignal(double td,double macro_mag,std::vector<double> time,L
   // expand intrinsic light curve
   std::vector<double> tmp_time(4+LC_intrinsic->time.size());
   LightCurve* tmp_in = new LightCurve(tmp_time);
-  extendIntrinsicLightCurve(LC_intrinsic,tmp_in,td,time[0],time.back());
+  double floor_val_in = LC_intrinsic->signal[0]/10.0; // light curves are in flux, not in magnitudes
+  double time_shift = td; // the shift is measured from time_max backwards
+  tailorLightCurve(LC_intrinsic,tmp_in,time_shift,time[0],time.back(),floor_val_in);
+ 
   LightCurve* base = new LightCurve(time);
-  tmp_in->interpolate(base,td);
+  tmp_in->interpolate(base,0);
   for(int t=0;t<time.size();t++){
     target->signal[t]  = macro_mag*base->signal[t]; // this line includes only the intrinsic signal and excludes microlensing
     target->dsignal[t] = 0.0;
@@ -191,74 +194,63 @@ void justSupernovaInSignal(double td,double macro_mag,std::vector<double> time,L
 }
 
 void combineSupernovaInExSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* target){
+  double time_min = time[0]; 
+  double time_max = time.back(); 
+  double time_shift,floor_val;
+  
   std::vector<double> tmp_time_in(4+LC_intrinsic->time.size());
   LightCurve* tmp_in = new LightCurve(tmp_time_in);
-  extendIntrinsicLightCurve(LC_intrinsic,tmp_in,td,time[0],time.back());
+  floor_val = LC_intrinsic->signal[0]/10.0; // light curves are in flux, not in magnitudes
+  time_shift = td; // the shift is measured from time_max backwards
+  tailorLightCurve(LC_intrinsic,tmp_in,time_shift,time_min,time_max,floor_val);
 
   std::vector<double> tmp_time_ex(4+LC_extrinsic->time.size());
   LightCurve* tmp_ex = new LightCurve(tmp_time_ex);
-  extendExtrinsicLightCurve(LC_extrinsic,tmp_ex,td,time[0],time.back(),LC_intrinsic->time[0]);
-  
+  floor_val = 1.0; // no microlensing magnification 
+  time_shift = LC_intrinsic->time[0] + td; // shifting the microlensing light curves to absolute time in order to match the intrinsic ones.
+  tailorLightCurve(LC_extrinsic,tmp_ex,time_shift,time_min,time_max,floor_val);
+
   LightCurve* base = new LightCurve(time);
-  tmp_in->interpolate(base,td);
-  tmp_ex->interpolate(target,td);
+  tmp_in->interpolate(base,0);
+  tmp_ex->interpolate(target,0);
   for(int t=0;t<time.size();t++){
-    target->signal[t]  = target->signal[t]*macro_mag*base->signal[t]; // this line includes only the intrinsic signal and excludes microlensing
-    target->dsignal[t] = target->dsignal[t]*macro_mag*base->signal[t];
+    target->signal[t]  = base->signal[t]*macro_mag*target->signal[t];
+    target->dsignal[t] = base->dsignal[t]*macro_mag*target->signal[t];
   }
   delete(base);
   delete(tmp_in);
   delete(tmp_ex);  
 }
 
-void extendExtrinsicLightCurve(LightCurve* lc_ex,LightCurve* lc_out,double td,double time_start,double time_end,double time_start_in){
-  lc_out->time[0] = time_start - td - 1;
-  lc_out->time[1] = lc_ex->time[0] + time_start_in - 0.1; // just 0.1 days earlier should be small enough
-  lc_out->time[lc_out->time.size()-2] = lc_ex->time[lc_ex->time.size()-1] + time_start_in + 0.1;
-  lc_out->time[lc_out->time.size()-1] = time_end + td + 1;
-  for(int i=0;i<lc_ex->time.size();i++){
-    lc_out->time[2+i] = lc_ex->time[i] + time_start_in;
+void tailorLightCurve(LightCurve* lc_input,LightCurve* lc_output,double td,double tstart,double tend,double floor_val){
+  int Nout = lc_output->time.size();
+  int Nin = lc_input->time.size();
+  // First set the time
+  lc_output->time[0] = tstart - 1;
+  lc_output->time[1] = (lc_input->time[0] + td) - 0.1; // just 0.1 days earlier should be small enough
+  lc_output->time[Nout-2] = (lc_input->time[Nin-1] + td) + 0.1;
+  lc_output->time[Nout-1] = tend + 1;
+  for(int i=0;i<Nin;i++){
+    lc_output->time[2+i] = lc_input->time[i] + td;
   }
-  lc_out->signal[0] = 1.0;
-  lc_out->signal[1] = 1.0;
-  lc_out->signal[lc_out->signal.size()-2] = lc_ex->signal[lc_ex->signal.size()-1];
-  lc_out->signal[lc_out->signal.size()-1] = lc_ex->signal[lc_ex->signal.size()-1];
-  for(int i=0;i<lc_ex->signal.size();i++){
-    lc_out->signal[2+i]  = lc_ex->signal[i];
-    lc_out->dsignal[2+i] = lc_ex->dsignal[i];
+  // Then set the signal
+  lc_output->signal[0] = floor_val;
+  lc_output->signal[1] = floor_val;
+  lc_output->signal[Nout-2] = floor_val;
+  lc_output->signal[Nout-1] = floor_val;
+  lc_output->dsignal[0] = 0.0;
+  lc_output->dsignal[1] = 0.0;
+  lc_output->dsignal[Nout-2] = 0.0;
+  lc_output->dsignal[Nout-1] = 0.0;
+  for(int i=0;i<Nin;i++){
+    lc_output->signal[2+i]  = lc_input->signal[i];
+    lc_output->dsignal[2+i] = lc_input->dsignal[i];
   }
-  lc_out->dsignal[0] = 0.0;
-  lc_out->dsignal[1] = 0.0;
-  lc_out->dsignal[lc_out->dsignal.size()-2] = lc_ex->dsignal[lc_ex->dsignal.size()-1];
-  lc_out->dsignal[lc_out->dsignal.size()-1] = lc_ex->dsignal[lc_ex->dsignal.size()-1];
 }
-
-void extendIntrinsicLightCurve(LightCurve* lc_in,LightCurve* lc_out,double td,double time_start,double time_end){
-  lc_out->time[0] = time_start - td - 1;
-  lc_out->time[1] = lc_in->time[0]-0.1; // just 0.1 days earlier should be small enough
-  lc_out->time[lc_out->time.size()-2] = lc_in->time[lc_in->time.size()-1]+0.1;
-  lc_out->time[lc_out->time.size()-1] = time_end + td + 1;
-  for(int i=0;i<lc_in->time.size();i++){
-    lc_out->time[2+i] = lc_in->time[i];
-  }
-  lc_out->signal[0] = lc_in->signal[0];
-  lc_out->signal[1] = lc_in->signal[0];
-  lc_out->signal[lc_out->signal.size()-2] = lc_in->signal[lc_in->signal.size()-1];
-  lc_out->signal[lc_out->signal.size()-1] = lc_in->signal[lc_in->signal.size()-1];
-  for(int i=0;i<lc_in->signal.size();i++){
-    lc_out->signal[2+i]  = lc_in->signal[i];
-    lc_out->dsignal[2+i] = lc_in->dsignal[i];
-  }
-  lc_out->dsignal[0] = 0.0;
-  lc_out->dsignal[1] = 0.0;
-  lc_out->dsignal[lc_out->dsignal.size()-2] = 0.0;
-  lc_out->dsignal[lc_out->dsignal.size()-1] = 0.0;
-}
-
 
 void combineInExSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* target){
   // === Combining two signals: intrinsic and extrinsic
-  LightCurve* base = new LightCurve(time);
+  LightCurve* base = new LightCurve(time); // base is the same as target, they are both initialized with tcont/time
   LC_intrinsic->interpolate(base,td);
   LC_extrinsic->interpolate(target,0.0);
   for(int t=0;t<time.size();t++){
