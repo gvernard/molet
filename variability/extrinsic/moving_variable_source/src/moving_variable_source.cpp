@@ -150,7 +150,7 @@ int main(int argc,char* argv[]){
       }
 
       double ZP = root["instruments"][k]["ZP"].asDouble();
-      double mag = ZP - 2.5*log10( sum*pow(root["point_source"]["variability"]["extrinsic"][instrument_name]["pixSize"].asDouble(),2) );
+      double mag = ZP - 2.5*log10( sum*pow(profPixSizePhys,2) );
       signal.append( mag );
       time.append( root["point_source"]["variability"]["extrinsic"][instrument_name]["time"][jj] );
     }

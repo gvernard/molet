@@ -188,22 +188,19 @@ then
 	    myprocess "$msg" "$cmd" "$log_file"
 	elif [ $ex_type = moving_variable_source ]
 	then
-	    # cmd=$molet_home"bin/check_confirm_convolutions "$infile" "$out_path
-	    # eval "$cmd"
-	    # exit_code=$?
+	    cmd=$molet_home"bin/check_confirm_convolutions_vs "$infile" "$out_path
+	    eval "$cmd"
+	    exit_code=$?
 	    
-	    # if [ "$exit_code" -ne "0" ]
-	    # then
-	    # 	echo "Quitting MOLET..."
-	    # 	exit
-	    # else
-	    # 	msg="Getting 'expanding_source' microlensing variability for each image..."
-	    # 	cmd=$molet_home"bin/var_expanding_source "$infile" "$out_path
-	    # 	myprocess "$msg" "$cmd" "$log_file"
-	    # fi	    
-	    msg="Getting 'moving_variable_source' microlensing variability for each image..."
-	    cmd=$molet_home"bin/var_moving_variable_source "$infile" "$in_path" "$out_path
-	    myprocess "$msg" "$cmd" "$log_file"	    
+	    if [ "$exit_code" -ne "0" ]
+	    then
+	    	echo "Quitting MOLET..."
+	    	exit
+	    else
+		msg="Getting 'moving_variable_source' microlensing variability for each image..."
+		cmd=$molet_home"bin/var_moving_variable_source "$infile" "$in_path" "$out_path
+		myprocess "$msg" "$cmd" "$log_file"	    
+	    fi	    
 
 	elif [ $ex_type = expanding_source ]
 	then

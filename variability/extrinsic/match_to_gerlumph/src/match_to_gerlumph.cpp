@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
     double s0 = images[q]["s"].asDouble();
     char buffer[250];
     double kg_sep = 0.05;
-    sprintf(buffer,"SELECT id,k,g,s,(k-%f)*(k-%f)+(g-%f)*(g-%f) AS dkg,ABS(s-%f) AS ds FROM gerlumph GROUP BY dkg,ds HAVING dkg < %f ORDER BY dkg ASC,ds ASC LIMIT 1;",k0,k0,g0,g0,s0,kg_sep*kg_sep);
+    sprintf(buffer,"SELECT id,k,g,s,(k-%f)*(k-%f)+(g-%f)*(g-%f) AS dkg,ABS(s-%f) AS ds,ss,res FROM gerlumph GROUP BY dkg,ds HAVING dkg < %f ORDER BY dkg ASC,ds ASC LIMIT 1;",k0,k0,g0,g0,s0,kg_sep*kg_sep);
     const char* sql = buffer;
     
     // Execute SQL statement
@@ -62,6 +62,8 @@ int main(int argc, char* argv[]) {
     entry["s"]    = entries[i].s;
     entry["dkg"]  = entries[i].dkg;
     entry["ds"]   = entries[i].ds;
+    entry["width"] = entries[i].ss;
+    entry["resolution"] = entries[i].res;
     json_db_entries.append(entry);
   }
 

@@ -12,6 +12,8 @@ struct dbEntry {
   float s   = 0.0;
   float dkg = 0.0;
   float ds  = 0.0;
+  float ss  = 0.0;
+  int res = 0;
 };
 
 static int callback(void* userData,int argc,char** argv,char** azColName){
@@ -28,6 +30,10 @@ static int callback(void* userData,int argc,char** argv,char** azColName){
 	E->s = atof(argv[i]);
       } else if( strcmp(azColName[i],"dkg") == 0 ){
 	E->dkg = atof(argv[i]);
+      } else if( strcmp(azColName[i],"ss") == 0 ){
+	E->ss = atof(argv[i]);
+      } else if( strcmp(azColName[i],"res") == 0 ){
+	E->res = atoi(argv[i]);
       } else {
 	E->ds = atof(argv[i]);
       }

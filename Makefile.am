@@ -24,6 +24,7 @@ bin_PROGRAMS = \
 	check_initialization \
 	check_get_map_path \
 	check_confirm_convolutions \
+	check_confirm_convolutions_vs \
 	check_coolest_conversion \
 	vkl_fproject \
 	vkl_point_source \
@@ -61,6 +62,9 @@ check_get_map_path_LDADD = -lgerlumph
 
 check_confirm_convolutions_SOURCES = checks/src/confirm_convolutions.cpp
 check_confirm_convolutions_LDADD = -lgerlumph -ljsoncpp
+
+check_confirm_convolutions_vs_SOURCES = checks/src/confirm_convolutions_vs.cpp
+check_confirm_convolutions_vs_LDADD = -lgerlumph -ljsoncpp
 
 check_coolest_conversion_SOURCES = checks/src/coolest_conversion.cpp
 check_coolest_conversion_CXXFLAGS = -std=c++17 -fPIC -g -frounding-math

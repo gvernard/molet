@@ -314,8 +314,7 @@ int main(int argc,char* argv[]){
 	    }
 
 	  } else if( ex_type == "expanding_source" ){
-	    std::cout << "HERE" << std::endl;
-	    
+
 	    // Calculate the combined light curve for each image with microlensing
 	    for(int i=0;i<images_micro.size();i++){
 	      int q = images_micro[i];
@@ -341,8 +340,8 @@ int main(int argc,char* argv[]){
 	      int q = images_micro[i];
 	      double td = td_max - images[q]["dt"].asDouble();
 	      double macro_mag = abs(images[q]["mag"].asDouble());
-	      justOneSignal(td,macro_mag,tcont,LC_extrinsic[q][lc_ex],cont_LC[q]);
-	      justOneSignal(td,macro_mag,tobs,LC_extrinsic[q][lc_ex],samp_LC[q]);
+	      combineInExSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],cont_LC[q]);
+	      combineInExSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],samp_LC[q]);
 	    }
 
 	    // Calculate the combined light curve for each image that doesn't have any microlensing

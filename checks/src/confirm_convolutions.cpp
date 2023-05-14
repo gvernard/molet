@@ -141,7 +141,7 @@ int main(int argc,char* argv[]){
 
 
 
-  // Write light curves
+  // Write hald-light radii
   Json::Value rhalf;
   for(int m=0;m<maps.size();m++){
     Json::Value jobj;

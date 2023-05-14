@@ -92,13 +92,16 @@ fig,ax = plt.subplots(1,figsize=(18,7))
 ax.invert_yaxis()
 ax.set_xlabel("t [days]")
 ax.set_ylabel("Mag")
-#ax.set_ylim(16,7)
+#ax.set_xlim(61150,61340)
+#ax.set_ylim(0.5,-6)
 
 for i in range(0,len(img_indices)):
     index = img_indices[i]
     ax.plot(lc_cont[index]["time"],lc_cont[index]["signal"],color=faded_colors[i],zorder=1)
     ax.scatter(lc_samp[index]["time"],lc_samp[index]["signal"],color=colors[i],zorder=2)
-    ax.text(lc_cont[index]["time"][0],lc_cont[index]["signal"][0],index,horizontalalignment='right',verticalalignment='bottom',color=colors[i],fontsize=22,zorder=3)
+
+    max_index = lc_cont[index]["signal"].index(np.amin(lc_cont[index]["signal"]))
+    ax.text(lc_cont[index]["time"][max_index],lc_cont[index]["signal"][max_index],index,horizontalalignment='right',verticalalignment='bottom',color=colors[i],fontsize=22,zorder=3)
 
 curves_ymin = ax.get_ylim()[0]
 curves_ymax = ax.get_ylim()[-1]
