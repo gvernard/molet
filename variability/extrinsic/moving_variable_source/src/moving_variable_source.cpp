@@ -221,17 +221,17 @@ int main(int argc,char* argv[]){
 	int Nsnap_tot = jtime.size();
 	double Dtime = tobs_max-tobs_min;
 	double tsrcmin = td_max - multiple_images[m]["dt"].asDouble();
-	double tsrcmax = tsrcmin + Dtime;
+	double tsrcmax = tsrcmin + Dtime; // Important! Added to make the extrinsic light curve slightly exceed the observed time
 	int jj_start;
-	for(int jj=1;jj<Nsnap_tot;jj++){
+	for(int jj=0;jj<Nsnap_tot;jj++){
 	  if( jtime[jj].asDouble() > tsrcmin ){
-	    jj_start = jj - 1;
+	    jj_start = jj;
 	    break;
 	  }
 	}
 	int jj_end;
 	for(int jj=jj_start;jj<Nsnap_tot;jj++){
-	  if( jtime[jj].asDouble() > tsrcmax ){
+	  if( jtime[jj].asDouble() > tsrcmax + 2 ){
 	    jj_end = jj;
 	    break;
 	  }
@@ -279,7 +279,7 @@ int main(int argc,char* argv[]){
 	  Json::Value dsignal;
 	  double t_interval = 11574/vtot[i]; // 11574 = 1/86400 * 10^9, first term from [day] in [s], second from 10^14 cm pixel size
 	  for(int jj=0;jj<Nsnap;jj++){
-	    time.append(jtime[jj+jj_start].asDouble());
+	    time.append( tobs_min + jtime[jj+jj_start].asDouble() - t_start );
 	    signal.append(mother.lightCurves[i]->m[jj]);
 	    dsignal.append(mother.lightCurves[i]->dm[jj]);
 	  }
