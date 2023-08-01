@@ -142,7 +142,7 @@ int main(int argc,char* argv[]){
     vkl::CollectionProfiles profile_collection = vkl::JsonParsers::parse_profile(root["source"]["light_profile"][name],root["instruments"][k]["ZP"].asDouble(),input);
     profile_collection.write_all_profiles(output + name + "_source_super.fits");
     
-    // Produce image using ray-shooting 
+    // Produce image using ray-shooting
     for(int i=0;i<mysim.Ny;i++){
       for(int j=0;j<mysim.Nx;j++){
 	mass_collection.all_defl(mysim.center_x[j],mysim.center_y[i],xdefl,ydefl);
@@ -155,7 +155,33 @@ int main(int argc,char* argv[]){
     std::vector<std::string> values{std::to_string(mysim.xmin),std::to_string(mysim.xmax),std::to_string(mysim.ymin),std::to_string(mysim.ymax)};
     std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
     vkl::FitsInterface::writeFits(mysim.Nx,mysim.Ny,mysim.z,keys,values,descriptions,output + name + "_lensed_image_super.fits");
-  
+
+    /*
+    // Output deflections
+    vkl::RectGrid defl_x(super_res_x/super_factor,super_res_y/super_factor,xmin,xmax,ymin,ymax);
+    vkl::RectGrid defl_y(super_res_x/super_factor,super_res_y/super_factor,xmin,xmax,ymin,ymax);
+    for(int i=0;i<defl_x.Ny;i++){
+      for(int j=0;j<defl_x.Nx;j++){
+	mass_collection.all_defl(defl_x.center_x[j],defl_x.center_y[i],xdefl,ydefl);
+	defl_x.z[i*defl_x.Nx+j] = xdefl;
+	defl_y.z[i*defl_x.Nx+j] = ydefl;
+      }
+    }
+    vkl::FitsInterface::writeFits(defl_x.Nx,defl_x.Ny,defl_x.z,keys,values,descriptions,output + name + "_defl_x.fits");
+    vkl::FitsInterface::writeFits(defl_y.Nx,defl_y.Ny,defl_y.z,keys,values,descriptions,output + name + "_defl_y.fits");
+
+    double xxx[4] = {-1.75,1.715,-1.75,1.715};
+    double yyy[4] = {1.75,1.75,-1.715,-1.715};
+    for(int k=0;k<4;k++){
+      mass_collection.all_defl(xxx[k],yyy[k],xdefl,ydefl);
+      printf("%10.4f %10.4f - %10.4f %10.4f\n",xxx[k],yyy[k],xdefl,ydefl);
+    }
+    mass_collection.models[0]->printMassPars();
+    */
+    
+    
+
+    
     // Super-resolved source image
     profile_collection.write_all_profiles(output + name + "_source_super.fits");
   }
