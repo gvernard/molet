@@ -146,20 +146,22 @@ Json::Value parseLight(Json::Value coolest_light_model,std::string name){
       }
       
     } else if( lmodel_type == "PixelatedRegularGrid" ){
-      profile["type"] = "custom";      
-      for( auto const& key : coolest_light_model[i]["pixels"].getMemberNames()){
+      profile["type"] = "custom";   
+      for( auto const& key : coolest_light_model[i]["parameters"]["pixels"].getMemberNames()){
 	if( key == "fits_file" ){
-	  profile["pars"]["filepath"] = coolest_light_model[i]["pixels"][key]["path"].asString();
+	  profile["pars"]["filepath"] = coolest_light_model[i]["parameters"]["pixels"][key]["path"].asString();
 	} else if( key == "field_of_view_x" ){
-	  profile["pars"]["xmin"] = coolest_light_model[i]["pixels"][key][0].asDouble();
-	  profile["pars"]["xmax"] = coolest_light_model[i]["pixels"][key][1].asDouble();
+	  profile["pars"]["xmin"] = coolest_light_model[i]["parameters"]["pixels"][key][0].asDouble();
+	  profile["pars"]["xmax"] = coolest_light_model[i]["parameters"]["pixels"][key][1].asDouble();
 	} else if( key == "field_of_view_y" ){
-	  profile["pars"]["ymin"] = coolest_light_model[i]["pixels"][key][0].asDouble();
-	  profile["pars"]["ymax"] = coolest_light_model[i]["pixels"][key][1].asDouble();
+	  profile["pars"]["ymin"] = coolest_light_model[i]["parameters"]["pixels"][key][0].asDouble();
+	  profile["pars"]["ymax"] = coolest_light_model[i]["parameters"]["pixels"][key][1].asDouble();
 	} else if( key == "num_pix_x" ){
-	  profile["pars"]["Nx"] = coolest_light_model[i]["pixels"][key].asInt();
+	  profile["pars"]["Nx"] = coolest_light_model[i]["parameters"]["pixels"][key].asInt();
 	} else if( key == "num_pix_y" ){
-	  profile["pars"]["Ny"] = coolest_light_model[i]["pixels"][key].asInt();
+	  profile["pars"]["Ny"] = coolest_light_model[i]["parameters"]["pixels"][key].asInt();
+	} else if( key == "id" ){
+	  continue;
 	} else {
 	  fprintf(stderr,"Unknown parameter name '%s' for lensing entity '%s'!\n",key.c_str(),name.c_str());
 	}
