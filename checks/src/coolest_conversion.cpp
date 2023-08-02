@@ -87,7 +87,7 @@ Json::Value parseMass(Json::Value coolest_mass_model,std::string name){
       profile["type"] = "pert";
       for( auto const& key : coolest_mass_model[i]["pixels"].getMemberNames()){
 	if( key == "fits_file" ){
-	  profile["pars"]["filepath"] = coolest_mass_model[i]["pixels"][key].asString();
+	  profile["pars"]["filepath"] = coolest_mass_model[i]["pixels"][key]["path"].asString();
 	} else if( key == "field_of_view_x" ){
 	  profile["pars"]["xmin"] = coolest_mass_model[i]["pixels"][key][0].asDouble();
 	  profile["pars"]["xmax"] = coolest_mass_model[i]["pixels"][key][1].asDouble();
@@ -149,7 +149,7 @@ Json::Value parseLight(Json::Value coolest_light_model,std::string name){
       profile["type"] = "custom";      
       for( auto const& key : coolest_light_model[i]["pixels"].getMemberNames()){
 	if( key == "fits_file" ){
-	  profile["pars"]["filepath"] = coolest_light_model[i]["pixels"][key].asString();
+	  profile["pars"]["filepath"] = coolest_light_model[i]["pixels"][key]["path"].asString();
 	} else if( key == "field_of_view_x" ){
 	  profile["pars"]["xmin"] = coolest_light_model[i]["pixels"][key][0].asDouble();
 	  profile["pars"]["xmax"] = coolest_light_model[i]["pixels"][key][1].asDouble();
@@ -269,7 +269,7 @@ int main(int argc,char* argv[]){
     Instrument::createNewInstrument(new_instrument,case_path+"psf.fits");
   }
 
-  
+
   // Observation options
   Json::Value molet_instruments = Json::Value(Json::arrayValue);
   Json::Value instrument;
