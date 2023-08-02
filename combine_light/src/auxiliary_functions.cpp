@@ -343,7 +343,8 @@ vkl::RectGrid createObsBase(Instrument* mycam,vkl::RectGrid* supersim,int res_x,
   for(int i=0;i<base->Nz;i++){
     base->z[i] = lens_light->z[i] + extended->z[i];
   }
-  vkl::RectGrid obs_base = base->embeddedNewGrid(res_x,res_y,"integrate");
+  //vkl::RectGrid obs_base = base->embeddedNewGrid(res_x,res_y,"integrate");
+  vkl::RectGrid obs_base = base->embeddedNewGrid(res_x,res_y,"additive_density");
 
   delete(extended);
   delete(lens_light);
