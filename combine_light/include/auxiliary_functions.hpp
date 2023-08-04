@@ -36,11 +36,10 @@ void tailorLightCurve(LightCurve* lc_input,LightCurve* lc_output,double td,doubl
 void combineSupernovaInExSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* target);
 void justSupernovaInSignal(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* target);
 void combineInExSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* target);
-void combineInExUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* LC_unmicro,LightCurve* target);
-void combineInUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_unmicro,LightCurve* target);
+void combineInExUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* LC_unmicro,LightCurve* target,double unmicro_ratio);
+void combineInUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_unmicro,LightCurve* target,double unmicro_ratio);
 void justOneSignal(double td,double macro_mag,std::vector<double> time,LightCurve* LC,LightCurve* target);
 void outputLightCurvesJson(std::vector<LightCurve*> lcs,std::string filename);
-void getUnmicrolensedLightCurves(std::vector<double> time,LightCurve* LC,LightCurve* target,double flux_ratio);
 
 vkl::RectGrid createObsBase(Instrument* mycam,vkl::RectGrid* supersim,int res_x,int res_y,std::string out_path);
 vkl::RectGrid createPointSourceLight(vkl::RectGrid* supersim,std::vector<double> image_signal,std::vector<offsetPSF>& PSFoffsets,std::vector<Instrument*>& instrument_list,std::vector<double>& psf_partial_sums,int res_x,int res_y);

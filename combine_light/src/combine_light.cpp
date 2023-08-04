@@ -169,6 +169,7 @@ int main(int argc,char* argv[]){
       //======================================== Unmicrolensed flux ===========================================================
       // Check for unmicrolensed variability, read light curve(s) from JSON and apply conversions: from rest frame to observer's frame, from mag to intensity and scale if needed.
       bool unmicro = false;
+      double unmicro_ratio;
       std::vector<LightCurve*> LC_unmicro;
       if( root["point_source"]["variability"].isMember("unmicro") ){
 	unmicro = true;
@@ -184,9 +185,9 @@ int main(int argc,char* argv[]){
 	*/
 
 	LC_unmicro.resize(LC_intrinsic.size());
-	double flux_ratio = root["point_source"]["variability"]["unmicro"][instrument_name]["flux_ratio"].asDouble();
+	unmicro_ratio = root["point_source"]["variability"]["unmicro"][instrument_name]["flux_ratio"].asDouble();
 	BaseLagKernel* lag = nullptr;
-
+	
 	// Set the lag function kernel
 	std::string lag_type = root["point_source"]["variability"]["unmicro"][instrument_name]["type"].asString();
 	if( lag_type == "top-hat" ){
@@ -202,7 +203,6 @@ int main(int argc,char* argv[]){
 
 	// Get the unmicrolensed light curve that corresponds to each intrinsic curve
 	for(int lc_in=0;lc_in<LC_intrinsic.size();lc_in++){
-	  std::cout << "Starting convolution ...";
 	  LC_unmicro[lc_in] = new LightCurve(LC_intrinsic[lc_in]->time);
 
 	  // Evaluate the lag kernel on the same time vector as the given intrinsic light curve 
@@ -212,20 +212,20 @@ int main(int argc,char* argv[]){
 	  
 	  // Perform the convolution
 	  std::vector<double> unmicro_signal(N);
-	  for(int n=0;n<N-1;n++){
+	  for(int n=0;n<N;n++){
 	    double sum = 0.0;
-	    for(int m=0;m<N-1;m++){
+	    for(int m=0;m<N;m++){
 	      int index_in = n - m; // index to the intrinsic light curve
-	      if( index_in >= 0 ){
-		sum += kernel[n]*LC_intrinsic[lc_in]->signal[index_in];
+	      if( index_in < 0 ){
+		index_in += N; // wrap the convolution to the end of the intrinsic light curve
 	      }
+	      sum += kernel[m]*LC_intrinsic[lc_in]->signal[index_in];
 	    }
-	    LC_unmicro[lc_in]->signal[n] = flux_ratio*sum;
+	    LC_unmicro[lc_in]->signal[n] = sum;
 	  }
-	  std::cout << "...done" << std::endl;
 	}
 
-	//outputLightCurvesJson(cont_LC,out_path+mock+"/"+instrument_name+"_LC_unmicro.json");
+	outputLightCurvesJson(LC_unmicro,out_path+"output/"+instrument_name+"_LC_unmicro.json");
       }
       //=======================================================================================================================            
 
@@ -300,7 +300,7 @@ int main(int argc,char* argv[]){
 	  char buffer[30];
 	  sprintf(buffer,"mock_%04d_%04d",lc_in,lc_ex);
 	  std::string mock = buffer;
-	  std::cout << mock << std::endl;
+	  //std::cout << mock << std::endl;
 	    
 	  // *********************** Product: Observed continuous and sampled light curves ***********************
 	  // cont_LC and samp_LC contain the light curves for ALL the images (i.e. with or without microlensing).
@@ -339,8 +339,8 @@ int main(int argc,char* argv[]){
 	      double td = td_max - images[q]["dt"].asDouble();
 	      double macro_mag = abs(images[q]["mag"].asDouble());
 	      if( unmicro ){
-		combineInExUnSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],LC_unmicro[lc_in],cont_LC[q]);
-		combineInExUnSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],LC_unmicro[lc_in],samp_LC[q]);
+		combineInExUnSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],LC_unmicro[lc_in],cont_LC[q],unmicro_ratio);
+		combineInExUnSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],LC_unmicro[lc_in],samp_LC[q],unmicro_ratio);
 	      } else {
 		combineInExSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],cont_LC[q]);
 		combineInExSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],samp_LC[q]);
@@ -353,8 +353,8 @@ int main(int argc,char* argv[]){
 	      double td = td_max - images[q]["dt"].asDouble();
 	      double macro_mag = abs(images[q]["mag"].asDouble());
 	      if( unmicro ){
-		combineInUnSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_unmicro[lc_in],cont_LC[q]);
-		combineInUnSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_unmicro[lc_in],samp_LC[q]);
+		combineInUnSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_unmicro[lc_in],cont_LC[q],unmicro_ratio);
+		combineInUnSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_unmicro[lc_in],samp_LC[q],unmicro_ratio);
 	      } else {
 		justOneSignal(td,macro_mag,tcont,LC_intrinsic[lc_in],cont_LC[q]);
 		justOneSignal(td,macro_mag,tobs,LC_intrinsic[lc_in],samp_LC[q]);

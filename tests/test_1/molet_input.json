@@ -121,15 +121,15 @@
     	    },
     	    "unmicro": {
 		"testCAM-i": {
-		    "flux_ratio": 1.0,
+		    "flux_ratio": 0.3,
     		    "type": "top-hat",
 		    "pars": {
 			"radius": 3000 // in 10^14 cm
 		    }
-//    		    "type": "delta",
-//		    "pars": {
-//			"t_peak": 30 // days
-//		    }
+   		    // "type": "delta",
+		    // "pars": {
+		    // 	"t_peak": 25 // days
+		    // }
 		}
     	    }
     	}

@@ -260,29 +260,31 @@ void combineInExSignals(double td,double macro_mag,std::vector<double> time,Ligh
   delete(base);
 }
 
-void combineInExUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* LC_unmicro,LightCurve* target){
+void combineInExUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* LC_unmicro,LightCurve* target,double unmicro_ratio){
   // === Combining three signals: intrinsic, intrinsic unmicrolensed, and extrinsic
   LightCurve* base = new LightCurve(time);
   LightCurve* base_unmicro = new LightCurve(time);
   LC_intrinsic->interpolate(base,td);
   LC_unmicro->interpolate(base_unmicro,td);
   LC_extrinsic->interpolate(target,0.0);
+  double factor = 1.0 - unmicro_ratio;
   for(int t=0;t<time.size();t++){
-    target->signal[t]  = macro_mag*(target->signal[t]*base->signal[t] + base_unmicro->signal[t]);
+    target->signal[t]  = macro_mag*(factor*target->signal[t]*base->signal[t] + unmicro_ratio*base_unmicro->signal[t]);
     target->dsignal[t] = macro_mag*target->dsignal[t]*base->signal[t]; // no error from macro-mag, intrinsic, and unmicrolensed flux, only from the microlensing mag    
   }
   delete(base);
   delete(base_unmicro);
 }
 
-void combineInUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_unmicro,LightCurve* target){
+void combineInUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_unmicro,LightCurve* target,double unmicro_ratio){
   // === Combining two signals: intrinsic and unmicrolensed
   LightCurve* base = new LightCurve(time);
   LightCurve* base_unmicro = new LightCurve(time);
   LC_intrinsic->interpolate(base,td);
   LC_unmicro->interpolate(base_unmicro,0.0);
+  double factor = 1.0 - unmicro_ratio;
   for(int t=0;t<time.size();t++){
-    target->signal[t]  = macro_mag*(base->signal[t] + base_unmicro->signal[t]);
+    target->signal[t]  = macro_mag*(factor*base->signal[t] + unmicro_ratio*base_unmicro->signal[t]);
     target->dsignal[t] = 0.0;
   }
   delete(base);
@@ -310,18 +312,6 @@ void outputLightCurvesJson(std::vector<LightCurve*> lcs,std::string filename){
   lcs_file << lcs_json;
   lcs_file.close();									      
 }
-
-
-void getUnmicrolensedLightCurves(std::vector<double> time,LightCurve* LC,LightCurve* target,double flux_ratio){
-  LightCurve* base = new LightCurve(time);
-  LC->interpolate(base,0.0);
-  for(int t=0;t<time.size();t++){
-    target->signal[t] = flux_ratio*base->signal[t];
-    target->dsignal[t] = 0.0;
-  }
-  delete(base);
-}
-
 // END:LIGHTCURVE MANIPULATION FUNCTIONS ========================================================================================
 
 
@@ -489,12 +479,12 @@ void DeltaKernel::getKernel(std::vector<double> time,std::vector<double>& kernel
   int index = 0;
   for(int i=0;i<time.size();i++){
     kernel[i] = 0.0;
-    if( time[i] < this->t_peak ){
+    if( (time[i] - time[0]) < this->t_peak ){ // Need to take the difference with the first element because t_peak is an interval Delta t.
       index = i;
     }
   }
   kernel[index] = 1.0;
-  std::cout << "Delta lag kernel: Delta location is: " << time[index] << " (given was: " << this->t_peak << ") days" << std::endl;
+  std::cout << "Delta lag kernel: Delta location is: " << (time[index] - time[0]) << " (given was: " << this->t_peak << ") days" << std::endl;
 }
 
 TopHatKernel::TopHatKernel(double radius){
@@ -503,7 +493,7 @@ TopHatKernel::TopHatKernel(double radius){
 void TopHatKernel::getKernel(std::vector<double> time,std::vector<double>& kernel){
   int counter = 0;
   for(int i=0;i<time.size();i++){
-    if( time[i] < this->t_limit ){
+    if( (time[i] - time[0]) < this->t_limit ){ // Need to take the difference with the first element because t_peak is an interval Delta t.
       kernel[i] = 1.0;
       counter++;
     } else {
@@ -515,10 +505,6 @@ void TopHatKernel::getKernel(std::vector<double> time,std::vector<double>& kerne
     kernel[i] /= counter;
   }
 }
-
-
-
-
 // END:TIME LAG KERNELS =====================================================================================
 
 
