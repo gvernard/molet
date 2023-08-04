@@ -40,6 +40,7 @@ void combineInExUnSignals(double td,double macro_mag,std::vector<double> time,Li
 void combineInUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_unmicro,LightCurve* target);
 void justOneSignal(double td,double macro_mag,std::vector<double> time,LightCurve* LC,LightCurve* target);
 void outputLightCurvesJson(std::vector<LightCurve*> lcs,std::string filename);
+void getUnmicrolensedLightCurves(std::vector<double> time,LightCurve* LC,LightCurve* target,double flux_ratio);
 
 vkl::RectGrid createObsBase(Instrument* mycam,vkl::RectGrid* supersim,int res_x,int res_y,std::string out_path);
 vkl::RectGrid createPointSourceLight(vkl::RectGrid* supersim,std::vector<double> image_signal,std::vector<offsetPSF>& PSFoffsets,std::vector<Instrument*>& instrument_list,std::vector<double>& psf_partial_sums,int res_x,int res_y);
@@ -66,6 +67,31 @@ public:
 private:
   double cosrot;
   double sinrot;
+};
+
+
+
+
+class BaseLagKernel {
+public:
+  virtual void getKernel(std::vector<double> time,std::vector<double>& kernel) = 0;
+};
+
+
+class DeltaKernel : public BaseLagKernel {
+public:
+  double t_peak; // in days
+  DeltaKernel(double t_peak) : t_peak(t_peak) {};
+  void getKernel(std::vector<double> time,std::vector<double>& kernel);
+};
+
+class TopHatKernel : public BaseLagKernel {
+public:
+  double t_limit; // in days
+  TopHatKernel(double radius); // radius must be in 10^14 cm
+  void getKernel(std::vector<double> time,std::vector<double>& kernel);  
+private:
+  double speed_of_light = 25.9; // in 10^14 cm /day
 };
 
 

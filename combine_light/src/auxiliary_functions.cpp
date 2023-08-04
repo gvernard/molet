@@ -102,7 +102,7 @@ Json::Value LightCurve::jsonOutMag(){
 
 
 
-// START:LIGHTCURVE MANIPULATION FUNCTION ========================================================================================
+// START:LIGHTCURVE MANIPULATION FUNCTIONS ========================================================================================
 Json::Value readLightCurvesJson(std::string lc_type,std::string type,std::string instrument_name,std::string in_path,std::string out_path){
   std::ifstream fin;
   Json::Value lcs_json;
@@ -310,13 +310,25 @@ void outputLightCurvesJson(std::vector<LightCurve*> lcs,std::string filename){
   lcs_file << lcs_json;
   lcs_file.close();									      
 }
-// END:LIGHTCURVE MANIPULATION FUNCTION ========================================================================================
+
+
+void getUnmicrolensedLightCurves(std::vector<double> time,LightCurve* LC,LightCurve* target,double flux_ratio){
+  LightCurve* base = new LightCurve(time);
+  LC->interpolate(base,0.0);
+  for(int t=0;t<time.size();t++){
+    target->signal[t] = flux_ratio*base->signal[t];
+    target->dsignal[t] = 0.0;
+  }
+  delete(base);
+}
+
+// END:LIGHTCURVE MANIPULATION FUNCTIONS ========================================================================================
 
 
 
 
 
-// START:IMAGE MANIPULATION FUNCTION ========================================================================================
+// START:IMAGE MANIPULATION FUNCTIONS ========================================================================================
 vkl::RectGrid createObsBase(Instrument* mycam,vkl::RectGrid* supersim,int res_x,int res_y,std::string out_path){
   // supersim is just carrying the resolution and extent of the image.
   std::string name = mycam->getName();
@@ -435,7 +447,7 @@ void writeAllCutouts(std::vector<double> tobs,Json::Value images,std::vector<Lig
     writeCutout(cutout_scale,&obs_pp_light,ptr_obs_base,fname);
   }
 }
-// END:IMAGE MANIPULATION FUNCTION ==========================================================================================
+// END:IMAGE MANIPULATION FUNCTIONS ==========================================================================================
 
 
 
@@ -468,6 +480,46 @@ double TransformPSF::interpolateValue(double x,double y,PSF* mypsf){
 }
 // END:TRANSFORM PSF =====================================================================================
 
+
+
+
+
+// START:TIME LAG KERNELS =====================================================================================
+void DeltaKernel::getKernel(std::vector<double> time,std::vector<double>& kernel){
+  int index = 0;
+  for(int i=0;i<time.size();i++){
+    kernel[i] = 0.0;
+    if( time[i] < this->t_peak ){
+      index = i;
+    }
+  }
+  kernel[index] = 1.0;
+  std::cout << "Delta lag kernel: Delta location is: " << time[index] << " (given was: " << this->t_peak << ") days" << std::endl;
+}
+
+TopHatKernel::TopHatKernel(double radius){
+  this->t_limit = radius/this->speed_of_light;  // radius in [10^14 cm], speed of light in [10^14 cm / day]
+}
+void TopHatKernel::getKernel(std::vector<double> time,std::vector<double>& kernel){
+  int counter = 0;
+  for(int i=0;i<time.size();i++){
+    if( time[i] < this->t_limit ){
+      kernel[i] = 1.0;
+      counter++;
+    } else {
+      kernel[i] = 0.0;
+    }
+  }
+
+  for(int i=0;i<time.size();i++){
+    kernel[i] /= counter;
+  }
+}
+
+
+
+
+// END:TIME LAG KERNELS =====================================================================================
 
 
 

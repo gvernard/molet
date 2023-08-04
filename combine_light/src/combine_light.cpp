@@ -172,12 +172,60 @@ int main(int argc,char* argv[]){
       std::vector<LightCurve*> LC_unmicro;
       if( root["point_source"]["variability"].isMember("unmicro") ){
 	unmicro = true;
+
+	/*
+	// This is to read in a custom unmicrolensed light curve
 	Json::Value unmicro_lc_json = readLightCurvesJson("unmicro",root["point_source"]["variability"]["unmicro"]["type"].asString(),instrument_name,in_path,out_path);
 	double scale_factor = 1.0;
 	if( root["point_source"]["variability"]["unmicro"].isMember("scale_factor") ){
 	  scale_factor = root["point_source"]["variability"]["unmicro"]["scale_factor"].asDouble();
 	} 
 	LC_unmicro = conversions(unmicro_lc_json,zs,scale_factor,mycam.ZP);
+	*/
+
+	LC_unmicro.resize(LC_intrinsic.size());
+	double flux_ratio = root["point_source"]["variability"]["unmicro"][instrument_name]["flux_ratio"].asDouble();
+	BaseLagKernel* lag = nullptr;
+
+	// Set the lag function kernel
+	std::string lag_type = root["point_source"]["variability"]["unmicro"][instrument_name]["type"].asString();
+	if( lag_type == "top-hat" ){
+	  double radius = root["point_source"]["variability"]["unmicro"][instrument_name]["pars"]["radius"].asDouble();
+	  lag = new TopHatKernel(radius);
+	} else if( lag_type == "delta" ){
+	  double t_peak = root["point_source"]["variability"]["unmicro"][instrument_name]["pars"]["t_peak"].asDouble();
+	  lag = new DeltaKernel(t_peak);
+	} else {
+	  fprintf(stderr,"Unknown Lag Kernel model: %s\n",lag_type.c_str());
+	  return 1;
+	}
+
+	// Get the unmicrolensed light curve that corresponds to each intrinsic curve
+	for(int lc_in=0;lc_in<LC_intrinsic.size();lc_in++){
+	  std::cout << "Starting convolution ...";
+	  LC_unmicro[lc_in] = new LightCurve(LC_intrinsic[lc_in]->time);
+
+	  // Evaluate the lag kernel on the same time vector as the given intrinsic light curve 
+	  int N = LC_intrinsic[lc_in]->time.size();
+	  std::vector<double> kernel(N);
+	  lag->getKernel(LC_intrinsic[lc_in]->time,kernel);
+	  
+	  // Perform the convolution
+	  std::vector<double> unmicro_signal(N);
+	  for(int n=0;n<N-1;n++){
+	    double sum = 0.0;
+	    for(int m=0;m<N-1;m++){
+	      int index_in = n - m; // index to the intrinsic light curve
+	      if( index_in >= 0 ){
+		sum += kernel[n]*LC_intrinsic[lc_in]->signal[index_in];
+	      }
+	    }
+	    LC_unmicro[lc_in]->signal[n] = flux_ratio*sum;
+	  }
+	  std::cout << "...done" << std::endl;
+	}
+
+	//outputLightCurvesJson(cont_LC,out_path+mock+"/"+instrument_name+"_LC_unmicro.json");
       }
       //=======================================================================================================================            
 
