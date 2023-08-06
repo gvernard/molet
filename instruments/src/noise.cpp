@@ -137,7 +137,7 @@ void UniformGaussian::calculateNoise(){
   // Renormalize by adding the minimum (negative) noise value
   // This is needed because the pixels can contain nan's if mag scale is used
   for(int i=0;i<this->noise_realization->Nz;i++){
-    this->noise_realization->z[i] += abs(this->min_noise);
+    this->noise_realization->z[i] += fabs(this->min_noise);
   }
 }
 

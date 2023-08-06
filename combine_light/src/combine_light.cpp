@@ -46,7 +46,7 @@ int main(int argc,char* argv[]){
     fin.open(out_path+"output/multiple_images.json",std::ifstream::in);
     fin >> images;
     fin.close();
-
+    
     // Get maximum image time delay
     for(int q=0;q<images.size();q++){
       double td = images[q]["dt"].asDouble();
@@ -239,7 +239,6 @@ int main(int argc,char* argv[]){
 
 
 
-
       // Loop over intrinsic light curves
       //0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=
       for(int lc_in=0;lc_in<LC_intrinsic.size();lc_in++){
@@ -252,8 +251,9 @@ int main(int argc,char* argv[]){
 	  char buffer[30];
 	  sprintf(buffer,"mock_%04d_%04d",lc_in,lc_ex);
 	  std::string mock = buffer;
-	  std::cout << mock << std::endl;
-	    
+
+
+	  
 	  // *********************** Product: Observed continuous and sampled light curves ***********************
 	  // cont_LC and samp_LC contain the light curves for ALL the images (i.e. with or without microlensing).
 	  // The first is based on the continuous time, tcont, and the second on the observed (sampled) time, tobs.
@@ -268,7 +268,7 @@ int main(int argc,char* argv[]){
 	    // for(int i=0;i<images_micro.size();i++){
 	    //   int q = images_micro[i];
 	    //   double td = td_max - images[q]["dt"].asDouble();
-	    //   double macro_mag = abs(images[q]["mag"].asDouble());
+	    //   double macro_mag = fabs(images[q]["mag"].asDouble());
 	    //   combineSupernovaInExSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],cont_LC[q]);
 	    //   combineSupernovaInExSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],samp_LC[q]);
 	    // }
@@ -277,7 +277,7 @@ int main(int argc,char* argv[]){
 	    // for(int i=0;i<images_no_micro.size();i++){
 	    //   int q = images_no_micro[i];
 	    //   double td = td_max - images[q]["dt"].asDouble();
-	    //   double macro_mag = abs(images[q]["mag"].asDouble());
+	    //   double macro_mag = fabs(images[q]["mag"].asDouble());
 	    //   justSupernovaInSignal(td,macro_mag,tcont,LC_intrinsic[lc_in],cont_LC[q]);
 	    //   justSupernovaInSignal(td,macro_mag,tobs,LC_intrinsic[lc_in],samp_LC[q]);
 	    // }	    
@@ -289,7 +289,7 @@ int main(int argc,char* argv[]){
 	    for(int i=0;i<images_micro.size();i++){
 	      int q = images_micro[i];
 	      double td = td_max - images[q]["dt"].asDouble();
-	      double macro_mag = abs(images[q]["mag"].asDouble());
+	      double macro_mag = fabs(images[q]["mag"].asDouble());
 	      if( unmicro ){
 		combineInExUnSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],LC_unmicro[lc_in],cont_LC[q]);
 		combineInExUnSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],LC_unmicro[lc_in],samp_LC[q]);
@@ -303,7 +303,7 @@ int main(int argc,char* argv[]){
 	    for(int i=0;i<images_no_micro.size();i++){
 	      int q = images_no_micro[i];
 	      double td = td_max - images[q]["dt"].asDouble();
-	      double macro_mag = abs(images[q]["mag"].asDouble());
+	      double macro_mag = fabs(images[q]["mag"].asDouble());
 	      if( unmicro ){
 		combineInUnSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_unmicro[lc_in],cont_LC[q]);
 		combineInUnSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_unmicro[lc_in],samp_LC[q]);
@@ -319,7 +319,7 @@ int main(int argc,char* argv[]){
 	    for(int i=0;i<images_micro.size();i++){
 	      int q = images_micro[i];
 	      double td = images[q]["dt"].asDouble();
-	      double macro_mag = abs(images[q]["mag"].asDouble());
+	      double macro_mag = fabs(images[q]["mag"].asDouble());
 	      combineSupernovaInExSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],cont_LC[q]);
 	      combineSupernovaInExSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],samp_LC[q]);
 	    }
@@ -328,7 +328,7 @@ int main(int argc,char* argv[]){
 	    for(int i=0;i<images_no_micro.size();i++){
 	      int q = images_no_micro[i];
 	      double td = images[q]["dt"].asDouble();
-	      double macro_mag = abs(images[q]["mag"].asDouble());
+	      double macro_mag = fabs(images[q]["mag"].asDouble());
 	      justSupernovaInSignal(td,macro_mag,tcont,LC_intrinsic[lc_in],cont_LC[q]);
 	      justSupernovaInSignal(td,macro_mag,tobs,LC_intrinsic[lc_in],samp_LC[q]);
 	    }
@@ -339,7 +339,7 @@ int main(int argc,char* argv[]){
 	    for(int i=0;i<images_micro.size();i++){
 	      int q = images_micro[i];
 	      double td = td_max - images[q]["dt"].asDouble();
-	      double macro_mag = abs(images[q]["mag"].asDouble());
+	      double macro_mag = fabs(images[q]["mag"].asDouble());
 	      combineInExSignals(td,macro_mag,tcont,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],cont_LC[q]);
 	      combineInExSignals(td,macro_mag,tobs,LC_intrinsic[lc_in],LC_extrinsic[q][lc_ex],samp_LC[q]);
 	    }
@@ -348,7 +348,7 @@ int main(int argc,char* argv[]){
  	    for(int i=0;i<images_no_micro.size();i++){
 	      int q = images_no_micro[i];
 	      double td = td_max - images[q]["dt"].asDouble();
-	      double macro_mag = abs(images[q]["mag"].asDouble());
+	      double macro_mag = fabs(images[q]["mag"].asDouble());
 	      justOneSignal(td,macro_mag,tcont,LC_intrinsic[lc_in],cont_LC[q]);
 	      justOneSignal(td,macro_mag,tobs,LC_intrinsic[lc_in],samp_LC[q]);
 	    }
@@ -393,7 +393,12 @@ int main(int argc,char* argv[]){
       // *********************** Product: Just one cutout with only the macromagnification *****************************
       if( !root["point_source"]["output_cutouts"].asBool() ){
 	// For each image we use the same brightness value: the t=0 value of the first intrinsic light curve (no time delay, no microlensing)
-	std::vector<double> image_signal(images.size(),LC_intrinsic[0]->signal[0]);
+	std::vector<double> image_signal(images.size());
+	double value = LC_intrinsic[0]->signal[0];
+	for(int q=0;q<images.size();q++){
+	  double macro_mag = fabs(images[q]["mag"].asDouble());
+	  image_signal[q] = macro_mag*value;
+	}
 	vkl::RectGrid obs_pp_light = createPointSourceLight(&supersim,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y);
 	
 	// Adding time-dependent noise here
