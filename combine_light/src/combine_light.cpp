@@ -392,9 +392,10 @@ int main(int argc,char* argv[]){
 
       // *********************** Product: Just one cutout with only the macromagnification *****************************
       if( !root["point_source"]["output_cutouts"].asBool() ){
-	// For each image we use the same brightness value: the t=0 value of the first intrinsic light curve (no time delay, no microlensing)
+	// For each image we use the same brightness value.
+	// This value defines a flux from the equation F = 10^(-0.4*(M-ZP)). For M=ZP-7.5 (-5) I get a flux of 1000 (100).
+	double value = 100.0;
 	std::vector<double> image_signal(images.size());
-	double value = LC_intrinsic[0]->signal[0];
 	for(int q=0;q<images.size();q++){
 	  double macro_mag = fabs(images[q]["mag"].asDouble());
 	  image_signal[q] = macro_mag*value;

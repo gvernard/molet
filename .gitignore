@@ -20,6 +20,7 @@ configure_command.txt
 !/data/initialize_instruments.sh
 !/data/instrument_data
 /plotting/*.png
+/plotting/extrinsic_lc.json
 
 
 

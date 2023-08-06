@@ -42,22 +42,8 @@
 			    "y0": 0.0,
 			    "pa": -145.0,
 			    "q": 0.8,
-			    "M_tot": 17,
-			    "r_eff": 1.0,
-			    "n": 4
-			}
-		    }
-		],
-		"ECAM-r": [
-		    {
-			"type": "sersic",
-			"pars": {
-			    "x0": 0.0,
-			    "y0": 0.0,
-			    "pa": -145.0,
-			    "q": 0.8,
-			    "M_tot": 17,
-			    "r_eff": 1.0,
+			    "M_tot": 21,
+			    "r_eff": 1.7,
 			    "n": 4
 			}
 		    }
@@ -96,7 +82,7 @@
 			"y0": 0.05,
 			"pa": 23.0,
 			"q": 0.64,
-			"M_tot": 22.0,
+			"M_tot": 25.0,
 			"r_eff": 0.06
 		    }
 		},
@@ -107,31 +93,7 @@
 			"y0": 0.125,
 			"pa": 0.0,
 			"q": 1.0,
-			"M_tot": 22.0,
-			"r_eff": 0.08
-		    }
-		}
-	    ],
-	    "ECAM-r": [
-		{
-		    "type": "gauss",
-		    "pars": {
-			"x0": -0.05,
-			"y0": 0.05,
-			"pa": 23.0,
-			"q": 0.64,
-			"M_tot": 22.0,
-			"r_eff": 0.06
-		    }
-		},
-		{
-		    "type": "gauss",
-		    "pars": {
-			"x0": -0.2,
-			"y0": 0.125,
-			"pa": 0.0,
-			"q": 1.0,
-			"M_tot": 22.0,
+			"M_tot": 25.0,
 			"r_eff": 0.08
 		    }
 		}
@@ -140,11 +102,9 @@
     },
     
     "output_options": {
-	"cut_outs": {
-	    "scale": "amp"
-	}
+	"super_factor": 5
     },
-    
+
     "point_source": {
     	"x0": -0.05,
     	"y0": 0.05,
@@ -159,8 +119,7 @@
     	    	"microlens_mass": 1,
     	    	"Nex": 100,
     	    	"v_expand": {
-		    "testCAM-i": 0.1,  // in 10^5 km/s, one entry per instrument
-		    "ECAM-r": 0.2
+		    "testCAM-i": 0.1  // in 10^5 km/s, one entry per instrument
 		}, 
 		"start": 1, // in days
 	    	"fractional_increase": 1.5, // from 0 to some small (<3-5) number
@@ -174,33 +133,19 @@
     
     "instruments": [
 	{
-	    "ZP": 20.0,
+	    "ZP": 22.19,
 	    "name": "testCAM-i",
 	    "field-of-view_xmin": -1.75,
 	    "field-of-view_xmax": 1.75,
 	    "field-of-view_ymin": -1.75,
 	    "field-of-view_ymax": 1.75,
 	    "noise":{
-		"type": "UniformGaussian",
-		"sn": 50
+		"type": "PoissonNoise",
+		"Msb": 22.8,
+		"texp": 200
 	    },
 	    "time": [
 		61181,61289.31,61290.25,61291.26,61292.29,61297.24,61299.21,61300.21,61328.14,61335.17
-	    ]
-	},
-	{
-	    "ZP": 20.0,
-	    "name": "ECAM-r",
-	    "field-of-view_xmin": -7.75,
-	    "field-of-view_xmax": 7.75,
-	    "field-of-view_ymin": -7.75,
-	    "field-of-view_ymax": 7.75,
-	    "noise":{
-		"type": "UniformGaussian",
-		"sn": 50
-	    },
-	    "time": [
-		61183,61284.31,61293.25,61294.26,61297.29,61297.24,61301.21,61304.21,61316.14,61330.17,61331.0
 	    ]
 	}
     ]
