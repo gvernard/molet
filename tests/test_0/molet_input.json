@@ -130,6 +130,7 @@
     
     "instruments": [
 	{
+	    "ZP": 20.0,
 	    "name": "testCAM-i",
 	    "field-of-view_xmin": -1.75,
 	    "field-of-view_xmax": 1.75,

@@ -107,24 +107,35 @@ int main(int argc,char* argv[]){
     double Ds  = cosmo[0]["Ds"].asDouble();
     double Dls = cosmo[0]["Dls"].asDouble();
     double sigma_crit = 3472.8*Ds/(Dl*Dls); // the critical density: c^2/(4pi G)  Ds/(Dl*Dls), in units of kg/m^2
-
-    Json::Value all_compact;
-    std::vector<double> ML_ratio;
-    for(int k=0;k<root["lenses"].size();k++){
-      if( root["lenses"][k]["compact_mass_model"].isArray() ){
-	for(int m=0;m<root["lenses"][k]["compact_mass_model"].size();m++){
-	  ML_ratio.push_back(1.0);
-	  all_compact.append(root["lenses"][k]["compact_mass_model"][m]);
+    
+    Json::Value all_compact; // Is not necessarily the same size as 'lenses' because one lens can have several 'compact_mass_model' profiles
+    std::vector<std::string> flag;
+    std::vector<double> zps;
+    std::vector<double> areas;
+    for(int i=0;i<root["lenses"].size();i++){
+      if( root["lenses"][i].isMember("compact_mass_model") ){
+	for(int m=0;m<root["lenses"][i]["compact_mass_model"].size();m++){
+	  all_compact.append( root["lenses"][i]["compact_mass_model"][m] );
+	  flag.push_back("direct_mass");
+	  zps.push_back(0.0); // dummy, not needed
+	  areas.push_back(0.0); // dummy, not needed
 	}
       } else {
-	// Which light profile to use for mass to light ratio?
-	for(int m=0;m<root["lenses"][k]["light_profile"].size();m++){
-	  ML_ratio.push_back( root["lenses"][k]["compact_mass_model"]["mass_to_light_ratio"].asDouble() );
-	  all_compact.append(root["lenses"][k]["light_profile"][root["instruments"][0]["name"].asString()][m]);
+	for(int k=0;k<root["instruments"].size();k++){
+	  std::string name = root["instruments"][k]["name"].asString();	
+	  for(int m=0;m<root["lenses"][i]["light_profile"].size();m++){
+	    if( root["lenses"][i]["light_profile"][name][m].isMember("mass-to-light") ){
+	      all_compact.append( root["lenses"][i]["light_profile"][name][m] );
+	      flag.push_back("mass-to-light");
+	      zps.push_back(root["instruments"][k]["ZP"].asDouble());
+	      double dum = Instrument::getResolution(name);
+	      areas.push_back(dum*dum);
+	    }
+	  }
 	}
       }
     }
-    vkl::CollectionProfiles compact_collection = vkl::JsonParsers::parse_profile(all_compact,input);
+    vkl::CollectionProfiles compact_collection = vkl::JsonParsers::parse_profile(all_compact,zps,input); // These are all LightProfile types (Sersic, Gauss, Custom)
 
     // Create overall kappa_star field
     double xmin,xmax,ymin,ymax;
@@ -134,7 +145,11 @@ int main(int argc,char* argv[]){
       for(int j=0;j<kappa_star.Nx;j++){
 	double value = 0.0;
 	for(int m=0;m<compact_collection.profiles.size();m++){
-	  value += ML_ratio[m]*compact_collection.profiles[m]->value(kappa_star.center_x[j],kappa_star.center_y[i]);
+	  if( flag[m] == "direct_mass" ){
+	    value += compact_collection.profiles[m]->value(kappa_star.center_x[j],kappa_star.center_y[i]);
+	  } else {
+	    value += areas[m]*compact_collection.profiles[m]->value_to_mass(kappa_star.center_x[j],kappa_star.center_y[i]);
+	  }
 	}
 	kappa_star.z[i*kappa_star.Nx+j] = value/sigma_crit;
       }
@@ -144,7 +159,8 @@ int main(int argc,char* argv[]){
     std::vector<std::string> values{std::to_string(kappa_star.xmin),std::to_string(kappa_star.xmax),std::to_string(kappa_star.ymin),std::to_string(kappa_star.ymax)};
     std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
     vkl::FitsInterface::writeFits(kappa_star.Nx,kappa_star.Ny,kappa_star.z,keys,values,descriptions,output + "lens_kappa_star_super.fits");      
-    
+
+
     // Read the image parameters
     Json::Value images;
     fin.open(output+"multiple_images.json",std::ifstream::in);
@@ -157,10 +173,15 @@ int main(int argc,char* argv[]){
       double y = images[j]["y"].asDouble();
       double value = 0.0;
       for(int m=0;m<compact_collection.profiles.size();m++){
-	value += ML_ratio[m]*compact_collection.profiles[m]->value(x,y);
+	if( flag[m] == "direct_mass" ){
+	  value += compact_collection.profiles[m]->value(x,y);
+	} else {
+	  value += areas[m]*compact_collection.profiles[m]->value_to_mass(x,y);
+	}
       }
       double k_star = value/sigma_crit;
       double s =  1.0 - k_star/images[j]["k"].asDouble();
+      std::cout << images[j]["k"].asDouble() << " " << k_star << " " << s << std::endl;
       if( s < 0 ){
 	images[j]["s"] = 0.0;
       } else {
