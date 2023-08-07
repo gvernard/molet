@@ -136,6 +136,7 @@ int main(int argc,char* argv[]){
     }
     int super_res_x = super_factor*( static_cast<int>(ceil((xmax-xmin)/resolution)) );
     int super_res_y = super_factor*( static_cast<int>(ceil((ymax-ymin)/resolution)) );
+    std::cout << "Super Resolution: " << super_res_x << std::endl;
     vkl::RectGrid mysim(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
 
     // Create the source and output super-resolved image

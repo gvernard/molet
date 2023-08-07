@@ -13,3 +13,4 @@ Here is the summary of all the examples included:
 "test_7"     -  Same as 'test_0' but now the point source is removed and there are gridded lens potential perturbations present.
 "test_8"     -  Same as 'test 0' but instead of the an 'SIE' we use a 'SPEMD' model for the lens mass.
 "test_9"     -  Same as 'test_2', generating light curves with the 'moving_fixed_source' variability model, but now a mass-to-light ratio is used to get kappa_star.
+"test_10"    -  Same as 'test 7' without potential perturbations and the analytic source replaced by a custom pixelated galaxy.
