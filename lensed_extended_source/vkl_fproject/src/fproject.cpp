@@ -138,9 +138,22 @@ int main(int argc,char* argv[]){
     int super_res_y = super_factor*( static_cast<int>(ceil((ymax-ymin)/resolution)) );
     vkl::RectGrid mysim(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
 
-    // Create the source
+    // Create the source and output super-resolved image
     vkl::CollectionProfiles profile_collection = vkl::JsonParsers::parse_profile(root["source"]["light_profile"][name],root["instruments"][k]["ZP"].asDouble(),input);
     profile_collection.write_all_profiles(output + name + "_source_super.fits");
+
+    // Confirm that the total brightness is conserved (by numerical integration)
+    double total_flux = 0.0;
+    for(int i=0;i<profile_collection.profiles.size();i++){
+      double integral = profile_collection.profiles[i]->integrate(500);
+      double integral_mag = -2.5*log10(integral) + root["instruments"][k]["ZP"].asDouble();
+      std::cout << "Total flux from source " << i << ": " << integral << " " << integral_mag << std::endl;
+      total_flux += integral;
+    }
+    double total_flux_mag = -2.5*log10(total_flux) + root["instruments"][k]["ZP"].asDouble();
+    std::cout << "Total flux all sources: " << total_flux << " " << total_flux_mag << std::endl;
+
+
     
     // Produce image using ray-shooting
     for(int i=0;i<mysim.Ny;i++){
@@ -156,13 +169,26 @@ int main(int argc,char* argv[]){
     std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
     vkl::FitsInterface::writeFits(mysim.Nx,mysim.Ny,mysim.z,keys,values,descriptions,output + name + "_lensed_image_super.fits");
 
+
+    //double total_flux,total_flux_mag;
+    mysim.integrate(total_flux,total_flux_mag,root["instruments"][k]["ZP"].asDouble());
+    std::cout << "Total flux from extended lensed source: " << total_flux << " " << total_flux_mag << std::endl;
+
+
+    
     /*
     // Output deflections
     vkl::RectGrid defl_x(super_res_x/super_factor,super_res_y/super_factor,xmin,xmax,ymin,ymax);
     vkl::RectGrid defl_y(super_res_x/super_factor,super_res_y/super_factor,xmin,xmax,ymin,ymax);
     for(int i=0;i<defl_x.Ny;i++){
       for(int j=0;j<defl_x.Nx;j++){
-	mass_collection.all_defl(defl_x.center_x[j],defl_x.center_y[i],xdefl,ydefl);
+	mass_collection.all_defl(defl_x.center_x[j],defl_x.c    double sum = 0.0;
+    double area = (mysim.center_x[1]-mysim.center_x[0])*(mysim.center_y[1] - mysim.center_y[0]);
+    for(int i=0;i<mysim.Nz;i++){
+      sum += mysim.z[i];
+    }
+    sum *= area;
+    double sum_mag = -2.5*log10(sum) + root["instruments"][k]["ZP"].asDouble();enter_y[i],xdefl,ydefl);
 	defl_x.z[i*defl_x.Nx+j] = xdefl;
 	defl_y.z[i*defl_x.Nx+j] = ydefl;
       }
@@ -180,10 +206,6 @@ int main(int argc,char* argv[]){
     */
     
     
-
-    
-    // Super-resolved source image
-    profile_collection.write_all_profiles(output + name + "_source_super.fits");
   }
   //================= END:LENS THE SOURCES =======================
 

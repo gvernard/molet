@@ -47,6 +47,7 @@ public:
   void cropPSF(double threshold);
   void createKernel(int Nx,int Ny);
   void convolve(vkl::RectGrid* grid);
+  void convolve(vkl::RectGrid* grid_in,vkl::RectGrid* grid_out);
   offsetPSF offsetPSFtoPosition(double x,double y,vkl::RectGrid* grid);
 
   void replacePSF(std::string path_to_file);

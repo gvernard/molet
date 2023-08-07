@@ -70,6 +70,18 @@ int main(int argc,char* argv[]){
     }
     vkl::CollectionProfiles light_collection = vkl::JsonParsers::parse_profile(all_lenses,root["instruments"][k]["ZP"].asDouble(),input);
 
+    // Confirm that the total brightness is conserved (by numerical integration)
+    double total_flux = 0.0;
+    for(int i=0;i<light_collection.profiles.size();i++){
+      double integral = light_collection.profiles[i]->integrate(1000);
+      double integral_mag = -2.5*log10(integral) + root["instruments"][k]["ZP"].asDouble();
+      std::cout << "Total flux from lens profile " << i << ": " << integral << " " << integral_mag << std::endl;
+      total_flux += integral;
+    }
+    double total_flux_mag = -2.5*log10(total_flux) + root["instruments"][k]["ZP"].asDouble();
+    std::cout << "Total flux all lens profiles: " << total_flux << " " << total_flux_mag << std::endl;
+
+    
     for(int i=0;i<mylight.Ny;i++){
       for(int j=0;j<mylight.Nx;j++){
 	mylight.z[i*mylight.Nx+j] = light_collection.all_values(mylight.center_x[j],mylight.center_y[i]);
@@ -81,17 +93,6 @@ int main(int argc,char* argv[]){
     std::vector<std::string> values{std::to_string(mylight.xmin),std::to_string(mylight.xmax),std::to_string(mylight.ymin),std::to_string(mylight.ymax)};
     std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
     vkl::FitsInterface::writeFits(mylight.Nx,mylight.Ny,mylight.z,keys,values,descriptions,output + name + "_lens_light_super.fits");
-
-    /*
-    // Confirm that the total brightness is conserved (by numerical integration)
-    double sum = 0.0;
-    for(int i=0;i<mylight.Nm;i++){
-    sum += mylight.img[i];
-    }
-    double fac = (width/super_res_x)*(height/super_res_y);
-    sum *= fac;
-    printf("Itot = %15.10f  Mtot = %15.10f\n",sum,-2.5*log10(sum));
-    */
   }
   //================= END:CREATE LENS LIGHT ================
 

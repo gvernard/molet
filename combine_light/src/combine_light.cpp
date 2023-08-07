@@ -19,21 +19,16 @@ int main(int argc,char* argv[]){
 
   // Read the main projection parameters
   Json::Value root;
-  fin.open(argv[1],std::ifstream::in);
+  fin.open(argv[1],std::ifstream::in);                                   // INPUT 1: main MOLET input file
   fin >> root;
   fin.close();
 
   std::string in_path = argv[2];
   std::string out_path = argv[3];
-
-  std::string cutout_scale;
-  if( root.isMember("output_options") ){
-    cutout_scale = root["output_options"]["cut_outs"]["scale"].asString();
-  } else {
-    cutout_scale = "mag";
-  }
   double zs = root["source"]["redshift"].asDouble();
 
+
+  
 
 
   //=============== Initialization for time varying light ONLY ==================
@@ -43,7 +38,7 @@ int main(int argc,char* argv[]){
   std::vector<double> tcont;
   if( root.isMember("point_source") ){
     // Read the multiple images' parameters from JSON
-    fin.open(out_path+"output/multiple_images.json",std::ifstream::in);
+    fin.open(out_path+"output/multiple_images.json",std::ifstream::in);  // INPUT FILE 2 (only for point source): properties of the multiple images
     fin >> images;
     fin.close();
     
@@ -57,7 +52,7 @@ int main(int argc,char* argv[]){
   
     // Read tobs_min and tobs_max
     Json::Value tobs_json;
-    fin.open(out_path+"output/tobs.json",std::ifstream::in);
+    fin.open(out_path+"output/tobs.json",std::ifstream::in);             // INPUT FILE 3 (only for point source): time vector properties
     fin >> tobs_json;
     fin.close();
     double tobs_max = tobs_json["tobs_max"].asDouble();
@@ -87,9 +82,12 @@ int main(int argc,char* argv[]){
   for(int b=0;b<root["instruments"].size();b++){
     const Json::Value instrument = root["instruments"][b];
     std::string instrument_name = root["instruments"][b]["name"].asString();
-
     Instrument mycam(instrument_name,root["instruments"][b]["ZP"].asDouble(),root["instruments"][b]["noise"]);
 
+
+
+    
+    //=============== START: INITIALIZE FINAL IMAGE GRIDS ====================
     // Set output image plane in super-resolution
     double xmin = root["instruments"][b]["field-of-view_xmin"].asDouble();
     double xmax = root["instruments"][b]["field-of-view_xmax"].asDouble();
@@ -111,45 +109,34 @@ int main(int argc,char* argv[]){
     //vkl::FitsInterface::writeFits(mycam.cropped_psf->Nx,mycam.cropped_psf->Ny,mycam.cropped_psf->z,out_path + "output/cropped_psf.fits");
     //vkl::FitsInterface::writeFits(supersim.Nx,supersim.Ny,mycam.kernel,out_path + "output/kernel_psf.fits");
 
-    // Create base image (lens light and extended lensed source)
-    vkl::RectGrid obs_base = createObsBase(&mycam,&supersim,res_x,res_y,out_path); // remember, the units are electrons/(s arcsec^2)
+    vkl::RectGrid super_extended = vkl::RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/"+instrument_name+"_lensed_image_super.fits");        // INPUT FILE 4: super-resolved lensed source
+    vkl::RectGrid super_lens_light = vkl::RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/"+instrument_name+"_lens_light_super.fits");        // INPUT FILE 5: super-resolved lens light
+
+    // Create static image (lens light and extended lensed source)
+    vkl::RectGrid obs_static = createObsStatic(&mycam,&super_extended,&super_lens_light,res_x,res_y,out_path); // This is in units of flux!
 
     // Assign noise grid
-    mycam.noise->setGrid(&obs_base);
+    mycam.noise->setGrid(&obs_static);
     
     // All the static light components have been created.
-    // The resulting observed image (not super-resolved) is "obs_base".
-    // If there is no time dimension required, the code just outputs the obs_base image and stops.
+    // The resulting observed image (not super-resolved) is "obs_static".
+    // If there is no time dimension required, the code just outputs the obs_static image and stops.
     // But further work is done when it comes to time varying images in three nested loops:
     // - one over all the intrinsic variability light curves,
     // - one over all the extrinsic variability light curves,
     // - and one over the observed time.
-
+    //===============   END: INITIALIZE FINAL IMAGE GRIDS ====================
     
 
-    if( !root.isMember("point_source") ){
-      //=============== CREATE A SINGLE STATIC IMAGE ====================
 
-      // Adding noise here and output realization
-      mycam.noise->initializeFromData(&obs_base);
-      mycam.noise->calculateNoise();
-      mycam.noise->addNoise(&obs_base);
-      mycam.noise->outputNoiseProperties(out_path + "output/",instrument_name);
-      
-      // Output the observed base image
-      std::vector<std::string> keys{"xmin","xmax","ymin","ymax"};
-      std::vector<std::string> values{std::to_string(obs_base.xmin),std::to_string(obs_base.xmax),std::to_string(obs_base.ymin),std::to_string(obs_base.ymax)};
-      std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
-      vkl::FitsInterface::writeFits(obs_base.Nx,obs_base.Ny,obs_base.z,keys,values,descriptions,out_path + "output/OBS_" + instrument_name + ".fits");
 
-    } else {
+    //=============== CREATE THE TIME VARYING LIGHT ====================
+    if( root.isMember("point_source") ){
 
-      //=============== CREATE THE TIME VARYING LIGHT ====================
       std::vector<double> tobs;
       for(int t=0;t<instrument["time"].size();t++){
 	tobs.push_back(instrument["time"][t].asDouble());
       }
-
       std::string ex_type = root["point_source"]["variability"]["extrinsic"]["type"].asString();
       
       
@@ -165,6 +152,7 @@ int main(int argc,char* argv[]){
       LC_intrinsic = conversions(intrinsic_lc_json,zs,scale_factor,mycam.ZP);
       //=======================================================================================================================
 
+      
       
       //======================================== Unmicrolensed flux ===========================================================
       // Check for unmicrolensed variability, read light curve(s) from JSON and apply conversions: from rest frame to observer's frame, from mag to intensity and scale if needed.
@@ -182,6 +170,7 @@ int main(int argc,char* argv[]){
       //=======================================================================================================================            
 
       
+
       //=============================================== Microlensing ==========================================================      
       // Read extrinsic light curve(s) from JSON
       Json::Value extrinsic_lc = readLightCurvesJson("extrinsic",root["point_source"]["variability"]["extrinsic"]["type"].asString(),instrument_name,in_path,out_path);
@@ -238,6 +227,7 @@ int main(int argc,char* argv[]){
       //=======================================================================================================================
 
 
+      
 
       // Loop over intrinsic light curves
       //0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=0=
@@ -257,6 +247,7 @@ int main(int argc,char* argv[]){
 	  // *********************** Product: Observed continuous and sampled light curves ***********************
 	  // cont_LC and samp_LC contain the light curves for ALL the images (i.e. with or without microlensing).
 	  // The first is based on the continuous time, tcont, and the second on the observed (sampled) time, tobs.
+	  // Units are: t in [days], and signal in [flux] NOT mag.
 	  std::vector<LightCurve*> cont_LC(images.size());
 	  std::vector<LightCurve*> samp_LC(images.size());
 	  for(int q=0;q<images.size();q++){
@@ -374,7 +365,7 @@ int main(int argc,char* argv[]){
 	    
 	  // *********************** Product: Observed sampled cut-outs (images) *****************************
 	  if( root["point_source"]["output_cutouts"].asBool() ){
-	    writeAllCutouts(tobs,images,samp_LC,&supersim,&mycam,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y,mock,instrument_name,cutout_scale,out_path);
+	    writeAllCutouts(tobs,images,samp_LC,&super_extended,&super_lens_light,&mycam,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y,mock,instrument_name,out_path);
 	  }
 	  // *********************** End of product **************************************************	    
 	    
@@ -391,28 +382,31 @@ int main(int argc,char* argv[]){
       
 
       // *********************** Product: Just one cutout with only the macromagnification *****************************
-      if( !root["point_source"]["output_cutouts"].asBool() ){
-	// For each image we use the same brightness value.
-	// This value defines a flux from the equation F = 10^(-0.4*(M-ZP)). For M=ZP-7.5 (-5) I get a flux of 1000 (100).
-	double value = 100.0;
-	std::vector<double> image_signal(images.size());
-	for(int q=0;q<images.size();q++){
-	  double macro_mag = fabs(images[q]["mag"].asDouble());
-	  image_signal[q] = macro_mag*value;
-	}
-	vkl::RectGrid obs_pp_light = createPointSourceLight(&supersim,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y);
-	
-	// Adding time-dependent noise here
-	mycam.noise->initializeFromData(&obs_pp_light);
-	mycam.noise->calculateNoise();
-	mycam.noise->addNoise(&obs_pp_light);
-	mycam.noise->outputNoiseProperties(out_path + "output/",instrument_name);
-	
-	// Finalize output (e.g convert to magnitudes) and write
-	std::string fname = out_path+"output/OBS_"+instrument_name+"_static.fits";
-	writeCutout(cutout_scale,&obs_pp_light,&obs_base,fname);
-	//vkl::FitsInterface::writeFits(obs_base.Nx,obs_base.Ny,obs_base.z,fname);
+      // For each image we use the same brightness value.
+      // This value defines a flux from the equation F = 10^(-0.4*(M-ZP)). For M=ZP-7.5 (-5) I get a flux of 1000 (100).
+      double total_image_flux = 0.0;
+      double area = supersim.step_x*supersim.step_y;
+      double single_image_flux = 10000.0; // In units of integrated (total) flux per image
+      std::vector<double> image_signal(images.size());
+      for(int q=0;q<images.size();q++){
+	double macro_mag = fabs(images[q]["mag"].asDouble());
+	image_signal[q] = single_image_flux*macro_mag;
+	total_image_flux += image_signal[q]*area; // The area of a PS image is one pixel
       }
+      double total_image_flux_mag = -2.5*log10(total_image_flux) + mycam.ZP;
+      std::cout << "Total PS flux from all images: " << total_image_flux << " " << total_image_flux_mag << std::endl;
+      vkl::RectGrid obs_ps_light = addPSLight(&obs_static,&supersim,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y,mycam.ZP); // This is in flux units!
+      convertFromFlux(&obs_ps_light,mycam.ZP);
+
+      // Adding time-dependent noise here
+      mycam.noise->initializeFromData(&obs_ps_light);
+      mycam.noise->calculateNoise();
+      //mycam.noise->addNoise(&obs_ps_light);
+      mycam.noise->outputNoiseProperties(out_path + "output/",instrument_name+"_ps_macro");
+
+      // Output the observed static image with a PS with macromagnification only
+      writeCutout(&obs_ps_light,out_path+"output/OBS_"+instrument_name+"_ps_macro.fits");
+      //vkl::FitsInterface::writeFits(obs_static.Nx,obs_static.Ny,obs_static.z,fname);
       // *********************** End of product ************************************************************************
 
 
@@ -436,8 +430,33 @@ int main(int argc,char* argv[]){
 
     }
     //================= END:CREATE THE TIME VARYING LIGHT ====================
+
     
+
+
+    //=============== START: CREATE STATIC LIGHT ====================
+
+
+    double total_flux,total_flux_mag;
+    obs_static.integrate(total_flux,total_flux_mag,mycam.ZP);
+    std::cout << "Static: " << total_flux << " " << total_flux_mag << std::endl;
+
+      
+    // A single image without any point source
+    convertFromFlux(&obs_static,mycam.ZP);
     
+    // Adding noise here and output realization
+    mycam.noise->initializeFromData(&obs_static);
+    mycam.noise->calculateNoise();
+    //mycam.noise->addNoise(&obs_static); // <------ BE CAREFUL: Noise is added directly to the obs_static pixels.
+    mycam.noise->outputNoiseProperties(out_path + "output/",instrument_name);
+    
+    // Output the observed static image
+    writeCutout(&obs_static,out_path + "output/OBS_" + instrument_name + ".fits");
+    //===============   END: CREATE STATIC LIGHT ====================
+
+
+
     
   }
   // Loop over the instruments ends here

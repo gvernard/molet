@@ -55,8 +55,8 @@
 			    "y0": 0.0,
 			    "pa": -145.0,
 			    "q": 0.8,
-			    "M_tot": 17,
-			    "r_eff": 1.0,
+			    "M_tot": 21,
+			    "r_eff": 1.7,
 			    "n": 4
 			}
 		    }
@@ -95,7 +95,7 @@
 			"y0": 0.05,
 			"pa": 23.0,
 			"q": 0.64,
-			"M_tot": 22.0,
+			"M_tot": 25.0,
 			"r_eff": 0.06
 		    }
 		},
@@ -106,7 +106,7 @@
 			"y0": 0.125,
 			"pa": 0.0,
 			"q": 1.0,
-			"M_tot": 22.0,
+			"M_tot": 25.0,
 			"r_eff": 0.08
 		    }
 		}
@@ -122,14 +122,16 @@
     
     "instruments": [
 	{
+	    "ZP": 22.19,
 	    "name": "testCAM-i",
 	    "field-of-view_xmin": -1.75,
 	    "field-of-view_xmax": 1.75,
 	    "field-of-view_ymin": -1.75,
 	    "field-of-view_ymax": 1.75,
 	    "noise":{
-		"type": "UniformGaussian",
-		"sn": 50
+		"type": "PoissonNoise",
+		"Msb": 22.8,
+		"texp": 200
 	    }
 	}
     ]

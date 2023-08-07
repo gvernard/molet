@@ -293,6 +293,46 @@ void Instrument::convolve(vkl::RectGrid* grid){
   }
 }
 
+void Instrument::convolve(vkl::RectGrid* grid_in,vkl::RectGrid* grid_out){
+  // Same as the convolution above but we change to the output grid when we do the inverse Fourier transform.
+  int Nx = grid_in->Nx;
+  int Ny = grid_in->Ny;
+
+  fftw_complex* f_image  = (fftw_complex*) fftw_malloc(Nx*Ny*sizeof(fftw_complex));
+  fftw_complex* f_kernel = (fftw_complex*) fftw_malloc(Nx*Ny*sizeof(fftw_complex));
+  
+  fftw_plan p1;
+  p1 = fftw_plan_dft_r2c_2d(Nx,Ny,this->kernel,f_kernel,FFTW_ESTIMATE);
+  fftw_execute(p1);
+  fftw_destroy_plan(p1);
+  
+  p1 = fftw_plan_dft_r2c_2d(Nx,Ny,grid_in->z,f_image,FFTW_ESTIMATE);
+  fftw_execute(p1);
+  fftw_destroy_plan(p1);
+  
+  double dum1,dum2;
+  for(int i=0;i<Ny;i++) {
+    for(int j=0;j<Nx;j++) {
+      dum1 = f_image[i*Nx+j][0]*f_kernel[i*Nx+j][0] - f_image[i*Nx+j][1]*f_kernel[i*Nx+j][1];
+      dum2 = f_image[i*Nx+j][0]*f_kernel[i*Nx+j][1] + f_image[i*Nx+j][1]*f_kernel[i*Nx+j][0];
+      f_image[i*Nx+j][0] = dum1;
+      f_image[i*Nx+j][1] = dum2;
+    }
+  }
+  
+  p1 = fftw_plan_dft_c2r_2d(Nx,Ny,f_image,grid_out->z,FFTW_ESTIMATE);
+  fftw_execute(p1);
+  fftw_destroy_plan(p1);
+  
+  fftw_free(f_image);
+  fftw_free(f_kernel);
+  
+  // Normalize output
+  for(int i=0;i<Nx*Ny;i++){
+    grid_out->z[i] /= (Nx*Ny);
+  }
+}
+
 
 offsetPSF Instrument::offsetPSFtoPosition(double x,double y,vkl::RectGrid* grid){
   int Nx_img   = grid->Nx;
