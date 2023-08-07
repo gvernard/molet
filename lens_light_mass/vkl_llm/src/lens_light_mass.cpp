@@ -46,6 +46,7 @@ int main(int argc,char* argv[]){
 
 
   //=============== BEGIN:CREATE LENS LIGHT =======================
+  Json::Value lens_fluxes;
   for(int k=0;k<root["instruments"].size();k++){
     std::string name = root["instruments"][k]["name"].asString();
 
@@ -63,25 +64,15 @@ int main(int argc,char* argv[]){
     vkl::RectGrid mylight(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
     
     Json::Value all_lenses;
+    std::vector<std::string> lens_profile_ind; // Needed to identify each profile with a lens when storing its total flux
     for(int i=0;i<root["lenses"].size();i++){
       for(int j=0;j<root["lenses"][i]["light_profile"][name].size();j++){
 	all_lenses.append(root["lenses"][i]["light_profile"][name][j]);
+	lens_profile_ind.push_back( std::to_string(i) + "-" + std::to_string(j) );
       }
     }
     vkl::CollectionProfiles light_collection = vkl::JsonParsers::parse_profile(all_lenses,root["instruments"][k]["ZP"].asDouble(),input);
 
-    // Confirm that the total brightness is conserved (by numerical integration)
-    double total_flux = 0.0;
-    for(int i=0;i<light_collection.profiles.size();i++){
-      double integral = light_collection.profiles[i]->integrate(1000);
-      double integral_mag = -2.5*log10(integral) + root["instruments"][k]["ZP"].asDouble();
-      std::cout << "Total flux from lens profile " << i << ": " << integral << " " << integral_mag << std::endl;
-      total_flux += integral;
-    }
-    double total_flux_mag = -2.5*log10(total_flux) + root["instruments"][k]["ZP"].asDouble();
-    std::cout << "Total flux all lens profiles: " << total_flux << " " << total_flux_mag << std::endl;
-
-    
     for(int i=0;i<mylight.Ny;i++){
       for(int j=0;j<mylight.Nx;j++){
 	mylight.z[i*mylight.Nx+j] = light_collection.all_values(mylight.center_x[j],mylight.center_y[i]);
@@ -93,7 +84,52 @@ int main(int argc,char* argv[]){
     std::vector<std::string> values{std::to_string(mylight.xmin),std::to_string(mylight.xmax),std::to_string(mylight.ymin),std::to_string(mylight.ymax)};
     std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
     vkl::FitsInterface::writeFits(mylight.Nx,mylight.Ny,mylight.z,keys,values,descriptions,output + name + "_lens_light_super.fits");
+
+
+
+
+    // Calculate total flux per profile and in total
+    double total_flux = 0.0;
+    double prof_flux,prof_flux_mag;
+    Json::Value profiles = Json::Value(Json::arrayValue);
+    for(int i=0;i<light_collection.profiles.size();i++){      
+      prof_flux = light_collection.profiles[i]->integrate(xmin,xmax,ymin,ymax,500);
+      prof_flux_mag = -2.5*log10(prof_flux) + root["instruments"][k]["ZP"].asDouble();
+      total_flux += prof_flux;
+
+      Json::Value profile;
+      profile["flux"]  = prof_flux;
+      profile["mag"]   = prof_flux_mag;
+      profile["type"]  = light_collection.profiles[i]->profile_type;
+      profile["index"] = lens_profile_ind[i];
+      profiles.append(profile);
+    }
+    double total_flux_mag = -2.5*log10(total_flux) + root["instruments"][k]["ZP"].asDouble();
+
+    lens_fluxes[name]["profiles"]      = profiles;
+    lens_fluxes[name]["total"]["flux"] = total_flux;
+    lens_fluxes[name]["total"]["mag"]  = total_flux_mag;
   }
+
+
+  // Write fluxes
+  Json::Value fluxes;
+  fin.open(output+"fluxes.json",std::ifstream::in);
+  if( fin.fail() ){
+    fluxes["lens_flux"] = lens_fluxes;
+    std::ofstream file_fluxes(output+"fluxes.json");
+    file_fluxes << fluxes;
+    file_fluxes.close();
+  } else {
+    // Overwrite fluxes after adding the lens fluxes
+    Json::Value fluxes;
+    fin >> fluxes;
+    fluxes["lens_flux"] = lens_fluxes;
+    std::ofstream file_fluxes(output+"fluxes.json");
+    file_fluxes << fluxes;
+    file_fluxes.close();
+  }
+  fin.close();
   //================= END:CREATE LENS LIGHT ================
 
 
@@ -198,5 +234,8 @@ int main(int argc,char* argv[]){
   //================= END:CREATE LENS COMPACT MASS ================
 
 
+
+
+    
   return 0;
 }

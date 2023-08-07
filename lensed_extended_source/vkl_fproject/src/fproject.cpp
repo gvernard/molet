@@ -121,6 +121,8 @@ int main(int argc,char* argv[]){
   
 
   //=============== BEGIN:LENS THE SOURCES =======================
+  Json::Value lensed_flux;
+  Json::Value unlensed_flux;
   for(int k=0;k<root["instruments"].size();k++){
     std::string name = root["instruments"][k]["name"].asString();
     
@@ -136,23 +138,13 @@ int main(int argc,char* argv[]){
     }
     int super_res_x = super_factor*( static_cast<int>(ceil((xmax-xmin)/resolution)) );
     int super_res_y = super_factor*( static_cast<int>(ceil((ymax-ymin)/resolution)) );
-    std::cout << "Super Resolution: " << super_res_x << std::endl;
     vkl::RectGrid mysim(super_res_x,super_res_y,xmin,xmax,ymin,ymax);
 
+
+    
     // Create the source and output super-resolved image
     vkl::CollectionProfiles profile_collection = vkl::JsonParsers::parse_profile(root["source"]["light_profile"][name],root["instruments"][k]["ZP"].asDouble(),input);
     profile_collection.write_all_profiles(output + name + "_source_super.fits");
-
-    // Confirm that the total brightness is conserved (by numerical integration)
-    double total_flux = 0.0;
-    for(int i=0;i<profile_collection.profiles.size();i++){
-      double integral = profile_collection.profiles[i]->integrate(500);
-      double integral_mag = -2.5*log10(integral) + root["instruments"][k]["ZP"].asDouble();
-      std::cout << "Total flux from source " << i << ": " << integral << " " << integral_mag << std::endl;
-      total_flux += integral;
-    }
-    double total_flux_mag = -2.5*log10(total_flux) + root["instruments"][k]["ZP"].asDouble();
-    std::cout << "Total flux all sources: " << total_flux << " " << total_flux_mag << std::endl;
 
 
     
@@ -171,11 +163,37 @@ int main(int argc,char* argv[]){
     vkl::FitsInterface::writeFits(mysim.Nx,mysim.Ny,mysim.z,keys,values,descriptions,output + name + "_lensed_image_super.fits");
 
 
-    //double total_flux,total_flux_mag;
-    mysim.integrate(total_flux,total_flux_mag,root["instruments"][k]["ZP"].asDouble());
-    std::cout << "Total flux from extended lensed source: " << total_flux << " " << total_flux_mag << std::endl;
 
+    // Calculate total unlensed flux per profile and in total.
+    double total_flux = 0.0;
+    double prof_flux,prof_flux_mag;
+    Json::Value profiles = Json::Value(Json::arrayValue);
+    for(int i=0;i<profile_collection.profiles.size();i++){      
+      prof_flux = profile_collection.profiles[i]->integrate(xmin,xmax,ymin,ymax,500);
+      prof_flux_mag = -2.5*log10(prof_flux) + root["instruments"][k]["ZP"].asDouble();
+      total_flux += prof_flux;
 
+      Json::Value profile;
+      profile["flux"]  = prof_flux;
+      profile["mag"]   = prof_flux_mag;
+      profile["type"]  = profile_collection.profiles[i]->profile_type;
+      profile["index"] = i;
+      profiles.append(profile);
+    }
+    double total_flux_mag = -2.5*log10(total_flux) + root["instruments"][k]["ZP"].asDouble();
+
+    // Calculate total lensed flux
+    double total_lensed_flux = 0.0;
+    double total_lensed_flux_mag;
+    mysim.integrate(total_lensed_flux,total_lensed_flux_mag,root["instruments"][k]["ZP"].asDouble());
+
+    unlensed_flux[name]["profiles"]      = profiles;
+    unlensed_flux[name]["total"]["flux"] = total_flux;
+    unlensed_flux[name]["total"]["mag"]  = total_flux_mag;    
+    lensed_flux[name]["total"]["flux"]   = total_lensed_flux;
+    lensed_flux[name]["total"]["mag"]    = total_lensed_flux_mag;
+
+    
     
     /*
     // Output deflections
@@ -210,6 +228,15 @@ int main(int argc,char* argv[]){
   }
   //================= END:LENS THE SOURCES =======================
 
+
+
+  // Write fluxes
+  Json::Value fluxes;
+  fluxes["lensed_source_flux"] = lensed_flux;
+  fluxes["unlensed_source_flux"] = unlensed_flux;
+  std::ofstream file_fluxes(output+"fluxes.json");
+  file_fluxes << fluxes;
+  file_fluxes.close();
 
   
   return 0;

@@ -317,7 +317,7 @@ void outputLightCurvesJson(std::vector<LightCurve*> lcs,std::string filename){
 
 
 // START:IMAGE MANIPULATION FUNCTIONS ========================================================================================
-vkl::RectGrid createObsStatic(Instrument* mycam,vkl::RectGrid* super_extended,vkl::RectGrid* super_lens_light,int res_x,int res_y,std::string out_path){  
+vkl::RectGrid createObsStatic(Instrument* mycam,vkl::RectGrid* super_extended,vkl::RectGrid* super_lens_light,int res_x,int res_y,double& F_conv_extended,double& F_conv_lens,bool convolve_lens){  
   // supersim is just carrying the resolution and extent of the image.
   int super_res_x = super_extended->Nx;
   int super_res_y = super_extended->Ny;
@@ -329,21 +329,19 @@ vkl::RectGrid createObsStatic(Instrument* mycam,vkl::RectGrid* super_extended,vk
   // Get the fixed extended lensed light. This is in units of flux!
   vkl::RectGrid convolved_extended = *super_extended;
   mycam->convolve(super_extended,&convolved_extended);
-  writeCutout(&convolved_extended,out_path+"output/psf_lensed_image_super.fits");
+  //writeCutout(&convolved_extended,out_path+"output/psf_lensed_image_super.fits");
   
   // Get the fixed lens galaxy light. This is in units of flux!
-  // We can choose not to convolve the lens light with the PSF by commenting out this line
   vkl::RectGrid convolved_lens_light = *super_lens_light;
-  mycam->convolve(super_lens_light,&convolved_lens_light);
-  writeCutout(&convolved_lens_light,out_path+"output/psf_lens_light_super.fits");  
-
-
-  double total_flux,total_flux_mag;
-  convolved_lens_light.integrate(total_flux,total_flux_mag,mycam->ZP);
-  std::cout << "Convolved Lens Light: " << total_flux << " " << total_flux_mag << std::endl;
-  convolved_extended.integrate(total_flux,total_flux_mag,mycam->ZP);
-  std::cout << "Convolved Extended: " << total_flux << " " << total_flux_mag << std::endl;
-
+  if( convolve_lens ){
+    mycam->convolve(super_lens_light,&convolved_lens_light);
+    //writeCutout(&convolved_lens_light,out_path+"output/psf_lens_light_super.fits");  
+  }
+  
+  // Calculate convolved fluxes
+  double dummy;
+  convolved_lens_light.integrate(F_conv_lens,dummy,mycam->ZP);
+  convolved_extended.integrate(F_conv_extended,dummy,mycam->ZP);
   
   // Combined light of the observed base image (integrating flux density from 'super' to observed resolution)
   vkl::RectGrid* base = new vkl::RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax); 
@@ -356,7 +354,7 @@ vkl::RectGrid createObsStatic(Instrument* mycam,vkl::RectGrid* super_extended,vk
   return obs_static;
 }
 
-vkl::RectGrid addPSLight(vkl::RectGrid* obs_static,vkl::RectGrid* supersim,std::vector<double> image_signal,std::vector<offsetPSF>& PSFoffsets,std::vector<Instrument*>& instrument_list,std::vector<double>& psf_partial_sums,int res_x,int res_y,double ZP){
+vkl::RectGrid createObsPS(vkl::RectGrid* supersim,std::vector<double> image_signal,std::vector<offsetPSF>& PSFoffsets,std::vector<Instrument*>& instrument_list,std::vector<double>& psf_partial_sums,int res_x,int res_y){
   // Loop over the truncated PSF (through PSF_offsets) for each image, and add their light to the ps_light image that contains all the point source light.
   // All vectors must have the same size, equal to the number of multiple images.
 
@@ -376,20 +374,6 @@ vkl::RectGrid addPSLight(vkl::RectGrid* obs_static,vkl::RectGrid* supersim,std::
 
   // Bin image from 'super' to observed resolution
   vkl::RectGrid obs_ps_light = super_ps_light.embeddedNewGrid(res_x,res_y,"integrate_density"); // This is (and should be) still in flux units!!!
-
-  double total_flux,total_flux_mag;
-  obs_ps_light.integrate(total_flux,total_flux_mag,ZP);
-  std::cout << "Convolved PS only: " << total_flux << " " << total_flux_mag << std::endl;
-
-  // The two grids, obs_ps_light and obs_static, have the same resolution, so I can simply add their fluxes
-  for(int i=0;i<obs_ps_light.Nz;i++){
-    obs_ps_light.z[i] += obs_static->z[i];
-  }
-
-  obs_ps_light.integrate(total_flux,total_flux_mag,ZP);
-  std::cout << "PS + static: " << total_flux << " " << total_flux_mag << std::endl;
-
-
   
   return obs_ps_light;  
 }
@@ -402,7 +386,7 @@ void writeCutout(vkl::RectGrid* obs,std::string fname){
 }
 
 
-void writeAllCutouts(std::vector<double> tobs,Json::Value images,std::vector<LightCurve*> samp_LC,vkl::RectGrid* super_extended,vkl::RectGrid* super_lens_light,Instrument* mycam,std::vector<offsetPSF>& PSFoffsets,std::vector<Instrument*>& instrument_list,std::vector<double>& psf_partial_sums,int res_x,int res_y,std::string mock,std::string instrument_name,std::string out_path){
+void writeAllCutouts(std::vector<double> tobs,Json::Value images,std::vector<LightCurve*> samp_LC,vkl::RectGrid* super_extended,vkl::RectGrid* super_lens_light,Instrument* mycam,std::vector<offsetPSF>& PSFoffsets,std::vector<Instrument*>& instrument_list,std::vector<double>& psf_partial_sums,int res_x,int res_y,std::string mock,bool convolve_lens,std::string out_path){
 
   // Create list of PSF file names +++++++++++++++++++	    
   //std::vector<std::string> psf_fnames = getFileNames(tobs,argv[4]); // user-provided function to get the file names of the PSFs as a function of timestep t
@@ -424,36 +408,50 @@ void writeAllCutouts(std::vector<double> tobs,Json::Value images,std::vector<Lig
     // ptr_obs_base = &obs_base_t;
     //++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    // The following line are only for a non-time-varying PSF
-    vkl::RectGrid obs_static = createObsStatic(mycam,super_extended,super_lens_light,res_x,res_y,out_path); // This is in flux units!
+    // The following line is only for a non-time-varying PSF
+    double F_conv_extended,F_conv_lens;
+    vkl::RectGrid obs_static = createObsStatic(mycam,super_extended,super_lens_light,res_x,res_y,F_conv_extended,F_conv_lens,convolve_lens); // This is in flux units!
     
     // construct a vector with the point source brightness in each image at the given time step
     std::vector<double> image_signal(images.size());
     for(int q=0;q<images.size();q++){
       image_signal[q] = samp_LC[q]->signal[t];
     }
-    vkl::RectGrid obs_ps_light = addPSLight(&obs_static,super_extended,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y,mycam->ZP);  // This is in flux units!
-    convertFromFlux(&obs_ps_light,mycam->ZP);
+    vkl::RectGrid obs_ps_light = createObsPS(super_extended,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y);  // This is in flux units!
+
+    // Calculate total flux of the PS light only
+    //double F_conv_ps,F_conv_ps_mag;
+    //obs_ps_light.integrate(F_conv_ps,F_conv_ps_mag,mycam->ZP);
+    
+    // The two grids, obs_ps_light and obs_static, have the same resolution, so I can simply add their fluxes
+    for(int i=0;i<obs_ps_light.Nz;i++){
+      obs_ps_light.z[i] += obs_static.z[i]; // <------ BE CAREFUL: 'obs_ps_light' now also contains the static light
+    }
     
     // Adding a simple time-dependent noise here, no need to save the noise realizations
+    convertGridFromFlux(&obs_ps_light,mycam->ZP);
     mycam->noise->initializeFromData(&obs_ps_light);
     mycam->noise->calculateNoise();
     mycam->noise->addNoise(&obs_ps_light);
     
     char buffer[100];
-    sprintf(buffer,"%s%s/OBS_%s_%03d.fits",out_path.c_str(),mock.c_str(),instrument_name.c_str(),t);
+    sprintf(buffer,"%s%s/OBS_%s_%03d.fits",out_path.c_str(),mock.c_str(),mycam->name.c_str(),t);
     std::string fname(buffer);
     writeCutout(&obs_ps_light,fname);
   }
 }
 
-void convertFromFlux(vkl::RectGrid* obs,double ZP){
+void convertGridFromFlux(vkl::RectGrid* obs,double ZP){
   for(int i=0;i<obs->Nz;i++){
-    if( obs->z[i] == 0.0 ){
-      obs->z[i] = 0.0; // Flux is zero (cannot convert to electrons/(s arcsec^2))
-    } else {
-      obs->z[i] = -2.5*log10(obs->z[i]) + ZP; // Convert to electrons/(s arcsec^2)
-    }
+    obs->z[i] = convertFromFlux(obs->z[i],ZP); // Convert to electrons/(s arcsec^2)
+  }
+}
+
+double convertFromFlux(double flux,double ZP){
+  if( flux == 0.0 ){
+    return 0.0; // Flux is zero (cannot convert to electrons/(s arcsec^2))
+  } else {
+    return -2.5*log10(flux) + ZP; // Convert to electrons/(s arcsec^2)
   }
 }
 // END:IMAGE MANIPULATION FUNCTIONS ==========================================================================================

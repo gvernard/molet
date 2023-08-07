@@ -14,20 +14,37 @@
 
 int main(int argc,char* argv[]){
 
+  /*
+    Requires:
+    - main input
+    - fluxes
+    - extended lensed source light (1 per instrument, from fproject.cpp)
+    - lens light (1 per instrument, from lens_light_mass.cpp)
+
+    If point source exists:
+    - multiple_images.json
+    - tobs.json
+  */
+
+  
   //=============== BEGIN:PARSE INPUT =======================
   std::ifstream fin;
 
   // Read the main projection parameters
   Json::Value root;
-  fin.open(argv[1],std::ifstream::in);                                   // INPUT 1: main MOLET input file
+  fin.open(argv[1],std::ifstream::in);                                   // INPUT FILE 1: main MOLET input file
   fin >> root;
   fin.close();
 
   std::string in_path = argv[2];
   std::string out_path = argv[3];
   double zs = root["source"]["redshift"].asDouble();
-
-
+  bool convolve_lens = root["output_options"]["convolve_lens"].asBool();
+  
+  Json::Value fluxes;
+  fin.open(out_path+"output/fluxes.json",std::ifstream::in);                      // INPUT FILE 2: fluxes
+  fin >> fluxes;
+  fin.close();
   
 
 
@@ -38,7 +55,7 @@ int main(int argc,char* argv[]){
   std::vector<double> tcont;
   if( root.isMember("point_source") ){
     // Read the multiple images' parameters from JSON
-    fin.open(out_path+"output/multiple_images.json",std::ifstream::in);  // INPUT FILE 2 (only for point source): properties of the multiple images
+    fin.open(out_path+"output/multiple_images.json",std::ifstream::in);  // INPUT FILE 3 (only for point source): properties of the multiple images
     fin >> images;
     fin.close();
     
@@ -52,7 +69,7 @@ int main(int argc,char* argv[]){
   
     // Read tobs_min and tobs_max
     Json::Value tobs_json;
-    fin.open(out_path+"output/tobs.json",std::ifstream::in);             // INPUT FILE 3 (only for point source): time vector properties
+    fin.open(out_path+"output/tobs.json",std::ifstream::in);             // INPUT FILE 4 (only for point source): time vector properties
     fin >> tobs_json;
     fin.close();
     double tobs_max = tobs_json["tobs_max"].asDouble();
@@ -83,6 +100,7 @@ int main(int argc,char* argv[]){
     const Json::Value instrument = root["instruments"][b];
     std::string instrument_name = root["instruments"][b]["name"].asString();
     Instrument mycam(instrument_name,root["instruments"][b]["ZP"].asDouble(),root["instruments"][b]["noise"],root["output_options"]["conserve_flux"].asBool());
+    double F_conv_extended,F_conv_lens,F_conv_ps;
 
 
 
@@ -119,14 +137,27 @@ int main(int argc,char* argv[]){
 
     
     
-    vkl::RectGrid super_extended = vkl::RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/"+instrument_name+"_lensed_image_super.fits");        // INPUT FILE 4: super-resolved lensed source
-    vkl::RectGrid super_lens_light = vkl::RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/"+instrument_name+"_lens_light_super.fits");        // INPUT FILE 5: super-resolved lens light
-
+    vkl::RectGrid super_extended = vkl::RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/"+instrument_name+"_lensed_image_super.fits");        // INPUT FILE 5: super-resolved lensed source
+    vkl::RectGrid super_lens_light = vkl::RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/"+instrument_name+"_lens_light_super.fits");        // INPUT FILE 6: super-resolved lens light
+    
     // Create static image (lens light and extended lensed source)
-    vkl::RectGrid obs_static = createObsStatic(&mycam,&super_extended,&super_lens_light,res_x,res_y,out_path); // This is in units of flux!
+    vkl::RectGrid obs_static = createObsStatic(&mycam,&super_extended,&super_lens_light,res_x,res_y,F_conv_extended,F_conv_lens,convolve_lens); // This is in units of flux!
 
+    // Calculate total flux of the static image
+    double F_final_static,F_final_static_mag;
+    obs_static.integrate(F_final_static,F_final_static_mag,mycam.ZP);
+    
     // Assign noise grid
     mycam.noise->setGrid(&obs_static);
+
+
+    fluxes["lensed_source_flux"][instrument_name]["total_convolved"]["flux"] = F_conv_extended;
+    fluxes["lensed_source_flux"][instrument_name]["total_convolved"]["mag"]  = convertFromFlux(F_conv_extended,mycam.ZP);
+    fluxes["lens_flux"][instrument_name]["total_convolved"]["flux"] = F_conv_lens;
+    fluxes["lens_flux"][instrument_name]["total_convolved"]["mag"]  = convertFromFlux(F_conv_lens,mycam.ZP);
+    fluxes["final_static"][instrument_name]["flux"] = F_final_static;
+    fluxes["final_static"][instrument_name]["mag"]  = F_final_static_mag;
+
     
     // All the static light components have been created.
     // The resulting observed image (not super-resolved) is "obs_static".
@@ -375,7 +406,7 @@ int main(int argc,char* argv[]){
 	    
 	  // *********************** Product: Observed sampled cut-outs (images) *****************************
 	  if( root["point_source"]["output_cutouts"].asBool() ){
-	    writeAllCutouts(tobs,images,samp_LC,&super_extended,&super_lens_light,&mycam,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y,mock,instrument_name,out_path);
+	    writeAllCutouts(tobs,images,samp_LC,&super_extended,&super_lens_light,&mycam,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y,mock,convolve_lens,out_path);
 	  }
 	  // *********************** End of product **************************************************	    
 	    
@@ -392,31 +423,53 @@ int main(int argc,char* argv[]){
       
 
       // *********************** Product: Just one cutout with only the macromagnification *****************************
-      // For each image we use the same brightness value.
-      // This value defines a flux from the equation F = 10^(-0.4*(M-ZP)). For M=ZP-7.5 (-5) I get a flux of 1000 (100).
-      double total_image_flux = 0.0;
+      // For each image we use the same brightness value, which is a multiple of the total extended lensed source flux.
+      // We gather the entire extended lensed source flux in one pixel and multiply by a factor
+      double factor = root["point_source"]["extended_flux_factor"].asDouble();
+      double extended_flux = fluxes["lensed_source_flux"][instrument_name]["total"]["flux"].asDouble();
       double area = supersim.step_x*supersim.step_y;
-      double single_image_flux = 10000.0; // In units of integrated (total) flux per image
+      double single_image_flux = factor*extended_flux;
+      double F_ps = 0.0;
       std::vector<double> image_signal(images.size());
       for(int q=0;q<images.size();q++){
 	double macro_mag = fabs(images[q]["mag"].asDouble());
-	image_signal[q] = single_image_flux*macro_mag;
-	total_image_flux += image_signal[q]*area; // The area of a PS image is one pixel
+	image_signal[q] = single_image_flux*macro_mag/area;
+	F_ps += image_signal[q]*area; // The area of a PS image is one pixel
       }
-      double total_image_flux_mag = -2.5*log10(total_image_flux) + mycam.ZP;
-      std::cout << "Total PS flux from all images: " << total_image_flux << " " << total_image_flux_mag << std::endl;
-      vkl::RectGrid obs_ps_light = addPSLight(&obs_static,&supersim,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y,mycam.ZP); // This is in flux units!
-      convertFromFlux(&obs_ps_light,mycam.ZP);
+      vkl::RectGrid obs_ps_light = createObsPS(&supersim,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y); // This is in flux units!
+
+      // Calculate total flux of the PS light only
+      double F_conv_ps_mag;
+      obs_ps_light.integrate(F_conv_ps,F_conv_ps_mag,mycam.ZP);
+
+      // The two grids, obs_ps_light and obs_static, have the same resolution, so I can simply add their fluxes
+      for(int i=0;i<obs_ps_light.Nz;i++){
+	obs_ps_light.z[i] += obs_static.z[i]; // <------ BE CAREFUL: 'obs_ps_light' now also contains the static light
+      }      
+
+      // Calculate total flux of the 'PS macro' image
+      double F_final_with_ps,F_final_with_ps_mag;
+      obs_ps_light.integrate(F_final_with_ps,F_final_with_ps_mag,mycam.ZP);
 
       // Adding time-dependent noise here
+      convertGridFromFlux(&obs_ps_light,mycam.ZP);
       mycam.noise->initializeFromData(&obs_ps_light);
       mycam.noise->calculateNoise();
-      //mycam.noise->addNoise(&obs_ps_light);
+      //mycam.noise->addNoise(&obs_ps_light); // <------ BE CAREFUL: Noise is added directly to the 'obs_ps_light' pixels.
       mycam.noise->outputNoiseProperties(out_path + "output/",instrument_name+"_ps_macro");
 
       // Output the observed static image with a PS with macromagnification only
       writeCutout(&obs_ps_light,out_path+"output/OBS_"+instrument_name+"_ps_macro.fits");
       //vkl::FitsInterface::writeFits(obs_static.Nx,obs_static.Ny,obs_static.z,fname);
+
+      fluxes["lensed_ps_flux"][instrument_name]["flux"] = F_ps;
+      fluxes["lensed_ps_flux"][instrument_name]["mag"]  = convertFromFlux(F_ps,mycam.ZP);
+      fluxes["lensed_ps_flux"][instrument_name]["flux"] = F_conv_ps;
+      fluxes["lensed_ps_flux"][instrument_name]["mag"]  = F_conv_ps_mag;
+      fluxes["unlensed_ps_flux"][instrument_name]["flux"] = single_image_flux;
+      fluxes["unlensed_ps_flux"][instrument_name]["mag"]  = convertFromFlux(single_image_flux,mycam.ZP);
+      fluxes["final_with_ps"][instrument_name]["flux"] = F_final_with_ps;
+      fluxes["final_with_ps"][instrument_name]["mag"]  = F_final_with_ps_mag;
       // *********************** End of product ************************************************************************
 
 
@@ -445,17 +498,9 @@ int main(int argc,char* argv[]){
 
 
     //=============== START: CREATE STATIC LIGHT ====================
-
-
-    double total_flux,total_flux_mag;
-    obs_static.integrate(total_flux,total_flux_mag,mycam.ZP);
-    std::cout << "Static: " << total_flux << " " << total_flux_mag << std::endl;
-
       
-    // A single image without any point source
-    convertFromFlux(&obs_static,mycam.ZP);
-    
     // Adding noise here and output realization
+    convertGridFromFlux(&obs_static,mycam.ZP);
     mycam.noise->initializeFromData(&obs_static);
     mycam.noise->calculateNoise();
     //mycam.noise->addNoise(&obs_static); // <------ BE CAREFUL: Noise is added directly to the obs_static pixels.
@@ -468,10 +513,18 @@ int main(int argc,char* argv[]){
 
 
     
+    
   }
   // Loop over the instruments ends here
   // ===================================================================================================================
   // ===================================================================================================================
+
+
+  // Add convolved and final fluxes
+  std::ofstream file_fluxes(out_path+"output/fluxes.json");
+  file_fluxes << fluxes;
+  file_fluxes.close();
+
 
   
   return 0;

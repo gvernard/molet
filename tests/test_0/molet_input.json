@@ -103,12 +103,14 @@
     
     "output_options": {
 	"super_factor": 5,
-	"conserve_flux": false
+	"conserve_flux": false,
+	"convolve_lens": false
     },
     
     "point_source": {
     	"x0": -0.05,
     	"y0": 0.05,
+	"extended_flux_factor": 0.01, // fiducial PS flux in units of the total lensed source flux
 	"triangle_size": 0.3, // in arcsec
     	"output_cutouts": false,
     	"variability": {
