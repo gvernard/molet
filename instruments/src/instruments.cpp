@@ -49,12 +49,12 @@ void offsetPSF::printFrame(FILE* fh,int Nx,int Ny,double xmin,double xmax,double
 
 
 // START:INSTRUMENT =================================================================================================
-Instrument::Instrument(std::string name,double ZP,Json::Value noise_pars):name(name){
-  this->ZP = ZP;
+Instrument::Instrument(std::string name,double ZP,Json::Value noise_pars,bool conserve_flux):name(name),ZP(ZP),conserve_flux(conserve_flux){
   this->common_constructor(noise_pars);
 }
-
-
+Instrument::Instrument(std::string name,double ZP,Json::Value noise_pars):name(name),ZP(ZP){
+  this->common_constructor(noise_pars);
+}
 Instrument::Instrument(std::string name,Json::Value noise_pars):name(name){
   this->ZP = 0.0;
   this->common_constructor(noise_pars);
@@ -182,7 +182,7 @@ void Instrument::interpolatePSF(vkl::RectGrid* grid){
   double yoffset = (this->original_psf->height - newh)/2.0;
   
   this->scaled_psf = new vkl::RectGrid(newNx,newNy,0,neww,0,newh);
-  
+
   double sum = 0.0;
   for(int i=0;i<this->scaled_psf->Ny;i++){
     double y = this->scaled_psf->center_y[i];
@@ -195,16 +195,29 @@ void Instrument::interpolatePSF(vkl::RectGrid* grid){
     }
   }
 
-  for(int i=0;i<this->scaled_psf->Nz;i++){
-    this->scaled_psf->z[i] /= sum;
+  if( this->conserve_flux ){
+    double total_flux,dummy;
+    this->scaled_psf->integrate(total_flux,dummy,this->ZP);
+    for(int i=0;i<this->scaled_psf->Nz;i++){
+      this->scaled_psf->z[i] /= total_flux;
+    }
+  } else {    
+    for(int i=0;i<this->scaled_psf->Nz;i++){
+      this->scaled_psf->z[i] /= sum;
+    }
   }
 }
 
 
-void Instrument::cropPSF(double threshold){
+void Instrument::cropPSF(double ratio){
   int Ncropx = 50;
   int Ncropy = 50;
 
+  double psf_flux,dummy;
+  this->scaled_psf->integrate(psf_flux,dummy,this->ZP);
+  double threshold = ratio*psf_flux;
+  double area = (this->scaled_psf->step_x)*(this->scaled_psf->step_y);
+  
   double* blur = NULL;
   while( true ){
     int loffx = floor(Ncropx/2.0);
@@ -220,7 +233,7 @@ void Instrument::cropPSF(double threshold){
     }
 
     //std::cout << sum << std::endl;
-    if( sum < threshold ){
+    if( sum*area < threshold ){
       Ncropx += 2;
       Ncropy += 2;
       free(blur);
@@ -236,6 +249,14 @@ void Instrument::cropPSF(double threshold){
     this->cropped_psf->z[i] = blur[i];
   }
   free(blur);
+  
+  if( this->conserve_flux ){
+    double total_flux,dummy;
+    this->cropped_psf->integrate(total_flux,dummy,this->ZP);
+    for(int i=0;i<this->cropped_psf->Nz;i++){
+      this->cropped_psf->z[i] /= total_flux;
+    }
+  }
 }
 
 
@@ -288,8 +309,15 @@ void Instrument::convolve(vkl::RectGrid* grid){
   fftw_free(f_kernel);
   
   // Normalize output
-  for(int i=0;i<Nx*Ny;i++){
-    grid->z[i] /= (Nx*Ny);
+  if( this->conserve_flux ){
+    double area = grid->step_x*grid->step_y;
+    for(int i=0;i<Nx*Ny;i++){
+      grid->z[i] = grid->z[i]*area/(Nx*Ny);
+    }
+  } else {
+    for(int i=0;i<Nx*Ny;i++){
+      grid->z[i] /= (Nx*Ny);
+    }
   }
 }
 
@@ -328,8 +356,15 @@ void Instrument::convolve(vkl::RectGrid* grid_in,vkl::RectGrid* grid_out){
   fftw_free(f_kernel);
   
   // Normalize output
-  for(int i=0;i<Nx*Ny;i++){
-    grid_out->z[i] /= (Nx*Ny);
+  if( this->conserve_flux ){
+    double area = grid_out->step_x*grid_out->step_y;
+    for(int i=0;i<Nx*Ny;i++){
+      grid_out->z[i] = grid_out->z[i]*area/(Nx*Ny);
+    }
+  } else {
+    for(int i=0;i<Nx*Ny;i++){
+      grid_out->z[i] /= (Nx*Ny);
+    }
   }
 }
 

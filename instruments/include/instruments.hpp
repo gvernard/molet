@@ -27,6 +27,7 @@ public:
   double resolution; // in arcsec
   double readout;    // in electrons
   double ZP;
+  bool conserve_flux = false;
   
   vkl::RectGrid* original_psf = NULL;
   vkl::RectGrid* scaled_psf   = NULL;
@@ -36,6 +37,7 @@ public:
 
   Instrument(std::string name,Json::Value noise_pars);
   Instrument(std::string name,double ZP,Json::Value noise_pars);
+  Instrument(std::string name,double ZP,Json::Value noise_pars,bool conserve_flux);
   ~Instrument();
 
   void common_constructor(Json::Value noise_pars);

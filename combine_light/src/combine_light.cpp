@@ -82,7 +82,7 @@ int main(int argc,char* argv[]){
   for(int b=0;b<root["instruments"].size();b++){
     const Json::Value instrument = root["instruments"][b];
     std::string instrument_name = root["instruments"][b]["name"].asString();
-    Instrument mycam(instrument_name,root["instruments"][b]["ZP"].asDouble(),root["instruments"][b]["noise"]);
+    Instrument mycam(instrument_name,root["instruments"][b]["ZP"].asDouble(),root["instruments"][b]["noise"],root["output_options"]["conserve_flux"].asBool());
 
 
 
@@ -109,6 +109,16 @@ int main(int argc,char* argv[]){
     //vkl::FitsInterface::writeFits(mycam.cropped_psf->Nx,mycam.cropped_psf->Ny,mycam.cropped_psf->z,out_path + "output/cropped_psf.fits");
     //vkl::FitsInterface::writeFits(supersim.Nx,supersim.Ny,mycam.kernel,out_path + "output/kernel_psf.fits");
 
+    double total,total_mag,total_scaled;
+    mycam.original_psf->integrate(total,total_mag,mycam.ZP);
+    std::cout << "Original PSF flux: " << total << " " << total_mag << std::endl;
+    mycam.scaled_psf->integrate(total_scaled,total_mag,mycam.ZP);
+    std::cout << "Scaled PSF flux: " << total_scaled << " " << total_mag << std::endl;
+    mycam.cropped_psf->integrate(total,total_mag,mycam.ZP);
+    std::cout << "Cropped PSF flux: " << total << " " << total_mag << " (" << 100*(total/total_scaled) << ")" << std::endl;
+
+    
+    
     vkl::RectGrid super_extended = vkl::RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/"+instrument_name+"_lensed_image_super.fits");        // INPUT FILE 4: super-resolved lensed source
     vkl::RectGrid super_lens_light = vkl::RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/"+instrument_name+"_lens_light_super.fits");        // INPUT FILE 5: super-resolved lens light
 
