@@ -110,7 +110,7 @@
     "point_source": {
     	"x0": -0.05,
     	"y0": 0.05,
-	"extended_flux_factor": 0.01, // fiducial PS flux in units of the total lensed source flux
+	"M_tot_unlensed": 25.0,
 	"triangle_size": 0.3, // in arcsec
     	"output_cutouts": false,
     	"variability": {

@@ -425,16 +425,15 @@ int main(int argc,char* argv[]){
       // *********************** Product: Just one cutout with only the macromagnification *****************************
       // For each image we use the same brightness value, which is a multiple of the total extended lensed source flux.
       // We gather the entire extended lensed source flux in one pixel and multiply by a factor
-      double factor = root["point_source"]["extended_flux_factor"].asDouble();
-      double extended_flux = fluxes["lensed_source_flux"][instrument_name]["total"]["flux"].asDouble();
+      double M_ps_unlensed = root["point_source"]["M_tot_unlensed"].asDouble();
+      double F_ps_unlensed = pow(10,-0.4*(M_ps_unlensed - mycam.ZP)); // This is a total flux
       double area = supersim.step_x*supersim.step_y;
-      double single_image_flux = factor*extended_flux;
       double F_ps = 0.0;
       std::vector<double> image_signal(images.size());
       for(int q=0;q<images.size();q++){
 	double macro_mag = fabs(images[q]["mag"].asDouble());
-	image_signal[q] = single_image_flux*macro_mag/area;
-	F_ps += image_signal[q]*area; // The area of a PS image is one pixel
+	image_signal[q] = macro_mag*(F_ps_unlensed/area); // This needs to be flux density, i.e. divided by the area of a pixel
+	F_ps += image_signal[q]*area; // This is the total magnified flux, i.e. multiplied by the area of a pixel
       }
       vkl::RectGrid obs_ps_light = createObsPS(&supersim,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y); // This is in flux units!
 
@@ -466,8 +465,8 @@ int main(int argc,char* argv[]){
       fluxes["lensed_ps_flux"][instrument_name]["mag"]  = convertFromFlux(F_ps,mycam.ZP);
       fluxes["lensed_ps_flux"][instrument_name]["flux"] = F_conv_ps;
       fluxes["lensed_ps_flux"][instrument_name]["mag"]  = F_conv_ps_mag;
-      fluxes["unlensed_ps_flux"][instrument_name]["flux"] = single_image_flux;
-      fluxes["unlensed_ps_flux"][instrument_name]["mag"]  = convertFromFlux(single_image_flux,mycam.ZP);
+      fluxes["unlensed_ps_flux"][instrument_name]["flux"] = F_ps_unlensed;
+      fluxes["unlensed_ps_flux"][instrument_name]["mag"]  = convertFromFlux(F_ps_unlensed,mycam.ZP);
       fluxes["final_with_ps"][instrument_name]["flux"] = F_final_with_ps;
       fluxes["final_with_ps"][instrument_name]["mag"]  = F_final_with_ps_mag;
       // *********************** End of product ************************************************************************
