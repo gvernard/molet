@@ -12,7 +12,6 @@ int main(int argc,char* argv[]){
 
   /*
     Requires:
-    - angular_diameter_distances.json
     - multiple_images.json
   */
   
@@ -31,12 +30,6 @@ int main(int argc,char* argv[]){
 
   std::string out_path = argv[3];
   std::string output = out_path+"output/";
-  
-  // Read the cosmological parameters
-  Json::Value cosmo;
-  fin.open(output+"angular_diameter_distances.json",std::ifstream::in);
-  fin >> cosmo;
-  fin.close();
   //================= END:PARSE INPUT =======================
 
 
@@ -84,8 +77,6 @@ int main(int argc,char* argv[]){
     std::vector<std::string> values{std::to_string(mylight.xmin),std::to_string(mylight.xmax),std::to_string(mylight.ymin),std::to_string(mylight.ymax)};
     std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
     vkl::FitsInterface::writeFits(mylight.Nx,mylight.Ny,mylight.z,keys,values,descriptions,output + name + "_lens_light_super.fits");
-
-
 
 
     // Calculate total flux per profile and in total
@@ -139,23 +130,15 @@ int main(int argc,char* argv[]){
 
   //=============== BEGIN:CREATE LENS COMPACT MASS ================
   if( root.isMember("point_source") ){
-    // Factor to convert surface mass density to kappa
-    double Dl  = cosmo[0]["Dl"].asDouble();
-    double Ds  = cosmo[0]["Ds"].asDouble();
-    double Dls = cosmo[0]["Dls"].asDouble();
-    double sigma_crit = 3472.8*Ds/(Dl*Dls); // the critical density: c^2/(4pi G)  Ds/(Dl*Dls), in units of kg/m^2
-    
     Json::Value all_compact; // Is not necessarily the same size as 'lenses' because one lens can have several 'compact_mass_model' profiles
     std::vector<std::string> flag;
-    std::vector<double> zps;
-    std::vector<double> areas;
+    std::vector<double> zps; // zero-points
     for(int i=0;i<root["lenses"].size();i++){
       if( root["lenses"][i].isMember("compact_mass_model") ){
 	for(int m=0;m<root["lenses"][i]["compact_mass_model"].size();m++){
 	  all_compact.append( root["lenses"][i]["compact_mass_model"][m] );
 	  flag.push_back("direct_mass");
-	  zps.push_back(0.0); // dummy, not needed
-	  areas.push_back(0.0); // dummy, not needed
+	  zps.push_back(0.0); // dummy
 	}
       } else {
 	for(int k=0;k<root["instruments"].size();k++){
@@ -165,8 +148,6 @@ int main(int argc,char* argv[]){
 	      all_compact.append( root["lenses"][i]["light_profile"][name][m] );
 	      flag.push_back("mass-to-light");
 	      zps.push_back(root["instruments"][k]["ZP"].asDouble());
-	      double dum = Instrument::getResolution(name);
-	      areas.push_back(dum*dum);
 	    }
 	  }
 	}
@@ -178,6 +159,11 @@ int main(int argc,char* argv[]){
     double xmin,xmax,ymin,ymax;
     compact_collection.getExtent(xmin,xmax,ymin,ymax);
     vkl::RectGrid kappa_star(300,300,xmin,xmax,ymin,ymax);
+    // double xmin = root["instruments"][0]["field-of-view_xmin"].asDouble();
+    // double xmax = root["instruments"][0]["field-of-view_xmax"].asDouble();
+    // double ymin = root["instruments"][0]["field-of-view_ymin"].asDouble();
+    // double ymax = root["instruments"][0]["field-of-view_ymax"].asDouble();
+    // vkl::RectGrid kappa_star(500,500,xmin,xmax,ymin,ymax);
     for(int i=0;i<kappa_star.Ny;i++){
       for(int j=0;j<kappa_star.Nx;j++){
 	double value = 0.0;
@@ -185,10 +171,10 @@ int main(int argc,char* argv[]){
 	  if( flag[m] == "direct_mass" ){
 	    value += compact_collection.profiles[m]->value(kappa_star.center_x[j],kappa_star.center_y[i]);
 	  } else {
-	    value += areas[m]*compact_collection.profiles[m]->value_to_mass(kappa_star.center_x[j],kappa_star.center_y[i]);
+	    value += compact_collection.profiles[m]->value_to_mass(kappa_star.center_x[j],kappa_star.center_y[i]);
 	  }
 	}
-	kappa_star.z[i*kappa_star.Nx+j] = value/sigma_crit;
+	kappa_star.z[i*kappa_star.Nx+j] = value;
       }
     }
     // Super-resolved lens compact mass profile image
@@ -213,19 +199,20 @@ int main(int argc,char* argv[]){
 	if( flag[m] == "direct_mass" ){
 	  value += compact_collection.profiles[m]->value(x,y);
 	} else {
-	  value += areas[m]*compact_collection.profiles[m]->value_to_mass(x,y);
+	  value += compact_collection.profiles[m]->value_to_mass(x,y);
 	}
       }
-      double k_star = value/sigma_crit;
+      double k_star = value;
       double s =  1.0 - k_star/images[j]["k"].asDouble();
-      std::cout << images[j]["k"].asDouble() << " " << k_star << " " << s << std::endl;
+      double kappa = images[j]["k"].asDouble();
+      images[j]["k_star"] = k_star;
       if( s < 0 ){
 	images[j]["s"] = 0.0;
       } else {
 	images[j]["s"] = s;	
       }
     }
-        
+
     // Overwrite multiple images file with values of s
     std::ofstream file_images(output+"multiple_images.json");
     file_images << images;
