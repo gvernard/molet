@@ -166,32 +166,28 @@ int main(int argc,char* argv[]){
 
     // Calculate total unlensed flux per profile and in total.
     double total_flux = 0.0;
-    double prof_flux,prof_flux_mag;
+    double ZP = root["instruments"][k]["ZP"].asDouble();
     Json::Value profiles = Json::Value(Json::arrayValue);
     for(int i=0;i<profile_collection.profiles.size();i++){      
-      prof_flux = profile_collection.profiles[i]->integrate(xmin,xmax,ymin,ymax,500);
-      prof_flux_mag = -2.5*log10(prof_flux) + root["instruments"][k]["ZP"].asDouble();
+      double prof_flux = profile_collection.profiles[i]->integrate(xmin,xmax,ymin,ymax,500);
       total_flux += prof_flux;
 
       Json::Value profile;
       profile["flux"]  = prof_flux;
-      profile["mag"]   = prof_flux_mag;
+      profile["mag"]   = -2.5*log10(prof_flux) + ZP;
       profile["type"]  = profile_collection.profiles[i]->profile_type;
       profile["index"] = i;
       profiles.append(profile);
     }
-    double total_flux_mag = -2.5*log10(total_flux) + root["instruments"][k]["ZP"].asDouble();
 
     // Calculate total lensed flux
-    double total_lensed_flux = 0.0;
-    double total_lensed_flux_mag;
-    mysim.integrate(total_lensed_flux,total_lensed_flux_mag,root["instruments"][k]["ZP"].asDouble());
+    double total_lensed_flux = mysim.integrate();
 
     unlensed_flux[name]["profiles"]      = profiles;
     unlensed_flux[name]["total"]["flux"] = total_flux;
-    unlensed_flux[name]["total"]["mag"]  = total_flux_mag;    
+    unlensed_flux[name]["total"]["mag"]  = -2.5*log10(total_flux) + ZP;
     lensed_flux[name]["total"]["flux"]   = total_lensed_flux;
-    lensed_flux[name]["total"]["mag"]    = total_lensed_flux_mag;
+    lensed_flux[name]["total"]["mag"]    = -2.5*log10(total_lensed_flux) + ZP;
 
     
     

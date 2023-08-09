@@ -341,16 +341,15 @@ vkl::RectGrid createObsStatic(Instrument* mycam,vkl::RectGrid* super_extended,vk
   }
   
   // Calculate convolved fluxes
-  double dummy;
-  convolved_lens_light.integrate(F_conv_lens,dummy,mycam->ZP);
-  convolved_extended.integrate(F_conv_extended,dummy,mycam->ZP);
+  F_conv_lens = convolved_lens_light.integrate();
+  F_conv_extended = convolved_extended.integrate();
   
   // Combined light of the observed base image (integrating flux density from 'super' to observed resolution)
   vkl::RectGrid* base = new vkl::RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax); 
   for(int i=0;i<base->Nz;i++){
     base->z[i] = convolved_lens_light.z[i] + convolved_extended.z[i];
   }
-  vkl::RectGrid obs_static = base->embeddedNewGrid(res_x,res_y,"integrate_density"); // This is in units of flux!
+  vkl::RectGrid obs_static = base->embeddedNewGrid(res_x,res_y,"average"); // This is in units of flux!
   delete(base);
 
   return obs_static;
@@ -375,7 +374,7 @@ vkl::RectGrid createObsPS(vkl::RectGrid* supersim,std::vector<double> image_sign
   }
 
   // Bin image from 'super' to observed resolution
-  vkl::RectGrid obs_ps_light = super_ps_light.embeddedNewGrid(res_x,res_y,"integrate_density"); // This is (and should be) still in flux units!!!
+  vkl::RectGrid obs_ps_light = super_ps_light.embeddedNewGrid(res_x,res_y,"average"); // This is (and should be) still in flux units!!!
   
   return obs_ps_light;  
 }

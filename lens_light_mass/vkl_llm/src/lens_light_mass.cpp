@@ -81,23 +81,22 @@ int main(int argc,char* argv[]){
 
     // Calculate total flux per profile and in total
     double total_flux = 0.0;
-    double prof_flux,prof_flux_mag;
+    double ZP = root["instruments"][k]["ZP"].asDouble();
     Json::Value profiles = Json::Value(Json::arrayValue);
     for(int i=0;i<light_collection.profiles.size();i++){      
-      prof_flux = light_collection.profiles[i]->integrate(xmin,xmax,ymin,ymax,500);
-      prof_flux_mag = -2.5*log10(prof_flux) + root["instruments"][k]["ZP"].asDouble();
+      double prof_flux = light_collection.profiles[i]->integrate(xmin,xmax,ymin,ymax,500);
       total_flux += prof_flux;
 
       Json::Value profile;
       profile["flux"]  = prof_flux;
-      profile["mag"]   = prof_flux_mag;
+      profile["mag"]   = -2.5*log10(prof_flux) + ZP;
       profile["type"]  = light_collection.profiles[i]->profile_type;
       profile["index"] = lens_profile_ind[i];
       profiles.append(profile);
     }
     double total_flux_mag = 0.0;
     if( total_flux != 0.0 ){
-      total_flux_mag = -2.5*log10(total_flux) + root["instruments"][k]["ZP"].asDouble();
+      total_flux_mag = -2.5*log10(total_flux) + ZP;
     }
 
     lens_fluxes[name]["profiles"]      = profiles;

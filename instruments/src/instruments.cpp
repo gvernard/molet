@@ -196,8 +196,7 @@ void Instrument::interpolatePSF(vkl::RectGrid* grid){
   }
 
   if( this->conserve_flux ){
-    double total_flux,dummy;
-    this->scaled_psf->integrate(total_flux,dummy,this->ZP);
+    double total_flux = this->scaled_psf->integrate();
     for(int i=0;i<this->scaled_psf->Nz;i++){
       this->scaled_psf->z[i] /= total_flux;
     }
@@ -213,8 +212,7 @@ void Instrument::cropPSF(double ratio){
   int Ncropx = 50;
   int Ncropy = 50;
 
-  double psf_flux,dummy;
-  this->scaled_psf->integrate(psf_flux,dummy,this->ZP);
+  double psf_flux = this->scaled_psf->integrate();
   double threshold = ratio*psf_flux;
   double area = (this->scaled_psf->step_x)*(this->scaled_psf->step_y);
   
@@ -251,8 +249,7 @@ void Instrument::cropPSF(double ratio){
   free(blur);
   
   if( this->conserve_flux ){
-    double total_flux,dummy;
-    this->cropped_psf->integrate(total_flux,dummy,this->ZP);
+    double total_flux = this->cropped_psf->integrate();
     for(int i=0;i<this->cropped_psf->Nz;i++){
       this->cropped_psf->z[i] /= total_flux;
     }

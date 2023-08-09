@@ -134,13 +134,12 @@ int main(int argc,char* argv[]){
     //vkl::FitsInterface::writeFits(mycam.cropped_psf->Nx,mycam.cropped_psf->Ny,mycam.cropped_psf->z,out_path + "output/cropped_psf.fits");
     //vkl::FitsInterface::writeFits(supersim.Nx,supersim.Ny,mycam.kernel,out_path + "output/kernel_psf.fits");
 
-    double total,total_mag,total_scaled;
-    mycam.original_psf->integrate(total,total_mag,mycam.ZP);
-    std::cout << "Original PSF flux: " << total << " " << total_mag << std::endl;
-    mycam.scaled_psf->integrate(total_scaled,total_mag,mycam.ZP);
-    std::cout << "Scaled PSF flux: " << total_scaled << " " << total_mag << std::endl;
-    mycam.cropped_psf->integrate(total,total_mag,mycam.ZP);
-    std::cout << "Cropped PSF flux: " << total << " " << total_mag << " (" << 100*(total/total_scaled) << ")" << std::endl;
+    double total = mycam.original_psf->integrate();
+    std::cout << "Original PSF flux: " << total << " " << -2.5*log10(total)+mycam.ZP << std::endl;
+    double total_scaled = mycam.scaled_psf->integrate();
+    std::cout << "Scaled PSF flux:   " << total_scaled << " " << -2.5*log10(total_scaled)+mycam.ZP << std::endl;
+    double total_cropped = mycam.cropped_psf->integrate();
+    std::cout << "Cropped PSF flux:  " << total_cropped << " " << -2.5*log10(total_cropped)+mycam.ZP << " (" << 100*(total_cropped/total_scaled) << ")" << std::endl;
 
     
     
@@ -151,8 +150,7 @@ int main(int argc,char* argv[]){
     vkl::RectGrid obs_static = createObsStatic(&mycam,&super_extended,&super_lens_light,res_x,res_y,F_conv_extended,F_conv_lens,convolve_lens); // This is in units of flux!
 
     // Calculate total flux of the static image
-    double F_final_static,F_final_static_mag;
-    obs_static.integrate(F_final_static,F_final_static_mag,mycam.ZP);
+    double F_final_static = obs_static.integrate();
     
     // Assign noise grid
     mycam.noise->setGrid(&obs_static);
@@ -163,7 +161,7 @@ int main(int argc,char* argv[]){
     fluxes["lens_flux"][instrument_name]["total_convolved"]["flux"] = F_conv_lens;
     fluxes["lens_flux"][instrument_name]["total_convolved"]["mag"]  = convertFromFlux(F_conv_lens,mycam.ZP);
     fluxes["final_static"][instrument_name]["flux"] = F_final_static;
-    fluxes["final_static"][instrument_name]["mag"]  = F_final_static_mag;
+    fluxes["final_static"][instrument_name]["mag"]  = convertFromFlux(F_final_static,mycam.ZP);
 
     
     // All the static light components have been created.
@@ -491,8 +489,7 @@ int main(int argc,char* argv[]){
       vkl::RectGrid obs_ps_light = createObsPS(&supersim,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y); // This is in flux units!
 
       // Calculate total flux of the PS light only
-      double F_conv_ps_mag;
-      obs_ps_light.integrate(F_conv_ps,F_conv_ps_mag,mycam.ZP);
+      F_conv_ps = obs_ps_light.integrate();
 
       // The two grids, obs_ps_light and obs_static, have the same resolution, so I can simply add their fluxes
       for(int i=0;i<obs_ps_light.Nz;i++){
@@ -500,11 +497,9 @@ int main(int argc,char* argv[]){
       }      
 
       // Calculate total flux of the 'PS macro' image
-      double F_final_with_ps,F_final_with_ps_mag;
-      obs_ps_light.integrate(F_final_with_ps,F_final_with_ps_mag,mycam.ZP);
+      double F_final_with_ps = obs_ps_light.integrate();
 
       // Adding time-dependent noise here
-      convertGridFromFlux(&obs_ps_light,mycam.ZP);
       mycam.noise->initializeFromData(&obs_ps_light);
       mycam.noise->calculateNoise();
       mycam.noise->addNoise(&obs_ps_light); // <------ BE CAREFUL: Noise is added directly to the 'obs_ps_light' pixels.
@@ -514,14 +509,14 @@ int main(int argc,char* argv[]){
       writeCutout(&obs_ps_light,out_path+"output/OBS_"+instrument_name+"_ps_macro.fits");
       //vkl::FitsInterface::writeFits(obs_static.Nx,obs_static.Ny,obs_static.z,fname);
 
-      fluxes["lensed_ps_flux"][instrument_name]["flux"] = F_ps;
-      fluxes["lensed_ps_flux"][instrument_name]["mag"]  = convertFromFlux(F_ps,mycam.ZP);
-      fluxes["lensed_ps_flux"][instrument_name]["flux"] = F_conv_ps;
-      fluxes["lensed_ps_flux"][instrument_name]["mag"]  = F_conv_ps_mag;
+      fluxes["lensed_ps_flux"][instrument_name]["flux"]   = F_ps;
+      fluxes["lensed_ps_flux"][instrument_name]["mag"]    = convertFromFlux(F_ps,mycam.ZP);
+      fluxes["lensed_ps_flux"][instrument_name]["flux"]   = F_conv_ps;
+      fluxes["lensed_ps_flux"][instrument_name]["mag"]    = convertFromFlux(F_conv_ps,mycam.ZP);
       fluxes["unlensed_ps_flux"][instrument_name]["flux"] = F_ps_unlensed;
       fluxes["unlensed_ps_flux"][instrument_name]["mag"]  = convertFromFlux(F_ps_unlensed,mycam.ZP);
-      fluxes["final_with_ps"][instrument_name]["flux"] = F_final_with_ps;
-      fluxes["final_with_ps"][instrument_name]["mag"]  = F_final_with_ps_mag;
+      fluxes["final_with_ps"][instrument_name]["flux"]    = F_final_with_ps;
+      fluxes["final_with_ps"][instrument_name]["mag"]     = convertFromFlux(F_final_with_ps,mycam.ZP);
       // *********************** End of product ************************************************************************
 
 
@@ -550,9 +545,8 @@ int main(int argc,char* argv[]){
 
 
     //=============== START: CREATE STATIC LIGHT ====================
-      
+    
     // Adding noise here and output realization
-    convertGridFromFlux(&obs_static,mycam.ZP);
     mycam.noise->initializeFromData(&obs_static);
     mycam.noise->calculateNoise();
     mycam.noise->addNoise(&obs_static); // <------ BE CAREFUL: Noise is added directly to the obs_static pixels.
