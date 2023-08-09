@@ -3,6 +3,10 @@ molet_driver
 /tests/*/output/
 /tests/*/mock_*
 /tests/test_6/input_files/vs_testCAM-i/*.fits
+/new_tests/*/*/MOLET_RUN/
+/new_tests/*/*/output/
+/new_tests/*/*/mock_*
+/new_tests/test_6/input_files/vs_testCAM-i/*.fits
 log.txt
 *.pdf
 lib

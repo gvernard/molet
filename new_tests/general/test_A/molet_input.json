@@ -92,7 +92,8 @@
     "output_options": {
 	"super_factor": 5,
 	"conserve_flux": false,
-	"convolve_lens": false
+	"convolve_lens": false,
+    	"output_PS_cutouts": false
     },
     
     "point_source": {
@@ -100,7 +101,6 @@
     	"y0": 0.05,
 	"M_tot_unlensed": 25.0,
 	"triangle_size": 0.3, // in arcsec
-    	"output_cutouts": false,
     	"variability": {
     	    "intrinsic": {
     		"type": "custom"

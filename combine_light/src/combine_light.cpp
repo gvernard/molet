@@ -405,7 +405,7 @@ int main(int argc,char* argv[]){
 	    
 	    
 	  // *********************** Product: Observed sampled cut-outs (images) *****************************
-	  if( root["point_source"]["output_cutouts"].asBool() ){
+	  if( root["output_options"]["output_PS_cutouts"].asBool() ){
 	    writeAllCutouts(tobs,images,samp_LC,&super_extended,&super_lens_light,&mycam,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y,mock,convolve_lens,out_path);
 	  }
 	  // *********************** End of product **************************************************	    
@@ -454,7 +454,7 @@ int main(int argc,char* argv[]){
       convertGridFromFlux(&obs_ps_light,mycam.ZP);
       mycam.noise->initializeFromData(&obs_ps_light);
       mycam.noise->calculateNoise();
-      //mycam.noise->addNoise(&obs_ps_light); // <------ BE CAREFUL: Noise is added directly to the 'obs_ps_light' pixels.
+      mycam.noise->addNoise(&obs_ps_light); // <------ BE CAREFUL: Noise is added directly to the 'obs_ps_light' pixels.
       mycam.noise->outputNoiseProperties(out_path + "output/",instrument_name+"_ps_macro");
 
       // Output the observed static image with a PS with macromagnification only
@@ -502,7 +502,7 @@ int main(int argc,char* argv[]){
     convertGridFromFlux(&obs_static,mycam.ZP);
     mycam.noise->initializeFromData(&obs_static);
     mycam.noise->calculateNoise();
-    //mycam.noise->addNoise(&obs_static); // <------ BE CAREFUL: Noise is added directly to the obs_static pixels.
+    mycam.noise->addNoise(&obs_static); // <------ BE CAREFUL: Noise is added directly to the obs_static pixels.
     mycam.noise->outputNoiseProperties(out_path + "output/",instrument_name);
     
     // Output the observed static image

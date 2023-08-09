@@ -183,7 +183,10 @@ int main(int argc,char* argv[]){
     std::vector<std::string> descriptions{"left limit of the frame","right limit of the frame","bottom limit of the frame","top limit of the frame"};
     vkl::FitsInterface::writeFits(kappa_star.Nx,kappa_star.Ny,kappa_star.z,keys,values,descriptions,output + "lens_kappa_star_super.fits");      
 
-
+    // double total_kappa_star,dummy;
+    // kappa_star.integrate(total_kappa_star,dummy,0.0);
+    // std::cout << "Total k_star: " << total_kappa_star << std::endl;
+    
     // Read the image parameters
     Json::Value images;
     fin.open(output+"multiple_images.json",std::ifstream::in);

@@ -92,23 +92,41 @@
     "output_options": {
 	"super_factor": 5,
 	"conserve_flux": false,
-	"convolve_lens": false
+	"convolve_lens": false,
+    	"output_PS_cutouts": false
     },
     
     "point_source": {
-    	"x0": -0.05,
-    	"y0": 0.05,
+	"x0": -0.05,
+	"y0": 0.05,
 	"M_tot_unlensed": 25.0,
 	"triangle_size": 0.3, // in arcsec
-    	"output_cutouts": false,
-    	"variability": {
-    	    "intrinsic": {
-    		"type": "custom"
-    	    },
-    	    "extrinsic": {
-    		"type": "custom"
-    	    }
-    	}
+	"variability": {
+	    "intrinsic": {
+		"type": "custom"
+	    },
+	    "extrinsic": {
+		"type": "moving_fixed_source",
+		"microlens_mass": 1,
+		"Nex": 100,
+		"pars": {
+		    "sigma_pec_l": 250,
+		    "sigma_pec_s": 250,
+		    "sigma_disp": 250,
+		    "ra": 340.2,
+		    "dec": 0.0
+		},
+		"profiles": {
+		    "type": "parametric",
+		    "r0": 3.25, // in 10^14 cm
+		    "l0": 102.68, // in nm
+		    "nu": 1.33,
+		    "shape": "gaussian",
+		    "incl": 0,
+		    "orient": 0
+		}
+	    }
+	}
     },
     
     
