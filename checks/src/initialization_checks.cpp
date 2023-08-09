@@ -37,15 +37,11 @@ int main(int argc,char* argv[]){
   if( root.isMember("point_source") ){
     point_source = true;
   }
-
-
-  
-
-
-  // ===================== Checks start here ============================
   bool check = false;
 
   
+  
+  // ====================================================================
   // Check if given instrument match the ones in the Molet modules and get a list of their names.
   std::vector<std::string> instruments;
   for(int i=0;i<root["instruments"].size();i++){
@@ -78,7 +74,7 @@ int main(int argc,char* argv[]){
   
   // Check mass model
   for(int j=0;j<root["lenses"].size();j++){
-    for(int k=0;k<root["lenses"][j]["mass_model"].size();j++){
+    for(int k=0;k<root["lenses"][j]["mass_model"].size();k++){
       std::string mass_type = root["lenses"][j]["mass_model"][k]["type"].asString();
       if( mass_type == "pert" ){
 	std::string filename = root["lenses"][j]["mass_model"][k]["pars"]["filepath"].asString();
@@ -91,32 +87,18 @@ int main(int argc,char* argv[]){
   }
 
   
-  // Check compact mass model of the lenses if a point source exists
-  if( point_source ){
-    for(int j=0;j<root["lenses"].size();j++){
-      for(int k=0;k<root["lenses"][j]["compact_mass_model"].size();j++){
-	std::string compact_type = root["lenses"][j]["compact_mass_model"][k]["type"].asString();
-	if( compact_type == "custom" ){
-	  std::string filename = root["lenses"][j]["compact_mass_model"][k]["pars"]["filepath"].asString();
-	  if( !file_exists(input_dir+filename) ){
-	    fprintf(stderr,"Custom compact mass model '%s' for lens %d not found! It must be provided in %s.\n",filename.c_str(),j,input_dir.c_str());
-	    check = true;
-	  }
-	}
-      }
-    }
-  }
-
-  
   // Exit here if there is something wrong at the first stage of the checks
   if( check ){
     return 1;
   }
+  // ====================================================================
 
 
 
   
 
+  
+  // ====================================================================
   // Loop over instruments and check light profiles
   for(int i=0;i<instruments.size();i++){
     std::string name = instruments[i];
@@ -135,7 +117,7 @@ int main(int argc,char* argv[]){
       
     // Check if lens light exists
     for(int j=0;j<root["lenses"].size();j++){
-      for(int k=0;k<root["lenses"][j]["light_profile"][name].size();j++){
+      for(int k=0;k<root["lenses"][j]["light_profile"][name].size();k++){
 	std::string light_type = root["lenses"][j]["light_profile"][name][k]["type"].asString();
 	if( light_type == "custom" ){
 	  std::string filename = root["lenses"][j]["light_profile"][name][k]["pars"]["filepath"].asString();
@@ -148,8 +130,81 @@ int main(int argc,char* argv[]){
     }
   }
 
+  
+  if( check ){
+    return 1;
+  }
+  // ====================================================================
 
   
+  
+
+  // ====================================================================
+  // Check compact mass model (after the light profiles) of the lenses if a point source exists
+  if( point_source ){
+
+
+    for(int i=0;i<root["lenses"].size();i++){
+      
+      std::vector<int> upsilon_counter(root["instruments"].size(),0);
+      for(int b=0;b<instruments.size();b++){
+	for(int k=0;k<root["lenses"][i]["light_profile"][instruments[b]].size();k++){
+	  if( root["lenses"][i]["light_profile"][instruments[b]][k].isMember("mass-to-light") ){
+	    upsilon_counter[b]++;
+	    if( root["lenses"][i]["light_profile"][instruments[b]][k]["mass-to-light"]["upsilon"].asDouble() < 0 ){
+	      fprintf(stderr,"Mass-to-light ratio for lens %d and light profile %d should be positive!\n",i,k);
+	      check = true;
+	    }
+	  }
+	}
+      }
+
+      int counter = 0; // Only one element of vector upsilon_counter should be non-zero.
+      for(int b=0;b<root["instruments"].size();b++){
+	if( upsilon_counter[b] != 0 ){
+	  counter++;
+	}
+      }
+
+      // Either a mass-to-light ratio, specified only for the profile(s) in a single instrument, or a compact mass profile can be defined - not both, not none
+      if( counter > 1 ){
+	fprintf(stderr,"Mass-to-light ratio must be specified only for ONE instrument for each lens! Check lens: %d\n",i);
+	check = true;
+      } else if( counter == 1 ){
+	if( root["lenses"][i].isMember("compact_mass_model") ){	
+	  fprintf(stderr,"Lens %d cannot have both a mass-to-light ratio and a compact mass profile specified!\n",i);
+	  check = true;
+	}
+      } else {
+	if( root["lenses"][i].isMember("compact_mass_model") ){	
+	  for(int k=0;k<root["lenses"][i]["compact_mass_model"].size();k++){
+	    std::string compact_type = root["lenses"][i]["compact_mass_model"][k]["type"].asString();
+	    if( compact_type == "custom" ){
+	      std::string filename = root["lenses"][i]["compact_mass_model"][k]["pars"]["filepath"].asString();
+	      if( !file_exists(input_dir+filename) ){
+		fprintf(stderr,"Custom compact mass model '%s' for lens %d not found! It must be provided in %s.\n",filename.c_str(),i,input_dir.c_str());
+		check = true;
+	      }
+	    }
+	  }
+	} else {
+	  fprintf(stderr,"Lens %d must have either a mass-to-light ratio or a compact mass profile specified!\n",i);
+	  check = true;
+	}
+      }
+
+    }
+  }
+
+  if( check ){
+    return 1;
+  }
+  // ====================================================================
+
+  
+
+  
+  // ====================================================================
   // If a point source exists, loop over instruments and check light curves
   if( point_source ){
 
@@ -187,12 +242,14 @@ int main(int argc,char* argv[]){
     }
 
   }
-  // ====================================================================
-
   
   if( check ){
     return 1;
   }
+  // ====================================================================
 
+
+
+  
   return 0;
 }
