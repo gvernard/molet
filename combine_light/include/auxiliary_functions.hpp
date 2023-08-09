@@ -25,7 +25,7 @@ public:
   void interpolate(std::vector<double> obs_time,double delay,double* interpolated);
   void interpolate(LightCurve* int_lc,double delay);
   Json::Value jsonOut();
-  Json::Value jsonOutMag();
+  Json::Value jsonOutMag(double ZP);
 };
 
 
@@ -39,7 +39,7 @@ void combineInExSignals(double td,double macro_mag,std::vector<double> time,Ligh
 void combineInExUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* LC_unmicro,LightCurve* target,double unmicro_ratio);
 void combineInUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_unmicro,LightCurve* target,double unmicro_ratio);
 void justOneSignal(double td,double macro_mag,std::vector<double> time,LightCurve* LC,LightCurve* target);
-void outputLightCurvesJson(std::vector<LightCurve*> lcs,std::string filename);
+void outputLightCurvesJson(std::vector<LightCurve*> lcs,double ZP,std::string filename);
 
 vkl::RectGrid createObsStatic(Instrument* mycam,vkl::RectGrid* super_extended,vkl::RectGrid* super_lens_light,int res_x,int res_y,double& F_conv_extended,double& F_conv_lens,bool convolve_lens);
 vkl::RectGrid createObsPS(vkl::RectGrid* supersim,std::vector<double> image_signal,std::vector<offsetPSF>& PSFoffsets,std::vector<Instrument*>& instrument_list,std::vector<double>& psf_partial_sums,int res_x,int res_y);

@@ -93,7 +93,7 @@ ax.invert_yaxis()
 ax.set_xlabel("t [days]")
 ax.set_ylabel("Mag")
 #ax.set_xlim(1230,1500)
-ax.set_ylim(16,12.5)
+#ax.set_ylim(25.5,21.5)
 
 for i in range(0,len(img_indices)):
     index = img_indices[i]

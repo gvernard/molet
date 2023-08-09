@@ -59,7 +59,7 @@ fig,ax = plt.subplots(1,figsize=(18,7))
 ax.set_xlabel("t [days]")
 ax.set_ylabel(r"$\mu$")
 #ax.set_xlim(61150,61340)
-#ax.set_ylim(0.5,-6)
+#ax.set_ylim(21.5,25.5)
 
 for q in range(0,len(images)):
     if len(images[q]) != 0:

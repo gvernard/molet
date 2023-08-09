@@ -39,7 +39,14 @@ int main(int argc,char* argv[]){
   std::string in_path = argv[2];
   std::string out_path = argv[3];
   double zs = root["source"]["redshift"].asDouble();
-  bool convolve_lens = root["output_options"]["convolve_lens"].asBool();
+  bool convolve_lens = false;
+  if( root["output_options"].isMember("convolve_lens") ){
+    convolve_lens = root["output_options"]["convolve_lens"].asBool();
+  }
+  bool conserve_flux = false;
+  if( root["output_options"].isMember("conserve_flux") ){
+    conserve_flux = root["output_options"]["conserve_flux"].asBool();
+  }
   
   Json::Value fluxes;
   fin.open(out_path+"output/fluxes.json",std::ifstream::in);                      // INPUT FILE 2: fluxes
@@ -99,7 +106,7 @@ int main(int argc,char* argv[]){
   for(int b=0;b<root["instruments"].size();b++){
     const Json::Value instrument = root["instruments"][b];
     std::string instrument_name = root["instruments"][b]["name"].asString();
-    Instrument mycam(instrument_name,root["instruments"][b]["ZP"].asDouble(),root["instruments"][b]["noise"],root["output_options"]["conserve_flux"].asBool());
+    Instrument mycam(instrument_name,root["instruments"][b]["ZP"].asDouble(),root["instruments"][b]["noise"],conserve_flux);
     double F_conv_extended,F_conv_lens,F_conv_ps;
 
 
@@ -254,7 +261,7 @@ int main(int argc,char* argv[]){
 	  }
 	}
 
-	outputLightCurvesJson(LC_unmicro,out_path+"output/"+instrument_name+"_LC_unmicro.json");
+	outputLightCurvesJson(LC_unmicro,mycam.ZP,out_path+"output/"+instrument_name+"_LC_unmicro.json");
       }
       //=======================================================================================================================            
 
@@ -441,8 +448,8 @@ int main(int argc,char* argv[]){
 	    
 	    
 	  // Write json light curves and clean up
-	  outputLightCurvesJson(cont_LC,out_path+mock+"/"+instrument_name+"_LC_continuous.json");
-	  outputLightCurvesJson(samp_LC,out_path+mock+"/"+instrument_name+"_LC_sampled.json");
+	  outputLightCurvesJson(cont_LC,mycam.ZP,out_path+mock+"/"+instrument_name+"_LC_continuous.json");
+	  outputLightCurvesJson(samp_LC,mycam.ZP,out_path+mock+"/"+instrument_name+"_LC_sampled.json");
 	  for(int q=0;q<images.size();q++){
 	    delete(cont_LC[q]);
 	    // we don't delete samp_LC yet because it is needed in case of outputing cutouts

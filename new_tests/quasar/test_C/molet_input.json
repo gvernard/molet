@@ -32,7 +32,7 @@
 		    }
 		}
             ],
-	    
+
 	    "light_profile": {
 		"testCAM-i": [
 		    {
@@ -45,26 +45,14 @@
 			    "M_tot": 21,
 			    "r_eff": 1.7,
 			    "n": 4
+			},
+			"mass-to-light": {
+			    "upsilon": 2.0,
+			    "upsilon_exp": 0.2
 			}
 		    }
 		]
-	    },
-
-	    "compact_mass_model": [
-	    	{
-	    	    "type": "sersic",
-	    	    "pars": {
-	    		"x0": 0.0,
-	    		"y0": 0.0,
-	    		"pa": -145.0,
-	    		"q": 0.8,
-	    		"i_eff": 0.5, // Directly kappa_star, in units of Sigma_critical
-	    		"r_eff": 1.7,
-	    		"n": 4
-	    	    }
-	    	}
-	    ]	    
-	    
+	    }
 	}
     ],
 
@@ -100,27 +88,40 @@
 	    ]
 	}
     },
-    
+
     "output_options": {
 	"super_factor": 5,
 	"conserve_flux": false,
 	"convolve_lens": false,
-	"output_PS_cutouts": false
+    	"output_PS_cutouts": false
     },
-    
+
     "point_source": {
-	"x0": -0.05,
-	"y0": 0.05,
+    	"x0": -0.05,
+    	"y0": 0.05,
 	"M_tot_unlensed": 25.0,
 	"triangle_size": 0.3, // in arcsec
-	"variability": {
-	    "intrinsic": {
-		"type": "custom"
-	    },
-	    "extrinsic": {
-		"type": "custom"		
-	    }
-	}
+    	"variability": {
+    	    "intrinsic": {
+    		"type": "custom"
+    	    },
+    	    "extrinsic": {
+    		"type": "custom"
+    	    },
+    	    "unmicro": {
+ 		"testCAM-i": {
+		    "flux_ratio": 0.3,
+    		    "type": "top-hat",
+		    "pars": {
+			"radius": 3000 // in 10^14 cm
+		    }
+   		    // "type": "delta",
+		    // "pars": {
+		    // 	"t_peak": 25 // days
+		    // }
+		}
+    	    }
+    	}
     },
     
     

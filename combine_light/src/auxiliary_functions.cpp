@@ -82,13 +82,13 @@ Json::Value LightCurve::jsonOut(){
   return json_lc;
 }
 
-Json::Value LightCurve::jsonOutMag(){
+Json::Value LightCurve::jsonOutMag(double ZP){
   Json::Value json_lc,json_time,json_signal,json_dsignal;
   for(int i=0;i<this->time.size();i++){
     json_time.append(this->time[i]);
-    json_signal.append(-2.5*log10(this->signal[i]));
+    json_signal.append(-2.5*log10(this->signal[i]) + ZP);
     // This is a symmetric error derived from the asymmetric logarithmic errors as: dm = [(m+)+(m-)]/2
-    json_dsignal.append( -2.5*log10(sqrt(1.0-pow(this->dsignal[i]/this->signal[i],2))) );
+    json_dsignal.append( -2.5*log10(sqrt(1.0-pow(this->dsignal[i]/this->signal[i],2))) + ZP );
   }
   json_lc["time"]    = json_time;
   json_lc["signal"]  = json_signal;
@@ -302,10 +302,10 @@ void justOneSignal(double td,double macro_mag,std::vector<double> time,LightCurv
   delete(base);
 }
 
-void outputLightCurvesJson(std::vector<LightCurve*> lcs,std::string filename){
+void outputLightCurvesJson(std::vector<LightCurve*> lcs,double ZP,std::string filename){
   Json::Value lcs_json;
   for(int q=0;q<lcs.size();q++){
-    lcs_json.append( lcs[q]->jsonOutMag() );
+    lcs_json.append( lcs[q]->jsonOutMag(ZP) );
     //lcs_json.append( lcs[q]->jsonOut() );
   }
   std::ofstream lcs_file(filename);

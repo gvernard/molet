@@ -1,0 +1,198 @@
+{
+  "coordinates_origin": {
+    "dec": "-08d45m51.48s",
+    "ra": "00h11m20.244s"
+  },
+  "cosmology": {
+    "H0": 73.0,
+    "Om0": 0.3,
+    "astropy_name": "FlatLambdaCDM"
+  },
+  "instrument": {
+    "band": "F814W",
+    "name": "HST-WFPC2",
+    "pixel_size": 0.1,
+    "psf": {
+      "description": null,
+      "pixels": {
+        "field_of_view_x": [
+          0,
+          4.8
+        ],
+        "field_of_view_y": [
+          0,
+          4.8
+        ],
+        "fits_file": {
+          "path": "psf.fits"
+        },
+        "num_pix_x": 74,
+        "num_pix_y": 74
+      },
+      "type": "PixelatedPSF"
+    },
+    "readout_noise": 4
+  },
+  "lensing_entities": [
+    {
+      "mass_model": [
+        {
+          "id": "0-massfield-mass-0-ExternalShear",
+          "parameters": {
+            "gamma_ext": {
+              "id": "0-massfield-mass-0-ExternalShear-gamma_ext",
+              "point_estimate": {
+                "value": 0.03
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "phi_ext": {
+              "id": "0-massfield-mass-0-ExternalShear-phi_ext",
+              "point_estimate": {
+                "value": 40
+              },
+              "prior": {
+                "type": null
+              }
+            }
+          },
+          "type": "ExternalShear"
+        }
+      ],
+      "name": "my lovely external shear",
+      "redshift": 0.5,
+      "type": "MassField"
+    },
+    {
+      "light_model": [],
+      "mass_model": [
+        {
+          "id": "1-galaxy-mass-0-PEMD",
+          "parameters": {
+            "center_x": {
+              "id": "1-galaxy-mass-0-PEMD-center_x",
+              "point_estimate": {
+                "value": 0.0
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "center_y": {
+              "id": "1-galaxy-mass-0-PEMD-center_y",
+              "point_estimate": {
+                "value": 0.0
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "gamma": {
+              "id": "1-galaxy-mass-0-PEMD-gamma",
+              "point_estimate": {
+                "value": 2.0
+              },
+              "prior": {
+                "mean": 2.0,
+                "type": "GaussianPrior",
+                "width": 0.2
+              }
+            },
+            "phi": {
+              "id": "1-galaxy-mass-0-PEMD-phi",
+              "point_estimate": {
+                "value": -15
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "q": {
+              "id": "1-galaxy-mass-0-PEMD-q",
+              "point_estimate": {
+                "value": 0.8
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "theta_E": {
+              "id": "1-galaxy-mass-0-PEMD-theta_E",
+              "point_estimate": {
+                "value": 1.3
+              },
+              "prior": {
+                "type": null
+              }
+            }
+          },
+          "type": "PEMD"
+        }
+      ],
+      "name": "a lens galaxy",
+      "redshift": 0.5,
+      "type": "Galaxy"
+    },
+    {
+      "light_model": [
+        {
+          "id": "3-galaxy-light-0-PixelatedRegularGrid",
+          "parameters": {
+            "pixels": {
+              "field_of_view_x": [
+                -0.55,
+                0.55
+              ],
+              "field_of_view_y": [
+                -0.55,
+                0.55
+              ],
+              "fits_file": {
+                "path": "my_pixelated_source.fits"
+              },
+              "id": "3-galaxy-light-0-PixelatedRegularGrid-pixels",
+              "num_pix_x": 442,
+              "num_pix_y": 442
+            }
+          },
+          "type": "PixelatedRegularGrid"
+        }
+      ],
+      "mass_model": [],
+      "name": "another source",
+      "redshift": 1.5,
+      "type": "Galaxy"
+    }
+  ],
+  "meta": {},
+  "mode": "MOCK",
+  "observation": {
+    "exposure_time": 200,
+    "mag_sky_brightness": 22.8,
+    "mag_zero_point": 22.19,
+    "noise": {
+      "type": "InstrumentalNoise",
+      "with_readout_noise": true,
+      "with_sky_shot_noise": true,
+      "with_target_shot_noise": true
+    },
+    "pixels": {
+      "field_of_view_x": [
+        -3.1,
+        3.1
+      ],
+      "field_of_view_y": [
+        -3.1,
+        3.1
+      ],
+      "fits_file": {
+        "path": "obs.fits"
+      },
+      "num_pix_x": 0,
+      "num_pix_y": 0
+    }
+  },
+  "standard": "COOLEST"
+}

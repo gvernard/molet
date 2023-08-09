@@ -95,7 +95,10 @@ int main(int argc,char* argv[]){
       profile["index"] = lens_profile_ind[i];
       profiles.append(profile);
     }
-    double total_flux_mag = -2.5*log10(total_flux) + root["instruments"][k]["ZP"].asDouble();
+    double total_flux_mag = 0.0;
+    if( total_flux != 0.0 ){
+      total_flux_mag = -2.5*log10(total_flux) + root["instruments"][k]["ZP"].asDouble();
+    }
 
     lens_fluxes[name]["profiles"]      = profiles;
     lens_fluxes[name]["total"]["flux"] = total_flux;

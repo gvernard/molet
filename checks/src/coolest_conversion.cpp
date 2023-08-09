@@ -51,9 +51,10 @@ Json::Value parseMass(Json::Value coolest_mass_model,std::string name){
 	} else if( key == "q" ){
 	  profile["pars"]["q"] = coolest_mass_model[i]["parameters"][key]["point_estimate"]["value"].asDouble();
 	} else if( key == "theta_E" ){
-	  double r_inter = coolest_mass_model[i]["parameters"][key]["point_estimate"]["value"].asDouble();
-	  double q = coolest_mass_model[i]["parameters"]["q"]["point_estimate"]["value"].asDouble();
-	  profile["pars"]["theta_E"] = r_inter/sqrt(q);
+	  // double r_inter = coolest_mass_model[i]["parameters"][key]["point_estimate"]["value"].asDouble();
+	  // double q = coolest_mass_model[i]["parameters"]["q"]["point_estimate"]["value"].asDouble();
+	  // profile["pars"]["theta_E"] = r_inter/sqrt(q);
+	  profile["pars"]["theta_E"] = coolest_mass_model[i]["parameters"][key]["point_estimate"]["value"].asDouble();
 	} else {
 	  fprintf(stderr,"Unknown parameter name '%s' for lensing entity '%s'!\n",key.c_str(),name.c_str());
 	}
@@ -73,9 +74,10 @@ Json::Value parseMass(Json::Value coolest_mass_model,std::string name){
 	} else if( key == "q" ){
 	  profile["pars"]["q"] = coolest_mass_model[i]["parameters"][key]["point_estimate"]["value"].asDouble();
 	} else if( key == "theta_E" ){
-	  double r_inter = coolest_mass_model[i]["parameters"][key]["point_estimate"]["value"].asDouble();
-	  double q = coolest_mass_model[i]["parameters"]["q"]["point_estimate"]["value"].asDouble();
-	  profile["pars"]["theta_E"] = r_inter/sqrt(q);
+	  // double r_inter = coolest_mass_model[i]["parameters"][key]["point_estimate"]["value"].asDouble();
+	  // double q = coolest_mass_model[i]["parameters"]["q"]["point_estimate"]["value"].asDouble();
+	  // profile["pars"]["theta_E"] = r_inter/sqrt(q);
+	  profile["pars"]["theta_E"] = coolest_mass_model[i]["parameters"][key]["point_estimate"]["value"].asDouble();
 	} else if( key == "s" ){
 	  profile["pars"]["s"] = coolest_mass_model[i]["parameters"][key]["point_estimate"]["value"].asDouble();
 	} else {
