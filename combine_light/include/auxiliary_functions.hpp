@@ -36,8 +36,8 @@ void tailorLightCurve(LightCurve* lc_input,LightCurve* lc_output,double td,doubl
 void combineSupernovaInExSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* target);
 void justSupernovaInSignal(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* target);
 void combineInExSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* target);
-void combineInExUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* LC_unmicro,LightCurve* target);
-void combineInUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_unmicro,LightCurve* target);
+void combineInExUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_extrinsic,LightCurve* LC_unmicro,LightCurve* target,double unmicro_ratio);
+void combineInUnSignals(double td,double macro_mag,std::vector<double> time,LightCurve* LC_intrinsic,LightCurve* LC_unmicro,LightCurve* target,double unmicro_ratio);
 void justOneSignal(double td,double macro_mag,std::vector<double> time,LightCurve* LC,LightCurve* target);
 void outputLightCurvesJson(std::vector<LightCurve*> lcs,std::string filename);
 
@@ -68,6 +68,31 @@ public:
 private:
   double cosrot;
   double sinrot;
+};
+
+
+
+
+class BaseLagKernel {
+public:
+  virtual void getKernel(std::vector<double> time,std::vector<double>& kernel) = 0;
+};
+
+
+class DeltaKernel : public BaseLagKernel {
+public:
+  double t_peak; // in days
+  DeltaKernel(double t_peak) : t_peak(t_peak) {};
+  void getKernel(std::vector<double> time,std::vector<double>& kernel);
+};
+
+class TopHatKernel : public BaseLagKernel {
+public:
+  double t_limit; // in days
+  TopHatKernel(double radius); // radius must be in 10^14 cm
+  void getKernel(std::vector<double> time,std::vector<double>& kernel);  
+private:
+  double speed_of_light = 25.9; // in 10^14 cm /day
 };
 
 
