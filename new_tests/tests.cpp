@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <valarray>
+#include <random>
 
 #include <CCfits/CCfits>
 #include "json/json.h"
@@ -38,7 +39,7 @@ std::vector<double> readFits(int& N,std::string filepath){
 }
 
 
-double maximum_difference(std::vector<double> img1,std::vector<double> img2){
+double maximum_image_difference(std::vector<double> img1,std::vector<double> img2){
   double diff,max_diff = 0.0;
   for(int i=0;i<img1.size();i++){
     diff = fabs(img1[i]-img2[i]);
@@ -59,27 +60,57 @@ void compare_image(std::string test1,std::string test2,double tol,std::string im
   REQUIRE( N1 == N2 );
 
   if( dimensions ){
-    REQUIRE_THAT( maximum_difference(img1,img2),Catch::Matchers::WithinAbs(0.0,tol) );
+    REQUIRE_THAT( maximum_image_difference(img1,img2),Catch::Matchers::WithinAbs(0.0,tol) );
   }
 }
 
 
-void run_molet(std::string example){
-  std::string molet = "../molet_driver";
-  char line[107];
-  const char *padding="######################################################";
-  int len = example.length();
-  int padLen = 55 - len;
-  sprintf(line,"%.*s %s %*.*s",50,padding,example.c_str(),padLen,padLen,padding);
-  std::cout << line << std::endl;
-
-  int exit = system((molet+" ../new_tests/"+example+"/molet_input.json").c_str());
-
-  sprintf(line,"%.*s%.*s%.*s",50,padding,len+2,padding,padLen,padding);
-  std::cout << line << std::endl;
-
-  REQUIRE( exit == 0 );
+Json::Value readJson(std::string filepath){
+  std::ifstream fin;
+  Json::Value json;
+  fin.open(filepath,std::ifstream::in);
+  fin >> json;
+  fin.close();
+  return json;
 }
+
+void compare_LC(std::string test1,std::string test2,double tol,std::string LC_name){
+  Json::Value lc1 = readJson(test1+LC_name);
+  Json::Value lc2 = readJson(test2+LC_name);
+
+  REQUIRE( lc1.size() == lc2.size() );
+
+  for(int q=0;q<lc1.size();q++){
+    REQUIRE( lc1[q]["time"].size() == lc2[q]["time"].size() );
+    REQUIRE( lc1[q]["signal"].size() == lc2[q]["signal"].size() );
+    REQUIRE( lc1[q]["dsignal"].size() == lc2[q]["dsignal"].size() );
+  }
+  
+  double diff_t,diff_time    = 0.0;
+  double diff_s,diff_signal  = 0.0;
+  double diff_d,diff_dsignal = 0.0;
+  for(int q=0;q<lc1.size();q++){
+    for(int i=0;i<lc1[q]["time"].size();i++){
+      diff_t = fabs(lc1[q]["time"][i].asDouble()-lc2[q]["time"][i].asDouble());
+      diff_s = fabs(lc1[q]["signal"][i].asDouble()-lc2[q]["signal"][i].asDouble());
+      diff_d = fabs(lc1[q]["dsignal"][i].asDouble()-lc2[q]["dsignal"][i].asDouble());
+      if( diff_t > diff_time ){
+	diff_time = diff_t;
+      }
+      if( diff_s > diff_signal ){
+	diff_signal = diff_s;
+      }
+      if( diff_d > diff_dsignal ){
+	diff_dsignal = diff_d;
+      }
+    }
+  }
+  REQUIRE_THAT( diff_time,Catch::Matchers::WithinAbs(0.0,tol) );
+  REQUIRE_THAT( diff_signal,Catch::Matchers::WithinAbs(0.0,tol) );
+  REQUIRE_THAT( diff_dsignal,Catch::Matchers::WithinAbs(0.0,tol) );
+}
+
+
 
 void check_fluxes(std::string example,std::string instrument,double tol,bool check_PS){
   Json::Value json;
@@ -99,6 +130,25 @@ void check_fluxes(std::string example,std::string instrument,double tol,bool che
     REQUIRE_THAT( (lens+extended+lensed_ps),Catch::Matchers::WithinAbs(final_with_ps,tol) );
   }  
 }
+
+
+void run_molet(std::string example){
+  std::string molet = "../molet_driver";
+  char line_before[107],line_after[107];
+  const char *padding="######################################################";
+
+  int len = example.length();
+  int padLen = 55 - len;
+  sprintf(line_before,"%.*s %s %*.*s",50,padding,example.c_str(),padLen,padLen,padding);
+  sprintf(line_after,"%.*s%.*s%.*s",50,padding,len+2,padding,padLen,padding);
+
+  std::cout << line_before << std::endl;
+  int exit = system((molet+" ../new_tests/"+example+"/molet_input.json").c_str());
+  std::cout << line_after << std::endl;
+
+  REQUIRE( exit == 0 );
+}
+
 //=================================== UTILITY FUNCTIONS ===================================
 
 
@@ -133,6 +183,8 @@ public:
 	run_molet("quasar/test_B");
       } else if( info.name == "QC" ){
 	run_molet("quasar/test_C");
+      } else if( info.name == "QD" ){
+	run_molet("quasar/test_D");
       } else {
 	// Do nothing
       }
@@ -149,7 +201,7 @@ CATCH_REGISTER_LISTENER(testSectionListener)
 
 double img_tol  = 0.0001;
 double flux_tol = 0.01;
-
+double lc_tol   = 0.01;
 
 
 
@@ -158,45 +210,90 @@ TEST_CASE("quasar")
   std::string base_test = "general/test_A/";
   std::string test;
   int exit;
-
+  std::mt19937 gen;
+  std::uniform_int_distribution<> distr(0,9);
+  int digit1,digit2;
   
 
-  SECTION("QA","Generating 'fixed moving source' light curves on the fly."){
+  SECTION("QA","Using fixed extrinsic light curves calculated in general/test_A."){
+    std::cout << std::endl;
     test = "quasar/test_A/";
-
+    std::string mycam = "testCAM-i";
+    
     std::cout << "Comparing static images" << std::endl;
-    compare_image(base_test,test,img_tol,"OBS_testCAM-i.fits");
+    compare_image(base_test,test,img_tol,"OBS_"+mycam+".fits");
     std::cout << "Comparing PS-macro images" << std::endl;
-    compare_image(base_test,test,img_tol,"OBS_testCAM-i_ps_macro.fits");
-    // Compare light curves
+    compare_image(base_test,test,img_tol,"OBS_"+mycam+"_ps_macro.fits");
     std::cout << "Checking fluxes" << std::endl;
-    check_fluxes(test,"testCAM-i",flux_tol,true);
+    check_fluxes(test,mycam,flux_tol,true);
+
+    std::cout << "Comparing intrinsic light curves" << std::endl;
+    compare_LC(base_test,test,lc_tol,"input_files/"+mycam+"_LC_intrinsic.json");
+    digit1 = distr(gen);
+    digit2 = distr(gen);
+    std::string mock = "mock_0000_00"+std::to_string(digit1)+std::to_string(digit2);
+    std::cout << "Comparing continuous light curves for " << mock  << std::endl;
+    compare_LC(base_test,test,lc_tol,mock+"/"+mycam+"_LC_continuous.json");
+    std::cout << "Comparing sampled light curves for " << mock << std::endl;
+    compare_LC(base_test,test,lc_tol,mock+"/"+mycam+"_LC_sampled.json");
   }
  
 
   SECTION("QB","Same as test_A, but using a compact mass profile instead of a mass-to-light ratio."){
+    std::cout << std::endl;
     test = "quasar/test_B/";
+    std::string mycam = "testCAM-i";
 
     std::cout << "Comparing static images" << std::endl;
-    compare_image(base_test,test,img_tol,"OBS_testCAM-i.fits");
+    compare_image(base_test,test,img_tol,"OBS_"+mycam+".fits");
     std::cout << "Comparing PS-macro images" << std::endl;
-    compare_image(base_test,test,img_tol,"OBS_testCAM-i_ps_macro.fits");
-    // Compare light curves
+    compare_image(base_test,test,img_tol,"OBS_"+mycam+"_ps_macro.fits");
     std::cout << "Checking fluxes" << std::endl;
-    check_fluxes(test,"testCAM-i",flux_tol,true);
+    check_fluxes(test,mycam,flux_tol,true);
+
+    std::cout << "Comparing intrinsic light curves" << std::endl;
+    compare_LC(base_test,test,lc_tol,"input_files/"+mycam+"_LC_intrinsic.json");
   }
 
 
   SECTION("QC","Using the output microlensing light curves of test_A as input and adding an unmicrolensed component."){
+    std::cout << std::endl;
     test = "quasar/test_C/";
+    std::string mycam = "testCAM-i";
 
     std::cout << "Comparing static images" << std::endl;
-    compare_image(base_test,test,img_tol,"OBS_testCAM-i.fits");
+    compare_image(base_test,test,img_tol,"OBS_"+mycam+".fits");
     std::cout << "Comparing PS-macro images" << std::endl;
-    compare_image(base_test,test,img_tol,"OBS_testCAM-i_ps_macro.fits");
-    // Compare input light curves with the output of test_A
+    compare_image(base_test,test,img_tol,"OBS_"+mycam+"_ps_macro.fits");
     std::cout << "Checking fluxes" << std::endl;
-    check_fluxes(test,"testCAM-i",flux_tol,true);
+    check_fluxes(test,mycam,flux_tol,true);
+    
+    std::cout << "Comparing intrinsic light curves" << std::endl;
+    compare_LC(base_test,test,lc_tol,"input_files/"+mycam+"_LC_intrinsic.json");
+  }
+
+
+  SECTION("QD","Same as test_A, but a custom profile is used for the accretion disc - the same as the analytic one of test_A but cast into a pixelated grid."){
+    std::cout << std::endl;
+    test = "quasar/test_D/";
+    std::string mycam = "testCAM-i";
+
+    std::cout << "Comparing static images" << std::endl;
+    compare_image(base_test,test,img_tol,"OBS_"+mycam+".fits");
+    std::cout << "Comparing PS-macro images" << std::endl;
+    compare_image(base_test,test,img_tol,"OBS_"+mycam+"_ps_macro.fits");
+    std::cout << "Checking fluxes" << std::endl;
+    check_fluxes(test,mycam,flux_tol,true);
+
+    std::cout << "Comparing intrinsic light curves" << std::endl;
+    compare_LC(base_test,test,lc_tol,"input_files/"+mycam+"_LC_intrinsic.json");
+    digit1 = distr(gen);
+    digit2 = distr(gen);
+    std::string mock = "mock_0000_00"+std::to_string(digit1)+std::to_string(digit2);
+    std::cout << "Comparing continuous light curves for " << mock  << std::endl;
+    compare_LC(base_test,test,lc_tol,mock+"/"+mycam+"_LC_continuous.json");
+    std::cout << "Comparing sampled light curves for " << mock << std::endl;
+    compare_LC(base_test,test,lc_tol,mock+"/"+mycam+"_LC_sampled.json");
   }
 }
 

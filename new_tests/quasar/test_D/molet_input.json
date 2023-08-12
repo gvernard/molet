@@ -49,7 +49,7 @@
 			"mass-to-light": {
 			    "upsilon": 2.0,
 			    "upsilon_exp": 0.2
-			}
+			}			
 		    }
 		]
 	    }
@@ -101,12 +101,13 @@
 	"y0": 0.05,
 	"M_tot_unlensed": 25.0,
 	"triangle_size": 0.3, // in arcsec
+	"output_cutouts": false,
 	"variability": {
 	    "intrinsic": {
 		"type": "custom"
 	    },
 	    "extrinsic": {
-		"type": "moving_fixed_source",
+		"type": "moving_fixed_source_custom",
 		"microlens_mass": 1,
 		"Nex": 100,
 		"pars": {
@@ -116,15 +117,12 @@
 		    "ra": 340.2,
 		    "dec": 0.0
 		},
-		"profiles": {
-		    "type": "parametric",
-		    "r0": 3.25, // in 10^14 cm
-		    "l0": 102.68, // in nm
-		    "nu": 1.33,
-		    "shape": "gaussian",
-		    "incl": 0,
-		    "orient": 0
+		"testCAM-i": {
+		    "pixSize": 1.04293,
+		    "Nx": 66,
+		    "Ny": 66
 		}
+
 	    }
 	}
     },
