@@ -78,12 +78,11 @@ Json::Value parseMass(Json::Value coolest_mass_model,std::string name){
 	  // double q = coolest_mass_model[i]["parameters"]["q"]["point_estimate"]["value"].asDouble();
 	  // profile["pars"]["theta_E"] = r_inter/sqrt(q);
 	  profile["pars"]["theta_E"] = coolest_mass_model[i]["parameters"][key]["point_estimate"]["value"].asDouble();
-	} else if( key == "s" ){
-	  profile["pars"]["s"] = coolest_mass_model[i]["parameters"][key]["point_estimate"]["value"].asDouble();
 	} else {
 	  fprintf(stderr,"Unknown parameter name '%s' for lensing entity '%s'!\n",key.c_str(),name.c_str());
 	}
       }
+      profile["pars"]["s"] = 0.000001;
 
     } else if( mmodel_type == "PixelatedRegularGrid" ){
       profile["type"] = "pert";
@@ -127,16 +126,19 @@ Json::Value parseLight(Json::Value coolest_light_model,std::string name){
       profile["type"] = "sersic";
       for( auto const& key : coolest_light_model[i]["parameters"].getMemberNames()){
 	if( key == "I_eff" ){
-	  profile["pars"]["i_eff"] = coolest_light_model[i]["parameters"][key]["point_estimate"]["value"].asDouble();	  
+	  double q = coolest_light_model[i]["parameters"]["q"]["point_estimate"]["value"].asDouble();
+	  double coolest_i_eff = coolest_light_model[i]["parameters"][key]["point_estimate"]["value"].asDouble();
+	  profile["pars"]["i_eff"] = q*coolest_i_eff;
+	  std::cout << coolest_i_eff << " " << q*coolest_i_eff << std::endl;
 	} else if( key == "R_eff" ){
 	  double q = coolest_light_model[i]["parameters"]["q"]["point_estimate"]["value"].asDouble();
-	  double r_inter = coolest_light_model[i]["parameters"][key]["point_estimate"]["value"].asDouble();
-	  profile["pars"]["r_eff"] = r_inter/sqrt(q); 
+	  double coolest_r_eff = coolest_light_model[i]["parameters"][key]["point_estimate"]["value"].asDouble(); // intermediate axis
+	  profile["pars"]["r_eff"] = coolest_r_eff*sqrt(q);
 	} else if( key == "center_x" ){
 	  profile["pars"]["x0"] = coolest_light_model[i]["parameters"][key]["point_estimate"]["value"].asDouble();
 	} else if( key == "center_y" ){
 	  profile["pars"]["y0"] = coolest_light_model[i]["parameters"][key]["point_estimate"]["value"].asDouble();
-	} else if( key == "n_sersic" ){
+	} else if( key == "n" ){
 	  profile["pars"]["n"] = coolest_light_model[i]["parameters"][key]["point_estimate"]["value"].asDouble();
 	} else if( key == "phi" ){
 	  profile["pars"]["pa"] = coolest_light_model[i]["parameters"][key]["point_estimate"]["value"].asDouble();

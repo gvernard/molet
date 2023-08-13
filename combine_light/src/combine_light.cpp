@@ -499,6 +499,9 @@ int main(int argc,char* argv[]){
       // Calculate total flux of the 'PS macro' image
       double F_final_with_ps = obs_ps_light.integrate();
 
+      // Output the noiseless static image with a PS with macromagnification only
+      writeCutout(&obs_ps_light,out_path+"output/OBS_"+instrument_name+"_ps_macro_noiseless.fits");
+
       // Adding time-dependent noise here
       mycam.noise->initializeFromData(&obs_ps_light);
       mycam.noise->calculateNoise();
@@ -545,6 +548,8 @@ int main(int argc,char* argv[]){
 
 
     //=============== START: CREATE STATIC LIGHT ====================
+    // Output the noiseless static image
+    writeCutout(&obs_static,out_path + "output/OBS_" + instrument_name + "_noiseless.fits");
     
     // Adding noise here and output realization
     mycam.noise->initializeFromData(&obs_static);

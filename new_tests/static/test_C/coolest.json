@@ -1,0 +1,340 @@
+{
+    "coordinates_origin": {
+	"dec": "-08d45m51.48s",
+	"ra": "00h11m20.244s"
+    },
+    "cosmology": {
+	"H0": 67.7,
+	"Om0": 0.309,
+	"astropy_name": "FlatLambdaCDM"
+    },
+    "instrument": {
+	"band": "i",
+	"name": "testCAM",
+	"pixel_size": 0.035,
+	"psf": {
+	    "description": null,
+	    "pixels": {
+		"field_of_view_x": [
+		    0,
+		    3
+		],
+		"field_of_view_y": [
+		    0,
+		    3
+		],
+		"fits_file": {
+		    "path": "psf.fits"
+		},
+		"num_pix_x": 74,
+		"num_pix_y": 74
+	    },
+	    "type": "PixelatedPSF"
+	},
+	"readout_noise": 5
+    },
+    "lensing_entities": [
+	{
+	    "mass_model": [
+		{
+		    "parameters": {
+			"gamma_ext": {
+			    "point_estimate": {
+				"value": 0.032
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"phi_ext": {
+			    "point_estimate": {
+				"value": -40
+			    },
+			    "prior": {
+				"type": null
+			    }
+			}
+		    },
+		    "type": "ExternalShear"
+		}
+	    ],
+	    "name": "my lovely external shear",
+	    "redshift": 0.77,
+	    "type": "MassField"
+	},
+	{
+	    "light_model": [
+		{
+		    "parameters": {
+			"center_x": {
+			    "point_estimate": {
+				"value": 0.0
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"center_y": {
+			    "point_estimate": {
+				"value": 0.0
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"I_eff": {
+			    "point_estimate": {
+				"value": 0.071379
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"phi": {
+			    "point_estimate": {
+				"value": 35
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"q": {
+			    "point_estimate": {
+				"value": 0.8
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"R_eff": {
+			    "point_estimate": {
+				"value": 1.900657781
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"n": {
+			    "point_estimate": {
+				"value": 4.0
+			    },
+			    "prior": {
+				"type": null
+			    }
+			}
+		    },
+		    "type": "Sersic"
+		}
+	    ],
+	    "mass_model": [
+		{
+		    "parameters": {
+			"center_x": {
+			    "point_estimate": {
+				"value": 0.0
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"center_y": {
+			    "point_estimate": {
+				"value": 0.0
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"phi": {
+			    "point_estimate": {
+				"value": 35
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"q": {
+			    "point_estimate": {
+				"value": 0.8
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"theta_E": {
+			    "point_estimate": {
+				"value": 1.1
+			    },
+			    "prior": {
+				"type": null
+			    }
+			}
+		    },
+		    "type": "SIE"
+		}
+	    ],
+	    "name": "a lens galaxy",
+	    "redshift": 0.77,
+	    "type": "Galaxy"
+	},
+	{
+	    "light_model": [
+		{
+		    "parameters": {
+			"center_x": {
+			    "point_estimate": {
+				"value": -0.05
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"center_y": {
+			    "point_estimate": {
+				"value": 0.05
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"I_eff": {
+			    "point_estimate": {
+				"value": 1.696114028
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"phi": {
+			    "point_estimate": {
+				"value": 23
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"q": {
+			    "point_estimate": {
+				"value": 0.64
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"R_eff": {
+			    "point_estimate": {
+				"value": 0.13590719
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"n": {
+			    "point_estimate": {
+				"value": 0.5
+			    },
+			    "prior": {
+				"type": null
+			    }
+			}
+		    },
+		    "type": "Sersic"
+		},
+				{
+		    "parameters": {
+			"center_x": {
+			    "point_estimate": {
+				"value": -0.2
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"center_y": {
+			    "point_estimate": {
+				"value": 0.125
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"I_eff": {
+			    "point_estimate": {
+				"value": 0.954061708
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"phi": {
+			    "point_estimate": {
+				"value": 0
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"q": {
+			    "point_estimate": {
+				"value": 1.0
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"R_eff": {
+			    "point_estimate": {
+				"value": 0.092779308
+			    },
+			    "prior": {
+				"type": null
+			    }
+			},
+			"n": {
+			    "point_estimate": {
+				"value": 0.5
+			    },
+			    "prior": {
+				"type": null
+			    }
+			}
+		    },
+		    "type": "Sersic"
+		}
+	    ],
+	    "mass_model": [],
+	    "name": "a source",
+	    "redshift": 2.03,
+	    "type": "Galaxy"
+	}
+    ],
+    "meta": {},
+    "mode": "MOCK",
+    "observation": {
+	"exposure_time": 200,
+	"mag_sky_brightness": 22.8,
+	"mag_zero_point": 22.19,
+	"noise": {
+	    "type": "InstrumentalNoise",
+	    "with_readout_noise": true,
+	    "with_sky_shot_noise": true,
+	    "with_target_shot_noise": true
+	},
+	"pixels": {
+	    "field_of_view_x": [
+		-1.75,
+		1.75
+	    ],
+	    "field_of_view_y": [
+		-1.75,
+		1.75
+	    ],
+	    "fits_file": {
+		"path": "obs.fits"
+	    },
+	    "num_pix_x": 100,
+	    "num_pix_y": 100
+	}
+    },
+    "standard": "COOLEST"
+}

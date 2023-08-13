@@ -17,7 +17,7 @@
 		    "pars": {
 			"theta_E": 1.1,
 			"q": 0.8,
-			"pa": -145.0,
+			"pa": 35.0,
 			"x0": 0.0,
 			"y0": 0.0
 		    }
@@ -40,7 +40,7 @@
 			"pars": {
 			    "x0": 0.0,
 			    "y0": 0.0,
-			    "pa": -145.0,
+			    "pa": 35.0,
 			    "q": 0.8,
 			    "M_tot": 21,
 			    "r_eff": 1.7,
@@ -56,7 +56,7 @@
 	    	    "pars": {
 	    		"x0": 0.0,
 	    		"y0": 0.0,
-	    		"pa": -145.0,
+	    		"pa": 35.0,
 	    		"q": 0.8,
 	    		"i_eff": 0.5, // Directly kappa_star, in units of Sigma_critical
 	    		"r_eff": 1.7,
@@ -102,7 +102,7 @@
     },
     
     "output_options": {
-	"super_factor": 5,
+	"super_factor": 10,
 	"conserve_flux": false,
 	"convolve_lens": false,
 	"output_PS_cutouts": false

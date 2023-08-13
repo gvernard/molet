@@ -132,7 +132,7 @@ void check_fluxes(std::string example,std::string instrument,double tol,bool che
 }
 
 
-void run_molet(std::string example){
+void run_molet(std::string example,std::string input="/molet_input.json"){
   std::string molet = "../molet_driver";
   char line_before[107],line_after[107];
   const char *padding="######################################################";
@@ -143,7 +143,7 @@ void run_molet(std::string example){
   sprintf(line_after,"%.*s%.*s%.*s",50,padding,len+2,padding,padLen,padding);
 
   std::cout << line_before << std::endl;
-  int exit = system((molet+" ../new_tests/"+example+"/molet_input.json").c_str());
+  int exit = system((molet+" ../new_tests/"+example+"/"+input).c_str());
   std::cout << line_after << std::endl;
 
   REQUIRE( exit == 0 );
@@ -164,6 +164,8 @@ public:
       
       if( info.name == "quasar" ){
 	run_molet("general/test_A");
+      } else if( info.name == "static" ){
+	run_molet("general/test_D");
       }
     }
 };
@@ -185,6 +187,12 @@ public:
 	run_molet("quasar/test_C");
       } else if( info.name == "QD" ){
 	run_molet("quasar/test_D");
+      } else if( info.name == "SA" ){
+	run_molet("static/test_A");
+      } else if( info.name == "SB" ){
+	run_molet("static/test_B");
+      } else if( info.name == "SC" ){
+	run_molet("static/test_C","coolest.json");
       } else {
 	// Do nothing
       }
@@ -196,14 +204,54 @@ CATCH_REGISTER_LISTENER(testSectionListener)
 
 
 
-
-
-
 double img_tol  = 0.0001;
 double flux_tol = 0.01;
 double lc_tol   = 0.01;
 
 
+
+TEST_CASE("static")
+{
+  std::string base_test = "general/test_D/";
+  std::string test;
+  int exit;
+
+  SECTION("SA","Same as general/test_D but with a SPEMD mass model instead of an SIE."){
+    std::cout << std::endl;
+    test = "static/test_A/";
+    std::string mycam = "testCAM-i";
+    
+    std::cout << "Comparing static images" << std::endl;
+    compare_image(base_test,test,img_tol,"OBS_"+mycam+"_noiseless.fits");
+    std::cout << "Checking fluxes" << std::endl;
+    check_fluxes(test,mycam,flux_tol,false);
+  }
+
+  SECTION("SB","Same as general/test_D (and static/test_A) but with the Gaussian sources replaced by equivalent Sersic ones."){
+    std::cout << std::endl;
+    test = "static/test_B/";
+    std::string mycam = "testCAM-i";
+    
+    std::cout << "Comparing static images" << std::endl;
+    compare_image(base_test,test,img_tol,"OBS_"+mycam+"_noiseless.fits");
+    std::cout << "Checking fluxes" << std::endl;
+    check_fluxes(test,mycam,flux_tol,false);
+  }
+
+  SECTION("SC","Same as general/test_D (and static/test_A, static/test_B) but with input given in the COOLEST standard."){
+    std::cout << std::endl;
+    test = "static/test_C/MOLET_RUN/";
+    std::string mycam = "testCAM-i";
+    
+    std::cout << "Comparing static images" << std::endl;
+    compare_image(base_test,test,img_tol,"OBS_"+mycam+"_noiseless.fits");
+    std::cout << "Checking fluxes" << std::endl;
+    check_fluxes(test,mycam,flux_tol,false);
+  }
+}
+
+
+  
 
 TEST_CASE("quasar")
 {
