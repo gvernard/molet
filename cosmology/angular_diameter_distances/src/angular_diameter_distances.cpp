@@ -38,20 +38,21 @@ int main(int argc,char* argv[]){
   double DH = c/H0;
   
 
-
+  
   std::vector<double> zs;
   std::vector<double> zl;
   
   zl.push_back( root["lenses"][0]["redshift"].asDouble() );
   zs.push_back( root["source"]["redshift"].asDouble() );
-  
+
+  /*
   if( root["lenses"].size() > 1 ){
     for(int k=1;k<root["lenses"].size()+1;k++){
       zl.push_back( root["lenses"][-1-k]["redshift"].asDouble() );
       zs.push_back( root["lenses"][-1-(k-1)]["redshift"].asDouble() );
     }
   }
-
+  */
 
   Json::Value distances;
   for(int k=0;k<zl.size();k++){

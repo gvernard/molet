@@ -178,8 +178,9 @@ public:
 
     void sectionStarting(Catch::SectionInfo const& info) override {
       std::cout << "Section: " << info.name << std::endl;
-      
+
       if( info.name == "QA" ){
+	// Quasar first
 	run_molet("quasar/test_A");
       } else if( info.name == "QB" ){
 	run_molet("quasar/test_B");
@@ -187,12 +188,19 @@ public:
 	run_molet("quasar/test_C");
       } else if( info.name == "QD" ){
 	run_molet("quasar/test_D");
+	// Then static
       } else if( info.name == "SA" ){
 	run_molet("static/test_A");
       } else if( info.name == "SB" ){
 	run_molet("static/test_B");
       } else if( info.name == "SC" ){
 	run_molet("static/test_C","coolest.json");
+      } else if( info.name == "SD" ){
+	run_molet("static/test_D");
+      } else if( info.name == "SE" ){
+	run_molet("static/test_E");
+      } else if( info.name == "SF" ){
+	run_molet("static/test_F");
       } else {
 	// Do nothing
       }
@@ -214,8 +222,8 @@ TEST_CASE("static")
 {
   std::string base_test = "general/test_D/";
   std::string test;
-  int exit;
 
+  
   SECTION("SA","Same as general/test_D but with a SPEMD mass model instead of an SIE."){
     std::cout << std::endl;
     test = "static/test_A/";
@@ -227,6 +235,7 @@ TEST_CASE("static")
     check_fluxes(test,mycam,flux_tol,false);
   }
 
+  
   SECTION("SB","Same as general/test_D (and static/test_A) but with the Gaussian sources replaced by equivalent Sersic ones."){
     std::cout << std::endl;
     test = "static/test_B/";
@@ -238,6 +247,7 @@ TEST_CASE("static")
     check_fluxes(test,mycam,flux_tol,false);
   }
 
+  
   SECTION("SC","Same as general/test_D (and static/test_A, static/test_B) but with input given in the COOLEST standard."){
     std::cout << std::endl;
     test = "static/test_C/MOLET_RUN/";
@@ -248,6 +258,40 @@ TEST_CASE("static")
     std::cout << "Checking fluxes" << std::endl;
     check_fluxes(test,mycam,flux_tol,false);
   }
+
+  
+  SECTION("SD","Is the same as general/test_D but the Gaussian sources are replaced with a pixelated source of the same total flux."){
+    std::cout << std::endl;
+    test = "static/test_D/";
+    std::string mycam = "testCAM-i";
+    
+    std::cout << "Comparing static images" << std::endl;
+    compare_image(base_test,test,0.65,"OBS_"+mycam+"_noiseless.fits");
+    std::cout << "Checking fluxes" << std::endl;
+    check_fluxes(test,mycam,flux_tol,false);
+  }
+
+  
+  SECTION("SE","Is the same as general/test_D but the lens potential includes perturbations."){
+    std::cout << std::endl;
+    test = "static/test_E/";
+    std::string mycam = "testCAM-i";
+    
+    std::cout << "Comparing static images" << std::endl;
+    compare_image(base_test,test,0.5,"OBS_"+mycam+"_noiseless.fits");
+    std::cout << "Checking fluxes" << std::endl;
+    check_fluxes(test,mycam,flux_tol,false);
+  }
+
+
+  SECTION("SF","Is the same as general/test_D but there is a smaller satellite galaxy to the lens."){
+    std::cout << std::endl;
+    test = "static/test_F/";
+    std::string mycam = "testCAM-i";
+    
+    std::cout << "Checking fluxes" << std::endl;
+    check_fluxes(test,mycam,2*flux_tol,false);
+  }  
 }
 
 
@@ -257,7 +301,6 @@ TEST_CASE("quasar")
 {
   std::string base_test = "general/test_A/";
   std::string test;
-  int exit;
   std::mt19937 gen;
   std::uniform_int_distribution<> distr(0,9);
   int digit1,digit2;
