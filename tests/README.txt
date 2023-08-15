@@ -1,16 +1,28 @@
-Here is the summary of all the examples included:
+General Capabilities (general)
+    A) - Generate microlensing light curves on the fly for 2 bands
+  * B) - Generate SN microlensing light curves on the fly for 2 bands
+  * C) - Output cutouts
+    D) - Just a static mock: SIE+shear, analytic source
 
-"paper_data" -  All the cases presented in the MOLET paper (Vernardos 2021).
-"standard"   -  An example using a .coolest file as input.
-"test_0"     -  A basic test for an AGN point source, with given intrinsic and microlensing variability light curves.
-"test_1"     -  Same as 'test_0', but it includes an additional unmicrolensed intrinsic signal from the source (e.g. coming from a large area like the BELR).
-"test_2"     -  Same as 'test_0', but now the microlensing light curves will be generated from magnification maps on the fly, using the 'moving_fixed_source' model.
-	     	If the maps are missing, a download link is provided automatically.
-"test_3"     -  Same as 'test_2' (and 'test_0'), but instead of an analytic a custom profile is used for the accretion disc.
-"test_4"     -  A selected microlensing light curve trajectory from 'test_0' (index: 20), for which cutouts are also calculated.
-"test_5"     -  Same as 'test_0' but now the point source is replaced by an 'expanding_source' and the cadence of the observations is changed.
-"test_6"     -  Same as 'test 2' but instead of the 'moving_fixed_source' variability model we have the 'moving_variable_source' model.
-"test_7"     -  Same as 'test_0' but now the point source is removed and there are gridded lens potential perturbations present.
-"test_8"     -  Same as 'test 0' but instead of the an 'SIE' we use a 'SPEMD' model for the lens mass.
-"test_9"     -  Same as 'test_2', generating light curves with the 'moving_fixed_source' variability model, but now a mass-to-light ratio is used to get kappa_star.
-"test_10"    -  Same as 'test 7' without potential perturbations and the analytic source replaced by a custom pixelated galaxy.
+No time variability (static) - main comparison general/D
+    A) - Use a SPEMD instead of an SIE
+    B) - Replace gaussian with equivalent Sersic sources
+    C) - Standard run with input given in the COOLEST format
+    D) - Use a pixelated source
+    E) - Use a SIE and add potential perturbations
+    F) - Use 2 lenses – one main and one satellite
+
+AGN source (quasar) - main comparison general/A
+    A) - Run with given AGN microlensing light curves
+    B) - Change from mass-to-light ratio to a specific compact mass profile.
+    C) - Add a non-microlensed variability component for 1 band
+    D) - Use a custom accretion disc profile (still using the ‘moving fixed source’ model)
+ $* E) - ‘variable moving source’ using an accretion disc ‘movie’ as input
+
+Supernova source (supernova) - main comparison general/B
+  * A) - Run with given SN microlensing light curves 
+ $* B) - ‘variable moving source’ using a Supernova movie as input
+
+
+* Not implemented yet
+$ Computationally demanding

@@ -1,13 +1,8 @@
 molet_driver
-/tests/*/MOLET_RUN/
-/tests/*/output/
-/tests/*/mock_*
-/tests/test_6/input_files/vs_testCAM-i/*.fits
-/new_tests/tests
-/new_tests/*/*/MOLET_RUN/
-/new_tests/*/*/output/
-/new_tests/*/*/mock_*
-/new_tests/test_6/input_files/vs_testCAM-i/*.fits
+/tests/tests
+/tests/*/*/MOLET_RUN/
+/tests/*/*/output/
+/tests/*/*/mock_*
 log.txt
 *.pdf
 lib
