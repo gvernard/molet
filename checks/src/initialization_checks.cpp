@@ -216,22 +216,8 @@ int main(int argc,char* argv[]){
 	  check = true;
 	}
       }
-    } else {
-      // Check if mean_mags match the given instruments
-      for(int i=0;i<instruments.size();i++){
-	if( !root["point_source"]["variability"]["intrinsic"]["mean_mag"].isMember(instruments[i]) && root["point_source"]["variability"]["extrinsic"]["type"].asString() != "moving_variable_source" ){
-	  fprintf(stderr,"Intrinsic mean magnitude not provided for instrument %s!\n",instruments[i].c_str());
-	  check = true;
-	}
-      }
     }
-      
-    // if( unmicro == "custom" ){
-    //   // Check if file exists
-    // } else {
-    //   // checks for generating unmicrolensed light curve on the fly
-    // }
-      
+    
     if( root["point_source"]["variability"]["extrinsic"]["type"] == "custom" ){
       for(int i=0;i<instruments.size();i++){
 	if( !file_exists(input_dir+instruments[i]+"_LC_extrinsic.json") ){

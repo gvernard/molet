@@ -1,6 +1,5 @@
 // Checks that the duration of the following time vectors is consistent (everything is in the observer's time frame):
 // - intrinsic light curve time
-// - unmicrolensed light curve time
 // - observing time vector for each instrument
 // To compare these, we also need the maximum time delay.
 
@@ -301,7 +300,8 @@ int main(int argc,char* argv[]){
       }
     }
 
-  //=======================================================================================================================
+
+    
   } else if( ex_type == "expanding_source" ){
 
     double cutoff_fac = root["point_source"]["variability"]["extrinsic"]["size_cutoff"].asDouble();  // in Rein
@@ -334,9 +334,8 @@ int main(int argc,char* argv[]){
       }
     }
 
-
     
-  //=======================================================================================================================
+
   } else if( ex_type == "moving_variable_source" ){
 
     // Check accretion disc size with respect to the map?
@@ -344,7 +343,6 @@ int main(int argc,char* argv[]){
 
 
 
-  //=======================================================================================================================
   } else if( ex_type == "moving_fixed_source_custom" ){
 
     for(int n=0;n<names.size();n++){
@@ -427,11 +425,10 @@ int main(int argc,char* argv[]){
 	  check = true;	
 	}
       }
-    }
-    
+    }    
 
     
-  //=======================================================================================================================
+
   } else if( ex_type == "moving_fixed_source" ){
       
     // Quick loop to check if the accretion dize does not become too large for some wavelength, e.g. above several Rein
@@ -468,7 +465,7 @@ int main(int argc,char* argv[]){
     }
     
 
-  //=======================================================================================================================
+    
   } else {
     fprintf(stderr,"Unknown variability model: %s\n",ex_type.c_str());
     fprintf(stderr,"Allowed options are:");
@@ -482,48 +479,19 @@ int main(int argc,char* argv[]){
 
 
 
-    
-    /*
-    std::string unmicro_path;
-    if( unmicro ){
-      if( root["point_source"]["variability"]["unmicro"]["type"].asString() == "custom" ){
-	unmicro_path = in_path+"input_files/";
-      } else {
-	unmicro_path = out_path+"output/";
-      }
-    }
-
+  if( root["point_source"]["variability"].isMember("unmicro") ){
     for(int n=0;n<names.size();n++){
-      std::string iname = names[n];
-            
-      // Check unmicrolensed light curves
-      if( unmicro ){
-	Json::Value json_unmicro;
-	fin.open(unmicro_path+iname+"_LC_unmicro.json",std::ifstream::in);
-	fin >> json_unmicro;
-	fin.close();
-	
-	if( json_unmicro.size() != json_intrinsic.size() ){
-	  fprintf(stderr,"Instrument %s: Number of intrinsic (%d) and unmicrolensed (%d) light curves should be the same!\n",iname.c_str(),json_intrinsic.size(),json_unmicro.size());
-	  check = true;
-	}
-	
-	// Same check as above for unmicrolensed light curves
-	for(int i=0;i<json_unmicro.size();i++){
-	  if( json_unmicro[i]["time"][0].asDouble() > (tobs_min-td_max) ){
-	    fprintf(stderr,"Instrument %s: Unmicrolensed light curve %d requires an earlier starting time by at least %f days!\n",iname.c_str(),i,json_unmicro[i]["time"][0].asDouble() - (tobs_min-td_max));
-	    check = true;
-	  }
-	  int Ntime = json_unmicro[i]["time"].size();
-	  if( json_unmicro[i]["time"][Ntime-1].asDouble() < tobs_max ){
-	    fprintf(stderr,"Instrument %s: Unmicrolensed light curve %d requires a later ending time by at least %f days!\n",iname.c_str(),i,tobs_max - json_unmicro[i]["time"][Ntime-1].asDouble());
-	    check = true;
-	  }
-	}    
+      // Check flux ratio
+      double flux_ratio = root["point_source"]["variability"][names[n]]["flux_ratio"].asDouble();
+      if( flux_ratio < 0 || 1 < flux_ratio ){
+	fprintf(stderr,"Flux ratio in instrument %s must be bettwen 0 and 1 (current value: %f).\n",names[i].c_str(),flux_ratio);
+	check = true;
       }
     }
-    */
-    
+  }
+
+  
+      
  
   //=======================================================================================================================    
 
