@@ -7,7 +7,7 @@ General Capabilities (general)
 No time variability (static) - main comparison general/D
     A) - Use a SPEMD instead of an SIE
     B) - Replace gaussian with equivalent Sersic sources
-    C) - Standard run with input given in the COOLEST format
+    C) - Input given in the COOLEST format
     D) - Use a pixelated source
     E) - Use a SIE and add potential perturbations
     F) - Use 2 lenses – one main and one satellite
