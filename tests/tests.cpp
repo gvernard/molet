@@ -114,7 +114,7 @@ void compare_LC(std::string test1,std::string test2,double tol,std::string LC_na
 
 void check_fluxes(std::string example,std::string instrument,double tol,bool check_PS){
   Json::Value json;
-  std::ifstream fin("../new_tests/"+example+"/output/fluxes.json",std::ifstream::in);
+  std::ifstream fin(example+"/output/fluxes.json",std::ifstream::in);
   fin >> json;
   fin.close();
   double sum;
@@ -143,7 +143,7 @@ void run_molet(std::string example,std::string input="/molet_input.json"){
   sprintf(line_after,"%.*s%.*s%.*s",50,padding,len+2,padding,padLen,padding);
 
   std::cout << line_before << std::endl;
-  int exit = system((molet+" ../new_tests/"+example+"/"+input).c_str());
+  int exit = system((molet+" "+example+"/"+input).c_str());
   std::cout << line_after << std::endl;
 
   REQUIRE( exit == 0 );

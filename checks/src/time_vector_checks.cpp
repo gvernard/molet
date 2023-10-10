@@ -484,7 +484,7 @@ int main(int argc,char* argv[]){
       // Check flux ratio
       double flux_ratio = root["point_source"]["variability"][names[n]]["flux_ratio"].asDouble();
       if( flux_ratio < 0 || 1 < flux_ratio ){
-	fprintf(stderr,"Flux ratio in instrument %s must be bettwen 0 and 1 (current value: %f).\n",names[i].c_str(),flux_ratio);
+	fprintf(stderr,"Flux ratio in instrument %s must be bettwen 0 and 1 (current value: %f).\n",names[n].c_str(),flux_ratio);
 	check = true;
       }
     }
