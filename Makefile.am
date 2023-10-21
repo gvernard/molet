@@ -34,6 +34,7 @@ bin_PROGRAMS = \
 	var_moving_variable_source \
 	var_match_to_gerlumph \
 	var_drw \
+	final_combine_variability \
 	final_combine_light
 
 
@@ -110,6 +111,12 @@ var_drw_SOURCES = \
 	variability/intrinsic/DRW/src/auxiliary_functions.cpp
 var_drw_CPPFLAGS = -Iinstruments/include -Ivariability/intrinsic/DRW/include
 var_drw_LDADD = -linstruments -lgerlumph -lfftw3 -lCCfits -lcfitsio -lpng -ljsoncpp
+
+final_combine_variability_SOURCES = \
+	combine_variability/src/combine_variability.cpp \
+	combine_variability/src/auxiliary_functions.cpp
+final_combine_variability_CPPFLAGS = -Iinstruments/include -Icombine_variability/include
+final_combine_variability_LDADD = -linstruments -lgmp -lCGAL -lvkl -lfftw3 -lCCfits -lcfitsio -ljsoncpp
 
 final_combine_light_SOURCES = \
 	combine_light/src/combine_light.cpp \
