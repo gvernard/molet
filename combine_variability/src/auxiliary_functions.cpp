@@ -1,3 +1,7 @@
+#include <cmath>
+#include <iostream>
+#include <fstream>
+
 #include "auxiliary_functions.hpp"
 
 

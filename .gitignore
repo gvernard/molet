@@ -12,7 +12,7 @@ bin
 /third_party/src
 configure_command.txt
 /checks/check_map_files.sh
-/combine_light/setup_dirs.sh
+/combine_variability/setup_dirs.sh
 
 /instrument_modules/*
 /data/*

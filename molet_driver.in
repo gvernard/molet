@@ -230,7 +230,12 @@ check=`echo $injson | @AM_JQ@ '. | select(.point_source)'`
 if [ ! -z "${check}" ]
 then
    msg="Mock output directories created..."
-   cmd=$molet_home"combine_light/setup_dirs.sh "$infile" "$in_path" "$out_path
+   cmd=$molet_home"combine_variability/setup_dirs.sh "$infile" "$in_path" "$out_path
+   myprocess "$msg" "$cmd" "$log_file"
+
+   # Combine variability
+   msg="Combining variability..."
+   cmd=$molet_home"bin/final_combine_variability "$infile" "$in_path" "$out_path
    myprocess "$msg" "$cmd" "$log_file"
 fi
 

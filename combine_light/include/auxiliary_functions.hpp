@@ -14,7 +14,7 @@ class offsetPSF;
 vkl::RectGrid createObsStatic(Instrument* mycam,vkl::RectGrid* super_extended,vkl::RectGrid* super_lens_light,int res_x,int res_y,double& F_conv_extended,double& F_conv_lens,bool convolve_lens);
 vkl::RectGrid createObsPS(vkl::RectGrid* supersim,std::vector<double> image_signal,std::vector<offsetPSF>& PSFoffsets,std::vector<Instrument*>& instrument_list,std::vector<double>& psf_partial_sums,int res_x,int res_y);
 void writeCutout(vkl::RectGrid* obs,std::string fname);
-void writeAllCutouts(std::vector<double> tobs,Json::Value images,std::vector<LightCurve*> samp_LC,vkl::RectGrid* super_extended,vkl::RectGrid* super_lens_light,Instrument* mycam,std::vector<offsetPSF>& PSFoffsets,std::vector<Instrument*>& instrument_list,std::vector<double>& psf_partial_sums,int res_x,int res_y,std::string mock,bool convolve_lens,std::string out_path);
+void writeAllCutouts(std::vector<double> tobs,Json::Value images,Json::Value samp_LC,vkl::RectGrid* super_extended,vkl::RectGrid* super_lens_light,Instrument* mycam,std::vector<offsetPSF>& PSFoffsets,std::vector<Instrument*>& instrument_list,std::vector<double>& psf_partial_sums,int res_x,int res_y,std::string mock,bool convolve_lens,std::string out_path);
 void convertGridFromFlux(vkl::RectGrid* obs,double ZP);
 double convertFromFlux(double flux,double ZP);
 

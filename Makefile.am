@@ -122,6 +122,7 @@ final_combine_light_SOURCES = \
 	combine_light/src/combine_light.cpp \
 	combine_light/src/auxiliary_functions.cpp
 final_combine_light_CPPFLAGS = -Iinstruments/include -Icombine_light/include
+final_combine_light_CXXFLAGS = -std=c++17
 final_combine_light_LDADD = -linstruments -lgmp -lCGAL -lvkl -lfftw3 -lCCfits -lcfitsio -ljsoncpp
 
 

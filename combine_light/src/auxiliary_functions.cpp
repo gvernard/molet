@@ -83,7 +83,7 @@ void writeCutout(vkl::RectGrid* obs,std::string fname){
 }
 
 
-void writeAllCutouts(std::vector<double> tobs,Json::Value images,std::vector<LightCurve*> samp_LC,vkl::RectGrid* super_extended,vkl::RectGrid* super_lens_light,Instrument* mycam,std::vector<offsetPSF>& PSFoffsets,std::vector<Instrument*>& instrument_list,std::vector<double>& psf_partial_sums,int res_x,int res_y,std::string mock,bool convolve_lens,std::string out_path){
+void writeAllCutouts(std::vector<double> tobs,Json::Value images,Json::Value samp_LC,vkl::RectGrid* super_extended,vkl::RectGrid* super_lens_light,Instrument* mycam,std::vector<offsetPSF>& PSFoffsets,std::vector<Instrument*>& instrument_list,std::vector<double>& psf_partial_sums,int res_x,int res_y,std::string mock,bool convolve_lens,std::string out_path){
 
   // Create list of PSF file names +++++++++++++++++++	    
   //std::vector<std::string> psf_fnames = getFileNames(tobs,argv[4]); // user-provided function to get the file names of the PSFs as a function of timestep t
@@ -112,7 +112,7 @@ void writeAllCutouts(std::vector<double> tobs,Json::Value images,std::vector<Lig
     // construct a vector with the point source brightness in each image at the given time step
     std::vector<double> image_signal(images.size());
     for(int q=0;q<images.size();q++){
-      image_signal[q] = samp_LC[q]->signal[t];
+      image_signal[q] = samp_LC[q]["signal"][t].asDouble();
     }
     vkl::RectGrid obs_ps_light = createObsPS(super_extended,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y);  // This is in flux units!
 

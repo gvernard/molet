@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include <algorithm>
+#include <filesystem>
 
 #include "json/json.h"
 
@@ -60,10 +61,6 @@ int main(int argc,char* argv[]){
     fin.open(out_path+"output/multiple_images.json",std::ifstream::in);          // INPUT FILE 3 (only for point source): properties of the multiple images
     fin >> images;
     fin.close();
-
-
-    // Read samp_LC
-
   }
   //=============================================================================
   
@@ -182,9 +179,27 @@ int main(int argc,char* argv[]){
       
       // *********************** Product: Observed sampled cut-outs (images) *******************************************
       if( root["output_options"]["output_PS_cutouts"].asBool() ){
+	std::vector<double> tobs;
+	for(int t=0;t<instrument["time"].size();t++){
+	  tobs.push_back(instrument["time"][t].asDouble());
+	}
 
-	
-	writeAllCutouts(tobs,images,samp_LC,&super_extended,&super_lens_light,&mycam,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y,mock,convolve_lens,out_path);
+	std::vector<std::string> mocks;
+	for(auto const& entry : std::filesystem::directory_iterator(out_path)){
+	  std::filesystem::path p(entry);
+	  std::string dir_name = p.stem();
+	  if( dir_name.compare(0,4,"mock") == 0 ){
+	    mocks.push_back( p.stem() );
+	  }
+	}
+  
+	for(int m=0;m<mocks.size();m++){
+	  Json::Value samp_LC;
+	  fin.open(out_path+"/"+mocks[m]+"/"+instrument_name+"_LC_sampled.json",std::ifstream::in);
+	  fin >> samp_LC;
+	  fin.close();
+	  writeAllCutouts(tobs,images,samp_LC,&super_extended,&super_lens_light,&mycam,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y,mocks[m],convolve_lens,out_path);
+	}
       }
       // *********************** End of product ************************************************************************
 

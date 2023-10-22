@@ -1,6 +1,12 @@
+#include <string>
+#include <vector>
+#include <fstream>
+#include <cmath>
 
 
-
+#include "json/json.h"
+#include "auxiliary_functions.hpp"
+#include "instruments.hpp"
 
 
 int main(int argc,char* argv[]){
@@ -72,13 +78,6 @@ int main(int argc,char* argv[]){
 
 
   
-  // But further work is done when it comes to time varying images in three nested loops:
-  // - one over all the intrinsic variability light curves,
-  // - one over all the extrinsic variability light curves,
-  // - and one over the observed time.
-
-
-
       
   // Loop over the instruments
   // ===================================================================================================================
