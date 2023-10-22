@@ -73,7 +73,15 @@ void Instrument::common_constructor(Json::Value noise_pars){
   this->lambda_max = specs["lambda_max"].asDouble();
   this->resolution = specs["resolution"].asDouble();
   this->readout    = specs["readout"].asDouble();
-  
+
+  int size = specs["wavelength"].size();
+  this->wavelength.resize(size);
+  this->throughput.resize(size);
+  for(int i=0;i<size;i++){
+    this->wavelength[i] = specs["wavelength"][i].asDouble();
+    this->throughput[i] = specs["throughput"][i].asDouble();
+  }
+
   int pix_x  = specs["psf"]["pix_x"].asInt();
   int pix_y  = specs["psf"]["pix_y"].asInt();
   double width  = specs["psf"]["width"].asDouble();
@@ -126,7 +134,13 @@ void Instrument::createNewInstrument(Json::Value specs,std::string path_to_psf){
     return;
   }
 
-    
+  int Nwave = specs["wavelength"].size();
+  int Ntput = specs["throughput"].size();
+  if( Nwave != Ntput ){
+    fprintf(stderr,"The 'wavelength' and 'throughput' values must have the same length! (currently: %d and %d)\n",Nwave,Ntput);
+    return;
+  }
+
   // If the instrument can be created (i.e. no error above) then copy to the right directory
   std::string dir_name = specs["name"].asString() + "-" + specs["band"].asString();
   std::filesystem::copy(Instrument::path + tmp_name,Instrument::path + dir_name);

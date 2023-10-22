@@ -26,6 +26,8 @@ public:
   double lambda_max; // in nm
   double resolution; // in arcsec
   double readout;    // in electrons
+  std::vector<double> wavelength; // in nm
+  std::vector<double> throughput; // in percent
   double ZP;
   bool conserve_flux = false;
   
