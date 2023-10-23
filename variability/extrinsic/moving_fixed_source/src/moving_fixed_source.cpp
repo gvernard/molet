@@ -203,6 +203,7 @@ int main(int argc,char* argv[]){
       for(int k=0;k<Nfilters;k++){
 	profile_parameter_map[k]["pixSizePhys"] = std::to_string(map.pixSizePhys);
 	profiles[k] = gerlumph::FactoryProfile::getInstance()->createProfileFromHalfRadius(profile_parameter_map[k]);
+	//profiles[k]->writeImageFITS(output+"cs_"+root["instruments"][k]["name"].asString()+".fits",1);
       }
 
       // Get maximum profile offset

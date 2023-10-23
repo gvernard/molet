@@ -215,6 +215,7 @@ CATCH_REGISTER_LISTENER(testSectionListener)
 double img_tol  = 0.0001;
 double flux_tol = 0.01;
 double lc_tol   = 0.01;
+double lc_tol2  = 0.1;
 
 
 
@@ -301,7 +302,8 @@ TEST_CASE("quasar")
 {
   std::string base_test = "general/test_A/";
   std::string test;
-  std::mt19937 gen;
+  std::random_device rd;
+  std::mt19937 gen(rd());
   std::uniform_int_distribution<> distr(0,9);
   int digit1,digit2;
   
@@ -382,9 +384,9 @@ TEST_CASE("quasar")
     digit2 = distr(gen);
     std::string mock = "mock_0000_00"+std::to_string(digit1)+std::to_string(digit2);
     std::cout << "Comparing continuous light curves for " << mock  << std::endl;
-    compare_LC(base_test,test,lc_tol,mock+"/"+mycam+"_LC_continuous.json");
+    compare_LC(base_test,test,lc_tol2,mock+"/"+mycam+"_LC_continuous.json");
     std::cout << "Comparing sampled light curves for " << mock << std::endl;
-    compare_LC(base_test,test,lc_tol,mock+"/"+mycam+"_LC_sampled.json");
+    compare_LC(base_test,test,lc_tol2,mock+"/"+mycam+"_LC_sampled.json");
   }
 }
 

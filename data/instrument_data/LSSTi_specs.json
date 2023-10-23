@@ -1,6 +1,6 @@
 {
-    "name": "LSSTg",
-    "band": "g",
+    "name": "LSSTi",
+    "band": "i",
     "resolution": 0.035,
     "psf": {
 	"pix_x": 74,
