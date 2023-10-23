@@ -107,12 +107,19 @@ int main(int argc,char* argv[]){
 
 
 
-  // Get rest wavelength at the middle of each instrument's range
+  // Get effective wavelength, i.e. the average wavelength, taking into account the instruments transmission function
   std::vector<double> lrest(Nfilters);
+  std::vector<Instrument*> instruments(Nfilters);
   for(int k=0;k<Nfilters;k++){
-    Instrument mycam(root["instruments"][k]["name"].asString(),root["instruments"][k]["noise"]);
-    double lobs  = (mycam.lambda_min + mycam.lambda_max)/2.0;
-    lrest[k] = lobs/(1.0+zs);
+    instruments[k] = new Instrument(root["instruments"][k]["name"].asString(),root["instruments"][k]["noise"]);
+    double leff = 0.0;
+    double norm = 0.0;
+    for(int i=1;i<instruments[k]->wavelength.size();i++){
+      norm += (instruments[k]->wavelength[i] - instruments[k]->wavelength[i-1])*(instruments[k]->throughput[i] + instruments[k]->throughput[i-1])/2.0;
+      leff += (instruments[k]->wavelength[i] - instruments[k]->wavelength[i-1])*(instruments[k]->throughput[i]*instruments[k]->wavelength[i] + instruments[k]->throughput[i-1]*instruments[k]->wavelength[i-1])/2.0;
+    }
+    lrest[k] = (leff/norm)/(1.0+zs);
+    //lrest[k] = (instruments[k]->lambda_min + instruments[k]->lambda_max)/2.0/(1.0+zs);
   }
 
 
@@ -120,29 +127,29 @@ int main(int argc,char* argv[]){
   std::vector< std::map<std::string,std::string> > profile_parameter_map(Nfilters);
   if( root["point_source"]["variability"]["extrinsic"]["type"].asString() == "moving_fixed_source_custom" ){
 
-      std::map<std::string,std::string> main_map;
-      main_map.insert( std::pair<std::string,std::string>("type","custom") );
-      main_map.insert( std::pair<std::string,std::string>("shape","custom") );
-      main_map.insert( std::pair<std::string,std::string>("incl","0") );
-      main_map.insert( std::pair<std::string,std::string>("orient","0") );
-      main_map.insert( std::pair<std::string,std::string>("pixSizePhys","1") ); // This is dummy here, but it is set properly in the loop over the maps
-      main_map.insert( std::pair<std::string,std::string>("filename","") );
-      main_map.insert( std::pair<std::string,std::string>("profPixSizePhys","") );
-      main_map.insert( std::pair<std::string,std::string>("rhalf","") );
-
-      for(int k=0;k<Nfilters;k++){
-	std::string name = root["instruments"][k]["name"].asString();
-	main_map["filename"] = in_path+"input_files/cs_"+name+".fits";
-	main_map["profPixSizePhys"] = std::to_string( root["point_source"]["variability"]["extrinsic"][name]["pixSize"].asDouble() );
-	gerlumph::BaseProfile* profile = gerlumph::FactoryProfile::getInstance()->createProfileFromPars(main_map);
-	rhalfs[k] = profile->getHalfRadius();
-	delete(profile);
-	main_map["rhalf"] = std::to_string( rhalfs[k] );
-	profile_parameter_map[k] = main_map;
-      }
-      
+    std::map<std::string,std::string> main_map;
+    main_map.insert( std::pair<std::string,std::string>("type","custom") );
+    main_map.insert( std::pair<std::string,std::string>("shape","custom") );
+    main_map.insert( std::pair<std::string,std::string>("incl","0") );
+    main_map.insert( std::pair<std::string,std::string>("orient","0") );
+    main_map.insert( std::pair<std::string,std::string>("pixSizePhys","1") ); // This is dummy here, but it is set properly in the loop over the maps
+    main_map.insert( std::pair<std::string,std::string>("filename","") );
+    main_map.insert( std::pair<std::string,std::string>("profPixSizePhys","") );
+    main_map.insert( std::pair<std::string,std::string>("rhalf","") );
+    
+    for(int k=0;k<Nfilters;k++){
+      std::string name = root["instruments"][k]["name"].asString();
+      main_map["filename"] = in_path+"input_files/cs_"+name+".fits";
+      main_map["profPixSizePhys"] = std::to_string( root["point_source"]["variability"]["extrinsic"][name]["pixSize"].asDouble() );
+      gerlumph::BaseProfile* profile = gerlumph::FactoryProfile::getInstance()->createProfileFromPars(main_map);
+      rhalfs[k] = profile->getHalfRadius();
+      delete(profile);
+      main_map["rhalf"] = std::to_string( rhalfs[k] );
+      profile_parameter_map[k] = main_map;
+    }
+    
   } else {
-  
+    
     // Create profile parameter maps
     Json::Value::Members json_members = root["point_source"]["variability"]["extrinsic"]["profiles"].getMemberNames();
     std::map<std::string,std::string> main_map; // size should be json_members.size()+2
@@ -156,12 +163,18 @@ int main(int argc,char* argv[]){
       if( main_map["type"] == "vector" ){
 	rhalfs[k] = root["point_source"]["variability"]["extrinsic"]["profiles"]["rhalf"][k].asDouble();
       } else {
-	rhalfs[k] = gerlumph::BaseProfile::getSize(main_map,lrest[k]);
+	//rhalfs[k] = gerlumph::BaseProfile::getSize(main_map,lrest[k]);
+	rhalfs[k] = gerlumph::BaseProfile::getSize(main_map,instruments[k]->wavelength,instruments[k]->throughput);
+	std::cout << rhalfs[k] << std::endl;
       }
       main_map["rhalf"] = std::to_string(rhalfs[k]);
       profile_parameter_map[k] = main_map;
     }
     
+  }
+
+  for(int k=0;k<Nfilters;k++){
+    delete(instruments[k]);
   }
   //================= END:INITIALIZE =======================
   
