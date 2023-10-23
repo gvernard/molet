@@ -69,8 +69,6 @@ void Instrument::common_constructor(Json::Value noise_pars){
   fin >> specs;
   fin.close();
 
-  this->lambda_min = specs["lambda_min"].asDouble();
-  this->lambda_max = specs["lambda_max"].asDouble();
   this->resolution = specs["resolution"].asDouble();
   this->readout    = specs["readout"].asDouble();
 
@@ -81,7 +79,10 @@ void Instrument::common_constructor(Json::Value noise_pars){
     this->wavelength[i] = specs["wavelength"][i].asDouble();
     this->throughput[i] = specs["throughput"][i].asDouble();
   }
+  this->lambda_min = this->wavelength[0];
+  this->lambda_max = this->wavelength[size-1];
 
+  
   int pix_x  = specs["psf"]["pix_x"].asInt();
   int pix_y  = specs["psf"]["pix_y"].asInt();
   double width  = specs["psf"]["width"].asDouble();
