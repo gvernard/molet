@@ -145,7 +145,7 @@ myprocess "$msg" "$cmd" "$log_file"
 # Intermediate step:
 # Get variability
 ####################################################################################
-check=`echo $injson | @AM_JQ@ '. | select(.point_source)'`
+check=`echo $injson | @AM_JQ@ '. | select(.point_source.variability)'`
 if [ ! -z "${check}" ]
 then
     # Intrinsic
@@ -226,7 +226,7 @@ fi
 # Combine different light components
 ####################################################################################
 # Create output directories if necessary
-check=`echo $injson | @AM_JQ@ '. | select(.point_source)'`
+check=`echo $injson | @AM_JQ@ '. | select(.point_source.variability)'`
 if [ ! -z "${check}" ]
 then
    msg="Mock output directories created..."
