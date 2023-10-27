@@ -130,7 +130,7 @@ Json::Value parseLight(Json::Value coolest_light_model,std::string name){
 	  double coolest_i_eff = coolest_light_model[i]["parameters"][key]["point_estimate"]["value"].asDouble();
 	  profile["pars"]["i_eff"] = q*coolest_i_eff;
 	  std::cout << coolest_i_eff << " " << q*coolest_i_eff << std::endl;
-	} else if( key == "R_eff" ){
+	} else if( key == "theta_eff" ){
 	  double q = coolest_light_model[i]["parameters"]["q"]["point_estimate"]["value"].asDouble();
 	  double coolest_r_eff = coolest_light_model[i]["parameters"][key]["point_estimate"]["value"].asDouble(); // intermediate axis
 	  profile["pars"]["r_eff"] = coolest_r_eff*sqrt(q);
