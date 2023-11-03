@@ -1,4 +1,4 @@
-AC_INIT([molet], [0.1], [gvernard@astro.rug.nl])
+AC_INIT([molet], [0.1], [gvernardos@amnh.org])
 AC_LANG(C++)
 AC_CONFIG_AUX_DIR(aux-dist)
 AM_INIT_AUTOMAKE([foreign subdir-objects])

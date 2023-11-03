@@ -129,7 +129,6 @@ Json::Value parseLight(Json::Value coolest_light_model,std::string name){
 	  double q = coolest_light_model[i]["parameters"]["q"]["point_estimate"]["value"].asDouble();
 	  double coolest_i_eff = coolest_light_model[i]["parameters"][key]["point_estimate"]["value"].asDouble();
 	  profile["pars"]["i_eff"] = q*coolest_i_eff;
-	  std::cout << coolest_i_eff << " " << q*coolest_i_eff << std::endl;
 	} else if( key == "theta_eff" ){
 	  double q = coolest_light_model[i]["parameters"]["q"]["point_estimate"]["value"].asDouble();
 	  double coolest_r_eff = coolest_light_model[i]["parameters"][key]["point_estimate"]["value"].asDouble(); // intermediate axis
@@ -148,7 +147,8 @@ Json::Value parseLight(Json::Value coolest_light_model,std::string name){
 	  fprintf(stderr,"Unknown parameter name '%s' for lensing entity '%s'!\n",key.c_str(),name.c_str());
 	}
       }
-      
+      profiles.append( profile );
+
     } else if( lmodel_type == "PixelatedRegularGrid" ){
       profile["type"] = "custom";   
       for( auto const& key : coolest_light_model[i]["parameters"]["pixels"].getMemberNames()){
@@ -170,17 +170,55 @@ Json::Value parseLight(Json::Value coolest_light_model,std::string name){
 	  fprintf(stderr,"Unknown parameter name '%s' for lensing entity '%s'!\n",key.c_str(),name.c_str());
 	}
       }
+      profiles.append( profile );
+
+    } else if( lmodel_type == "LensedPS" ){
+      // Do nothing
       
     } else {
+      fprintf(stderr,"HERE");
       fprintf(stderr,"Unknown light model type '%s' for lensing entity '%s'!\n",lmodel_type.c_str(),name.c_str());
     }
     
-    profiles.append( profile );
   }
 
   return profiles;
 }
 
+
+
+Json::Value getPointSource(Json::Value last_plane){
+  Json::Value ps_profile;
+  bool exit_flag = false;
+  
+  for(int j=0;j<last_plane.size();j++){
+  
+    if( last_plane[j].isMember("light_model") ){
+      
+      for(int i=0;i<last_plane[j]["light_model"].size();i++){    
+	std::string lmodel_type = last_plane[j]["light_model"][i]["type"].asString();
+	if( lmodel_type == "LensedPS" ){
+	  std::string flag_contains = last_plane[j]["light_model"][i]["parameters"]["flag_contains"]["point_estimate"].asString();
+	  bool flag_coupled = last_plane[j]["light_model"][i]["parameters"]["flat_coupled"]["point_estimate"].asBool();
+	  if( flag_contains == "true" || (flag_contains == "both" && flag_coupled == true) ){
+	    ps_profile["x0"] = last_plane[j]["light_model"][i]["parameters"]["x_true"]["point_estimate"]["value"].asDouble();
+	    ps_profile["y0"] = last_plane[j]["light_model"][i]["parameters"]["y_true"]["point_estimate"]["value"].asDouble();
+	    ps_profile["M_tot_unlensed"] = last_plane[j]["light_model"][i]["parameters"]["m_true"]["point_estimate"]["value"].asDouble();
+	  }
+	  exit_flag = true;
+	  break;
+	}
+      }
+      
+    }
+
+    if( exit_flag ){
+      break;
+    }
+  }
+  
+  return ps_profile;
+}
 
       
 int main(int argc,char* argv[]){
@@ -354,8 +392,34 @@ int main(int argc,char* argv[]){
 
   
   // Point source
+  Json::Value molet_ps = getPointSource(last_plane);
+  if( molet_ps != Json::nullValue ){
 
 
+   
+    Json::Value meta = root["meta"];
+
+    if( meta.isMember("triangle_size") ){
+      molet_ps["triangle_size"] = meta["triangle_size"].asDouble();
+    } else {
+      molet_ps["triangle_size"] = 0.3;
+    }
+
+    // Check for variability
+
+
+
+    // Add mass-to-light in every lens
+    for(int i=0;i<molet_lenses.size();i++){
+      for(int j=0;j<molet_lenses[i]["light_profile"][instrument_name].size();j++){
+	molet_lenses[i]["light_profile"][instrument_name][j]["mass-to-light"] = meta["mass_to_light"];
+      }
+    }
+
+  }
+  //std::cout << molet_ps << std::endl;
+
+  
 
   // Create the file in the proper format acceptable by molet and write output
   Json::Value molet_final;
@@ -363,6 +427,9 @@ int main(int argc,char* argv[]){
   molet_final["lenses"] = molet_lenses;
   molet_final["source"] = molet_source;
   molet_final["instruments"] = molet_instruments;
+  if( molet_ps != Json::nullValue ){
+    molet_final["point_source"] = molet_ps;
+  }
   //std::cout << molet_final << std::endl;
   //std::cout << molet_instruments << std::endl;
 
