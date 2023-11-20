@@ -115,7 +115,7 @@ Json::Value parseMass(Json::Value coolest_mass_model,std::string name){
 }
 
 
-Json::Value parseLight(Json::Value coolest_light_model,std::string name){
+Json::Value parseLight(Json::Value coolest_light_model,std::string name,std::string case_path){
   Json::Value profiles = Json::Value(Json::arrayValue);
   for(int i=0;i<coolest_light_model.size();i++){
     Json::Value profile;
@@ -170,6 +170,26 @@ Json::Value parseLight(Json::Value coolest_light_model,std::string name){
 	  fprintf(stderr,"Unknown parameter name '%s' for lensing entity '%s'!\n",key.c_str(),name.c_str());
 	}
       }
+      // Convert image pixels from COOLEST units [e/s] to MOLET units [e/(s arcsec^2].
+      double xmax = profile["pars"]["xmax"].asDouble();
+      double xmin = profile["pars"]["xmin"].asDouble();
+      double ymax = profile["pars"]["ymax"].asDouble();
+      double ymin = profile["pars"]["ymin"].asDouble();
+      int Nx = profile["pars"]["Nx"].asInt();
+      int Ny = profile["pars"]["Ny"].asInt();
+      double pix_area = (xmax-xmin)*(ymax-ymin)/(Nx*Ny);
+      std::string src_fname = profile["pars"]["filepath"].asString();
+      int lastindex = src_fname.find_last_of("."); 
+      std::string new_src_fname = src_fname.substr(0,lastindex) + "_molet_units.fits";
+      
+      // Read, convert, and write source
+      vkl::RectGrid input_src(Nx,Ny,xmin,xmax,ymin,ymax,case_path+"/"+src_fname);
+      for(int i=0;i<input_src.Nz;i++){
+	input_src.z[i] /= pix_area;
+      }
+      vkl::FitsInterface::writeFits(Nx,Ny,input_src.z,case_path+"/"+new_src_fname);
+      profile["pars"]["filepath"] = new_src_fname;
+      
       profiles.append( profile );
 
     } else if( lmodel_type == "LensedPS" ){
@@ -379,7 +399,7 @@ int main(int argc,char* argv[]){
     Json::Value light_model;
     light_model[instrument_name] = Json::Value(Json::arrayValue);
     for(int j=0;j<planes[i].size();j++){
-      Json::Value lmodel = parseLight(planes[i][j]["light_model"],planes[i][j]["name"].asString());
+      Json::Value lmodel = parseLight(planes[i][j]["light_model"],planes[i][j]["name"].asString(),case_path);
       for(int k=0;k<lmodel.size();k++){
 	light_model[instrument_name].append( lmodel[k] );
       }
@@ -397,7 +417,7 @@ int main(int argc,char* argv[]){
   light_model[instrument_name] = Json::Value(Json::arrayValue);
   Json::Value last_plane = planes[planes.size()-1];
   for(int j=0;j<last_plane.size();j++){
-    Json::Value lmodel = parseLight(last_plane[j]["light_model"],last_plane[j]["name"].asString());
+    Json::Value lmodel = parseLight(last_plane[j]["light_model"],last_plane[j]["name"].asString(),case_path);
     for(int k=0;k<lmodel.size();k++){
       light_model[instrument_name].append( lmodel[k] );
     }

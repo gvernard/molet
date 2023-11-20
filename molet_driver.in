@@ -64,14 +64,17 @@ then
     @MKDIR_P@ ${in_path}MOLET_RUN/output
     log_file=${in_path}MOLET_RUN/output/log.txt
 
+    # Copy the input files
+    cp ${in_path}*.dat ${in_path}*.txt ${in_path}psf.fits ${in_path}MOLET_RUN/input_files 2>/dev/null
+
     # Run the conversion
     msg="Check: conversion from coolest..."
     cmd=$molet_home"bin/check_coolest_conversion "$molet_home" "$in_path" "$infile
     myprocess "$msg" "$cmd" "$log_file"
 
-    # Copy the input files
-    cp ${in_path}*.dat ${in_path}*.txt ${in_path}*.fits ${in_path}MOLET_RUN/input_files 2>/dev/null
+    # Move newly created MOLET input file
     mv ${in_path}molet_input.json ${in_path}MOLET_RUN/molet_input.json
+    mv ${in_path}*_molet_units.fits ${in_path}MOLET_RUN/input_files/
 
     # Change the input file name, the input path, and the json string for the rest of the script and codes
     in_path=${in_path}MOLET_RUN/
