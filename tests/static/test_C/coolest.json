@@ -221,7 +221,7 @@
 				"type": null
 			    }
 			},
-			"R_eff": {
+			"theta_eff": {
 			    "point_estimate": {
 				"value": 0.13590719
 			    },
@@ -282,7 +282,7 @@
 				"type": null
 			    }
 			},
-			"R_eff": {
+			"theta_eff": {
 			    "point_estimate": {
 				"value": 0.092779308
 			    },
