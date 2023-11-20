@@ -297,19 +297,35 @@ int main(int argc,char* argv[]){
   } else {
 
     // Check if name contains forbitten characters, e.g. '/'
-    
+
     fprintf(stdout,"Creating new instrument: '%s'\n",instrument_name.c_str());
     Json::Value new_instrument;
     new_instrument["name"] = root["instrument"]["name"];
     new_instrument["band"] = root["instrument"]["band"];
     new_instrument["readout"] = root["instrument"]["readout_noise"];
     new_instrument["resolution"] = root["instrument"]["pixel_size"];
+
     Json::Value psf;
     psf["pix_x"]  = root["instrument"]["psf"]["pixels"]["num_pix_x"];
     psf["pix_y"]  = root["instrument"]["psf"]["pixels"]["num_pix_y"];
     psf["width"]  = root["instrument"]["psf"]["pixels"]["field_of_view_x"][1].asDouble() - root["instrument"]["psf"]["pixels"]["field_of_view_x"][0].asDouble();
     psf["height"] = root["instrument"]["psf"]["pixels"]["field_of_view_y"][1].asDouble() - root["instrument"]["psf"]["pixels"]["field_of_view_y"][0].asDouble();
     new_instrument["psf"] = psf;
+
+    if( root["instrument"].isMember("wavelength") && root["instrument"].isMember("throughput") ){
+      new_instrument["wavelength"] = root["instrument"]["wavelength"];
+      new_instrument["throughput"] = root["instrument"]["throughput"];
+    } else {
+      Json::Value wavelength = Json::Value(Json::arrayValue);
+      Json::Value throughput = Json::Value(Json::arrayValue);
+      wavelength.append(500);
+      wavelength.append(600);
+      throughput.append(1);
+      throughput.append(1);
+      new_instrument["wavelength"] = wavelength;
+      new_instrument["throughput"] = throughput;
+    }
+    
     Instrument::createNewInstrument(new_instrument,case_path+"psf.fits");
   }
 
