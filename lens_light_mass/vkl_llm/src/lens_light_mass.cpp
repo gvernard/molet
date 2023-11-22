@@ -144,7 +144,7 @@ int main(int argc,char* argv[]){
 	}
       } else {
 	for(int k=0;k<root["instruments"].size();k++){
-	  std::string name = root["instruments"][k]["name"].asString();	
+	  std::string name = root["instruments"][k]["name"].asString();
 	  for(int m=0;m<root["lenses"][i]["light_profile"].size();m++){
 	    if( root["lenses"][i]["light_profile"][name][m].isMember("mass-to-light") ){
 	      all_compact.append( root["lenses"][i]["light_profile"][name][m] );

@@ -121,7 +121,7 @@ int main(int argc,char* argv[]){
     vkl::RectGrid super_lens_light = vkl::RectGrid(super_res_x,super_res_y,xmin,xmax,ymin,ymax,out_path+"output/"+instrument_name+"_lens_light_super.fits");        // INPUT FILE 6: super-resolved lens light
     
     // Create static image (lens light and extended lensed source)
-    vkl::RectGrid obs_static = createObsStatic(&mycam,&super_extended,&super_lens_light,res_x,res_y,F_conv_extended,F_conv_lens,convolve_lens); // This is in units of flux!
+    vkl::RectGrid obs_static = createObsStatic(&mycam,&super_extended,&super_lens_light,res_x,res_y,F_conv_extended,F_conv_lens,convolve_lens); // This is in units of electrons/(s arcsec^2)!
 
     // Calculate total flux of the static image
     double F_final_static = obs_static.integrate();
@@ -209,16 +209,16 @@ int main(int argc,char* argv[]){
       // For each image we use the same brightness value, which is a multiple of the total extended lensed source flux.
       // We gather the entire extended lensed source flux in one pixel and multiply by a factor
       double M_ps_unlensed = root["point_source"]["M_tot_unlensed"].asDouble();
-      double F_ps_unlensed = pow(10,-0.4*(M_ps_unlensed - mycam.ZP)); // This is a total flux
-      double area = supersim.step_x*supersim.step_y;
+      double F_ps_unlensed = pow(10,-0.4*(M_ps_unlensed - mycam.ZP)); // This is a total flux in [electrons/s]
+      double area_super = supersim.step_x*supersim.step_y;
       double F_ps = 0.0;
       std::vector<double> image_signal(images.size());
       for(int q=0;q<images.size();q++){
 	double macro_mag = fabs(images[q]["mag"].asDouble());
-	image_signal[q] = macro_mag*(F_ps_unlensed/area); // This needs to be flux density, i.e. divided by the area of a pixel
-	F_ps += image_signal[q]*area; // This is the total magnified flux, i.e. multiplied by the area of a pixel
+	image_signal[q] = macro_mag*(F_ps_unlensed/area_super); // This needs to be flux density, i.e. divided by the area of a pixel [electrons/(s arcsec^2)]
+	F_ps += image_signal[q]*area_super; // This is the total magnified flux, i.e. multiplied by the area of a pixel
       }
-      vkl::RectGrid obs_ps_light = createObsPS(&supersim,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y); // This is in flux units!
+      vkl::RectGrid obs_ps_light = createObsPS(&supersim,image_signal,PSFoffsets,instrument_list,psf_partial_sums,res_x,res_y); // This is in [electrons/(s arcsec^2)]
 
       // Calculate total flux of the PS light only
       F_conv_ps = obs_ps_light.integrate();
@@ -233,7 +233,13 @@ int main(int argc,char* argv[]){
 
       // Output the noiseless static image with a PS with macromagnification only
       writeCutout(&obs_ps_light,out_path+"output/OBS_"+instrument_name+"_ps_macro_noiseless.fits");
-
+      
+      // Convert to units of electrons/s, must be done before adding noise
+      double area = obs_ps_light.step_x*obs_ps_light.step_y;
+      for(int i=0;i<obs_ps_light.Nz;i++){
+	obs_ps_light.z[i] *= area;
+      }
+      
       // Adding time-dependent noise here
       mycam.noise->initializeFromData(&obs_ps_light);
       mycam.noise->calculateNoise();
@@ -263,6 +269,12 @@ int main(int argc,char* argv[]){
     //=============== START: CREATE STATIC LIGHT ====================
     // Output the noiseless static image
     writeCutout(&obs_static,out_path + "output/OBS_" + instrument_name + "_noiseless.fits");
+    
+    // Convert to units of electrons/s, must be done before adding noise
+    double area = obs_static.step_x*obs_static.step_y;
+    for(int i=0;i<obs_static.Nz;i++){
+      obs_static.z[i] *= area;
+    }
     
     // Adding noise here and output realization
     mycam.noise->initializeFromData(&obs_static);
