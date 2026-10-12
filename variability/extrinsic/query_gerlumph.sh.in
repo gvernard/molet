@@ -3,7 +3,7 @@
 
 out_path=$1
 
-json_maps=`grep -o '^[^//]*' ${out_path}output/multiple_images.json`
+json_maps=`@GREP@ -o '^[^//]*' ${out_path}output/multiple_images.json`
 
 gerlumph_maps='[]'
 Nq=`echo $json_maps | @AM_JQ@ '. | length'`

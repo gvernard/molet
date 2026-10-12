@@ -77,7 +77,7 @@ myprocess () {
 
 infile=$1
 infile=`realpath $infile`
-injson=`grep -o '^[^//]*' $infile`
+injson=`@GREP@ -o '^[^//]*' $infile`
 in_path=`dirname $infile`"/"
 molet_home=@MOLET_HOME@"/"
 map_path=`${molet_home}"bin/check_get_map_path"`
@@ -89,7 +89,7 @@ set -a && source ${molet_home}/.env && set +a
 # Step -1:
 # Convert input file from coolest standard if necessary and change execution paths
 ####################################################################################
-if grep -q "COOLEST" $infile
+if @GREP@ -q "COOLEST" $infile
 then
     # Make run directories first (needed for the log.txt)
     @MKDIR_P@ ${in_path}MOLET_RUN/
@@ -112,7 +112,7 @@ then
     # Change the input file name, the input path, and the json string for the rest of the script and codes
     in_path=${in_path}MOLET_RUN/
     infile=${in_path}/molet_input.json
-    injson=`grep -o '^[^//]*' $infile`
+    injson=`@GREP@ -o '^[^//]*' $infile`
 else
     # A directory named 'input_files' must exist at the same path as the 'molet_input.json' file, even if it is empty!
     if [ ! -d ${in_path}"input_files" ]

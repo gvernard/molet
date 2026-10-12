@@ -5,7 +5,7 @@ map_path=$1
 out_path=$2
 api_status=$3
 
-json_maps=`grep -o '^[^//]*' ${out_path}output/gerlumph_maps.json`
+json_maps=`@GREP@ -o '^[^//]*' ${out_path}output/gerlumph_maps.json`
 
 missing=()
 Nq=`echo $json_maps |  @AM_JQ@ '. | length'`

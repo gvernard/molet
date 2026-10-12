@@ -10,7 +10,23 @@ AC_SUBST(INSTRUMENT_PATH,$PWD/instrument_modules/)
 
 AC_PROG_CXX
 AC_PROG_MKDIR_P # MKDIR_P
-AC_PROG_SED # SED
+AC_PROG_SED
+AC_PROG_GREP
+
+
+AC_PATH_PROG([WGET], [wget])
+AS_IF([test -z "$WGET"], [
+  AC_MSG_ERROR([wget is required but was not found in your PATH.])
+])
+
+AC_PATH_PROG([CURL], [curl])
+AS_IF([test -z "$CURL"], [
+  AC_MSG_ERROR([curl is required but was not found in your PATH.])
+])
+
+
+
+
 
 LT_INIT([disable-static])
 
