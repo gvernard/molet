@@ -194,5 +194,6 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([molet_driver],[chmod +x molet_driver])
 AC_CONFIG_FILES([checks/check_map_files.sh],[chmod +x checks/check_map_files.sh])
 AC_CONFIG_FILES([combine_variability/setup_dirs.sh],[chmod +x combine_variability/setup_dirs.sh])
+AC_CONFIG_FILES([variability/extrinsic/query_gerlumph.sh],[chmod +x variability/extrinsic/query_gerlumph.sh])
 
 AC_OUTPUT

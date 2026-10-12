@@ -1,3 +1,4 @@
+.env
 molet_driver
 /tests/tests
 /tests/*/*/MOLET_RUN/
@@ -13,6 +14,7 @@ bin
 configure_command.txt
 /checks/check_map_files.sh
 /combine_variability/setup_dirs.sh
+/variability/extrinsic/query_gerlumph.sh
 
 /instrument_modules/*
 /data/*

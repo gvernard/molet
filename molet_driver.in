@@ -1,23 +1,54 @@
 #!/bin/bash
 
 
-myprocess () {
+#myprocess () {
+#    msg=$1
+#    cmd_list=$2
+#    log_file=$3
+#
+#    old_process "$msg" "$cmd_list" "$log_file"
+#    #new_process "$msg" "$cmd_list" "$log_file"
+#}
+
+new_process () {
     msg=$1
     cmd_list=$2
     log_file=$3
 
-    
     echo "COMMAND: $cmd_list" >> $log_file
     dum="=========================================="
     echo $dum$dum$dum$dum$dum >> $log_file
 
     printf "%-100s" "$msg"
 
-    error_file=$(mktemp)
-    out=$($cmd_list 2>$error_file)
-    exit_code=$?
-    err=$(< $error_file)
-    rm $error_file
+    source $cmd_list
+    
+    printf "%-10s\n" "...done"
+}
+    
+myprocess () {
+    msg=$1
+    cmd_list=$2
+    log_file=$3
+    script=$4
+
+    echo "COMMAND: $cmd_list" >> $log_file
+    dum="=========================================="
+    echo $dum$dum$dum$dum$dum >> $log_file
+
+    printf "%-100s" "$msg"
+
+    
+    if [ "$script" == "script" ]
+    then
+	source $cmd_list
+    else
+	error_file=$(mktemp)
+	out=$($cmd_list 2>$error_file)
+	exit_code=$?
+	err=$(< $error_file)
+	rm $error_file
+    fi
     
     if [ ! -z "$err" ]
     then
@@ -51,6 +82,8 @@ in_path=`dirname $infile`"/"
 molet_home=@MOLET_HOME@"/"
 map_path=`${molet_home}"bin/check_get_map_path"`
 
+
+set -a && source ${molet_home}/.env && set +a
 
 
 # Step -1:
@@ -102,7 +135,6 @@ out_path=$in_path
 msg="Check: perform initialization checks..."
 cmd=$molet_home"bin/check_initialization "$molet_home" "$in_path" "$infile
 myprocess "$msg" "$cmd" "$log_file"
-
 
     
 # Step 1:
@@ -176,13 +208,28 @@ then
     ex_type=`echo $injson | @AM_JQ@ '.point_source.variability.extrinsic.type' | @SED@ -e 's/^"//' -e 's/"$//'`
     if [ $ex_type != "custom" ]
     then
-	msg="Matching macro-images to GERLUMPH maps..."
-	cmd=$molet_home"bin/var_match_to_gerlumph "$molet_home"data/gerlumph.db "$out_path
-	myprocess "$msg" "$cmd" "$log_file"
+	response=$(curl -s -o /dev/null -w "%{http_code}\n" -u "$GERLUMPH_username:$GERLUMPH_password" -X POST $GERLUMPH_api_check -H "Content-Type: application/json")
+	if [ "$response" == "200" ];
+	then
+	    api_status="true"
+	else
+	    api_status="false"
+	fi
+
+	if [ "$api_status" == "true" ]
+	then
+	    msg="Matching macro-images to the GERLUMPH api..."
+	    cmd=$molet_home"variability/extrinsic/query_gerlumph.sh "$out_path
+	    myprocess "$msg" "$cmd" "$log_file" "script"
+	else
+	    msg="Matching macro-images to *local* database file of GERLUMPH maps..."
+	    cmd=$molet_home"bin/var_match_to_gerlumph "$molet_home"data/gerlumph.db "$out_path
+	    myprocess "$msg" "$cmd" "$log_file"
+	fi
 
 	msg="Check: if GERLUMPH maps exist locally..."
-	cmd=$molet_home"checks/check_map_files.sh "$map_path" "$out_path
-	myprocess "$msg" "$cmd" "$log_file"
+	cmd=$molet_home"checks/check_map_files.sh "$map_path" "$out_path" "$api_status
+	myprocess "$msg" "$cmd" "$log_file" "script"
 
 	if [ $ex_type = moving_fixed_source ] || [ $ex_type = moving_fixed_source_custom ]
 	then
@@ -234,7 +281,7 @@ if [ ! -z "${check}" ]
 then
    msg="Mock output directories created..."
    cmd=$molet_home"combine_variability/setup_dirs.sh "$infile" "$in_path" "$out_path
-   myprocess "$msg" "$cmd" "$log_file"
+   myprocess "$msg" "$cmd" "$log_file" "script"
 
    # Combine variability
    msg="Combining variability..."

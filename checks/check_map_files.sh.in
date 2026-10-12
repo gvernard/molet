@@ -3,60 +3,70 @@
 
 map_path=$1
 out_path=$2
+api_status=$3
 
 json_maps=`grep -o '^[^//]*' ${out_path}output/gerlumph_maps.json`
 
 missing=()
-Nq=`echo $json_maps | @AM_JQ@ '. | length'`
+Nq=`echo $json_maps |  @AM_JQ@ '. | length'`
 for (( q=0; q<$Nq; q++ ))
 do  
-    id=`echo $json_maps | @AM_JQ@ ".[$q].id " | @SED@ -e 's/^"//' -e 's/"$//'`
+    id=$(echo $json_maps | @AM_JQ@ ".[$q].id " | @SED@ -e 's/^"//' -e 's/"$//')
     if [ $id != "none" ]
     then
 	mydir=${map_path}$id
 	if [ ! -d "$mydir" ]
 	then
 	    missing+=("$id")
-	fi	
+	fi
     fi
 done
 
 
 
 
-urlencode() {
-    # urlencode <string>
-    old_lc_collate=$LC_COLLATE
-    LC_COLLATE=C
-    
-    local length="${#1}"
-    for (( i = 0; i < length; i++ )); do
-	local c="${1:i:1}"
-	case $c in
-            [a-zA-Z0-9.~_-]) printf "$c" ;;
-            *) printf '%%%02X' "'$c" ;;
-	esac
-    done
-    
-    LC_COLLATE=$old_lc_collate
-}
-
-
 if [ ${#missing[@]} -ne 0 ]
 then
-    get_args=""
-    for id in "${missing[@]}"
-    do
-	get_args=${get_args}"ids[]="$id"&"
-    done
-    get_args=${get_args::-1}
+
+    if [ "$api_status" == "true" ]
+    then
     
-    printf "ATTENTION: missing GERLUMPH maps from '%s' !\n" $map_path 1>&2
-    printf "Click the following link to download them:" 1>&2
-    printf "\n\n" 1>&2
-    printf "      %s" "https://gerlumph.swin.edu.au/inc/generic/put_to_cart.php?"$get_args 1>&2
-    printf "\n\n" 1>&2
-    printf "and place them at: %s " $map_path 1>&2
+	echo "${#missing[@]} map(s) will be downloaded from the GERLUMPH api."
+
+	query_args=$(echo '{}' | @AM_JQ@ --jsonargs '.ids = $ARGS.positional' "${missing[@]}")
+	#echo $query_args
+	    
+    	response=$(curl -s -u "$GERLUMPH_username:$GERLUMPH_password" -X POST $GERLUMPH_api_fetch -H "Content-Type: application/json" -d "$query_args")
+	#echo $response
+
+	message=$(echo "$response" |  @AM_JQ@ '.message' | @SED@ -e 's/^"//' -e 's/"$//')
+	if [[ "$message" == "success" ]]
+	then
+	    length=$(echo "$response" |  @AM_JQ@ '.map_links | length')
+	    for ((i=0; i<length; i++)); do
+		mkdir ${map_path}${missing[$i]}
+		
+		map_link=$(echo "$response" |  @AM_JQ@ -c --argjson idx "$i" '.map_links[$idx]')
+		clean_link=${map_link//\"/}
+		wget -q --show-progress -O ${map_path}${missing[$i]}/map.bin $clean_link
+		
+		meta_link=$(echo "$response" |  @AM_JQ@ -c --argjson idx "$i" '.meta_links[$idx]')
+		clean_link=${meta_link//\"/}
+		wget -q --show-progress -O ${map_path}${missing[$i]}/mapmeta.dat $clean_link
+	    done
+	else
+	    echo "Something went wrong! Here is the error:" >&2
+	    echo $message >&2
+	    exit 1
+	fi
+
+    else
+
+	echo "${#missing[@]} maps are missing and need to be downloaded, but the GERLUMPH api is currently offline."
+	echo "Please either wait, rerun MOLET with different options, or contact the admins if you think this is a mistake."
+	exit 1
+	
+    fi
 fi
 
 

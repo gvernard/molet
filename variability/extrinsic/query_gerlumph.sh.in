@@ -1,0 +1,42 @@
+#!/bin/bash
+
+
+out_path=$1
+
+json_maps=`grep -o '^[^//]*' ${out_path}output/multiple_images.json`
+
+gerlumph_maps='[]'
+Nq=`echo $json_maps | @AM_JQ@ '. | length'`
+for (( q=0; q<$Nq; q++ ))
+do  
+    k=$(echo $json_maps | @AM_JQ@ ".[$q].k ")
+    g=$(echo $json_maps | @AM_JQ@ ".[$q].g ")
+    s=$(echo $json_maps | @AM_JQ@ ".[$q].s ")
+
+    query_args="{\"k\":$k,\"g\":$g,\"s\":$s}"
+    response=$(curl -s -u "$GERLUMPH_username:$GERLUMPH_password" -X POST $GERLUMPH_api_query -H "Content-Type: application/json" -d $query_args)
+    #echo $response
+    
+    check=$(echo $response | @AM_JQ@ '.message' | @SED@ -e 's/^"//' -e 's/"$//')
+    if [[ $check == *"No map"* ]];
+    then
+	map_prop=$(@AM_JQ@ -n --arg id "none" --argjson k "0" --argjson g "0" --argjson s "0" --argjson ds "0" --argjson dkg "0" --argjson resolution "0" --argjson width "0" '$ARGS.named')
+    else
+	id=$(echo $response | @AM_JQ@ '.map.id')
+	kk=$(echo $response | @AM_JQ@ '.map.k')
+	gg=$(echo $response | @AM_JQ@ '.map.g')
+	ss=$(echo $response | @AM_JQ@ '.map.s')
+	ds=$(echo $response | @AM_JQ@ '.map.ds')
+	dkg=$(echo $response | @AM_JQ@ '.map.dkg')
+	res=$(echo $response | @AM_JQ@ '.map.res')
+	width=$(echo $response | @AM_JQ@ '.map.width')
+	map_prop=$(@AM_JQ@ -n --arg id "$id" --argjson k "$kk" --argjson g "$gg" --argjson s "$ss" --argjson ds "$ds" --argjson dkg "$dkg" --argjson resolution "$res" --argjson width "$width" '$ARGS.named')
+    fi
+
+    #echo $map_prop
+    gerlumph_maps=$(echo "$gerlumph_maps" | @AM_JQ@ --argjson map "$map_prop" '. += [$map]')
+done
+
+
+echo $gerlumph_maps > ${out_path}output/gerlumph_maps.json
+
