@@ -30,7 +30,13 @@ then
 
     if [ "$api_status" == "true" ]
     then
-    
+
+	if [[ -z "$GERLUMPH_username" || -z "$GERLUMPH_password" ]];
+	then
+	    echo "GERLUMPH api credentials not found (does the .env file exist or is it empty?)"
+	    exit 1
+	fi
+	
 	echo "${#missing[@]} map(s) will be downloaded from the GERLUMPH api."
 
 	query_args=$(echo '{}' | @AM_JQ@ --jsonargs '.ids = $ARGS.positional' "${missing[@]}")
@@ -62,7 +68,7 @@ then
 
     else
 
-	echo "${#missing[@]} maps are missing and need to be downloaded, but the GERLUMPH api is currently offline."
+	echo "${#missing[@]} maps are missing and need to be downloaded, but the GERLUMPH api is currently unreachable."
 	echo "Please either wait, rerun MOLET with different options, or contact the admins if you think this is a mistake."
 	exit 1
 	

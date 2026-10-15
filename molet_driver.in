@@ -49,7 +49,7 @@ myprocess () {
 	err=$(< $error_file)
 	rm $error_file
     fi
-    
+
     if [ ! -z "$err" ]
     then
         printf "\n===> Failed with error: \n%s" "$err"
@@ -208,12 +208,31 @@ then
     ex_type=`echo $injson | @AM_JQ@ '.point_source.variability.extrinsic.type' | @SED@ -e 's/^"//' -e 's/"$//'`
     if [ $ex_type != "custom" ]
     then
-	response=$(curl -s -o /dev/null -w "%{http_code}\n" -u "$GERLUMPH_username:$GERLUMPH_password" -X POST $GERLUMPH_api_check -H "Content-Type: application/json")
-	if [ "$response" == "200" ];
+	if [[ -z "$GERLUMPH_username" || -z "$GERLUMPH_password" ]];
 	then
-	    api_status="true"
-	else
+	    echo -e "\nGERLUMPH api credentials not found (does the .env file exist or is it empty?)"
+	    echo -e "--- proceeding using the local database\n"
 	    api_status="false"
+	else
+	    response=$(curl -s -o /dev/null -w "%{http_code}\n" -u "$GERLUMPH_username:$GERLUMPH_password" -X POST $GERLUMPH_api_check -H "Content-Type: application/json")
+	    if [ "$response" == "200" ];
+	    then
+		api_status="true"
+	    elif [ "$response" == "000" ];
+	    then
+		echo -e "\nGERLUMPH api is unreachable. If you think this is an error please contact the GERLUMPH api administrator."
+		echo -e "--- proceeding using the local database\n"
+		api_status="false"
+	    elif [ "$response" == "403" ];
+	    then
+		echo -e "\nGERLUMPH api responded with an error (are you using the correct username and password in the .env file?)"
+		echo -e "--- proceeding using the local database\n"
+		api_status="false"
+	    else
+		echo -e "\nThere was an unspecified error while contacting the GERLUMPH api (error code: "$response"). Please contact the GERLUMPH api administrator!"
+		echo -e "--- proceeding using the local database\n"
+		api_status="false"
+	    fi
 	fi
 
 	if [ "$api_status" == "true" ]

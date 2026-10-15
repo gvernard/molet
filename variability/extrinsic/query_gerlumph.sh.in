@@ -1,9 +1,30 @@
 #!/bin/bash
 
+if [[ -z "$GERLUMPH_username" || -z "$GERLUMPH_password" ]];
+then
+    echo "GERLUMPH api credentials not found (does the .env file exist or is it empty?)"
+    exit 1
+fi
+
 
 out_path=$1
 
 json_maps=`@GREP@ -o '^[^//]*' ${out_path}output/multiple_images.json`
+
+
+# Find the index of the Maximum image
+readarray -t maps < <(echo "$json_maps" | @AM_JQ@ -c '.[]')
+dtmax=0
+i_dtmax=0
+for i in "${!maps[@]}"; do
+    if echo "${maps[$i]}" | @AM_JQ@ -e --argjson dtmax "$dtmax" '.dt > $dtmax' > /dev/null;
+    then
+	dtmax=$(echo "${maps[$i]}" | @AM_JQ@ -r '.dt')
+	i_dtmax=$i
+    fi
+done
+#echo $i_dtmax
+
 
 gerlumph_maps='[]'
 Nq=`echo $json_maps | @AM_JQ@ '. | length'`
@@ -18,10 +39,8 @@ do
     #echo $response
     
     check=$(echo $response | @AM_JQ@ '.message' | @SED@ -e 's/^"//' -e 's/"$//')
-    if [[ $check == *"No map"* ]];
+    if [[ $check == *"success"* ]];
     then
-	map_prop=$(@AM_JQ@ -n --arg id "none" --argjson k "0" --argjson g "0" --argjson s "0" --argjson ds "0" --argjson dkg "0" --argjson resolution "0" --argjson width "0" '$ARGS.named')
-    else
 	id=$(echo $response | @AM_JQ@ '.map.id')
 	kk=$(echo $response | @AM_JQ@ '.map.k')
 	gg=$(echo $response | @AM_JQ@ '.map.g')
@@ -31,6 +50,14 @@ do
 	res=$(echo $response | @AM_JQ@ '.map.res')
 	width=$(echo $response | @AM_JQ@ '.map.width')
 	map_prop=$(@AM_JQ@ -n --arg id "$id" --argjson k "$kk" --argjson g "$gg" --argjson s "$ss" --argjson ds "$ds" --argjson dkg "$dkg" --argjson resolution "$res" --argjson width "$width" '$ARGS.named')
+    else
+	if [[ $q == $i_dtmax ]];
+	then
+	    map_prop=$(@AM_JQ@ -n --arg id "none" --argjson k "0" --argjson g "0" --argjson s "0" --argjson ds "0" --argjson dkg "0" --argjson resolution "0" --argjson width "0" '$ARGS.named')
+	else
+	    echo "No matching map found for image $q within the given tolerance!"
+	    exit 1
+	fi
     fi
 
     #echo $map_prop

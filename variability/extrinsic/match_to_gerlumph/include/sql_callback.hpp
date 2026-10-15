@@ -30,12 +30,27 @@ static int callback(void* userData,int argc,char** argv,char** azColName){
 	E->s = atof(argv[i]);
       } else if( strcmp(azColName[i],"dkg") == 0 ){
 	E->dkg = atof(argv[i]);
+      } else if( strcmp(azColName[i],"ds") == 0 ){
+	E->ds = atof(argv[i]);
       } else if( strcmp(azColName[i],"ss") == 0 ){
 	E->ss = atof(argv[i]);
       } else if( strcmp(azColName[i],"res") == 0 ){
 	E->res = atoi(argv[i]);
       } else {
 	E->ds = atof(argv[i]);
+      }
+    }
+  }
+  return 0;
+}
+
+static int count_callback(void *counter, int argc, char **argv, char **azColName) {
+  int *count = static_cast<int*>(counter);
+
+  if( argc > 0 ){
+    for(int i=0;i<argc;i++){
+      if( strcmp(azColName[i],"count") == 0 ){
+	*count = std::atoi(argv[i]); // Convert string result to integer  
       }
     }
   }
