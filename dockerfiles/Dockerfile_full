@@ -18,7 +18,7 @@ RUN wget ftp://ftp.fftw.org/pub/fftw/fftw-3.3.8.tar.gz \
 	&&	make install
 
 # Install cfitsio
-RUN wget http://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio-3.47.tar.gz \
+RUN wget https://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio-3.47.tar.gz \
 	&&	tar -xvf cfitsio-3.47.tar.gz \
 	&&	mv cfitsio-3.47 cfitsio \
 	&&	cd cfitsio \
@@ -35,17 +35,18 @@ RUN wget https://heasarc.gsfc.nasa.gov/fitsio/CCfits-2.5/CCfits-2.5.tar.gz \
 	&&	make install
 
 # Install libpng
-RUN wget --no-check-certificate https://sourceforge.net/projects/libpng/files/libpng16/1.6.37/libpng-1.6.37.tar.gz \
-	&&	tar -xvf libpng-1.6.37.tar.gz \
-	&&	cd libpng-1.6.37 \
+RUN wget https://sourceforge.net/projects/libpng/files/libpng16/1.6.59/libpng-1.6.59.tar.gz/download \
+        &&      mv download libpng-1.6.59.tar.gz \											     
+	&&	tar -xvf libpng-1.6.59.tar.gz \
+	&&	cd libpng-1.6.59 \
 	&&	./configure --prefix=$LIBDIR/libpng \
 	&&	make check \
 	&&	make install
 
 # Install gmp
-RUN wget https://gmplib.org/download/gmp/gmp-6.1.2.tar.xz \
-	&&	tar -xvf gmp-6.1.2.tar.xz \
-	&&	cd gmp-6.1.2 \
+RUN wget https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.gz \
+	&&	tar -xvf gmp-6.3.0.tar.gz \
+	&&	cd gmp-6.3.0 \
 	&&	./configure --prefix=$LIBDIR/gmp \
 	&&	make \
 	&&	make install
@@ -59,7 +60,7 @@ RUN wget http://www.mpfr.org/mpfr-4.0.2/mpfr-4.0.2.tar.gz \
 	&&	make install
 
 # Install boost
-RUN wget https://boostorg.jfrog.io/artifactory/main/release/1.66.0/source/boost_1_66_0.tar.gz \
+RUN wget https://archives.boost.io/release/1.66.0/source/boost_1_66_0.tar.gz \
 	&&	tar -xvf boost_1_66_0.tar.gz \
 	&&	cd boost_1_66_0 \
 	&&	./bootstrap.sh --with-libraries=thread \
@@ -106,16 +107,19 @@ RUN git clone https://github.com/open-source-parsers/jsoncpp.git \
 	&&	make \
 	&&	make install
 
-# Install jq and libsqlite3 necessary to run MOLET
-RUN apt-get update\
-	&& apt-get install -y\
-	libsqlite3-dev\
-	jq\
-	&& rm -r /var/lib/apt/lists/*
 
-ENV CPATH $CPATH:$LIBDIR/fftw/include:$LIBDIR/cfitsio/include:$LIBDIR/CCfits/include:$LIBDIR/libpng/include:$LIBDIR/gmp/include:$LIBDIR/mpfr/include:$LIBDIR/boost/include:$LIBDIR/CGAL/include:$LIBDIR/jsoncpp/include
-ENV LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib:$LIBDIR/libpng/lib:$LIBDIR/gmp/lib:$LIBDIR/mpfr/lib:$LIBDIR/boost/lib:$LIBDIR/CGAL/lib:$LIBDIR/jsoncpp/lib
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib:$LIBDIR/libpng/lib:$LIBDIR/gmp/lib:$LIBDIR/mpfr/lib:$LIBDIR/boost/lib:$LIBDIR/CGAL/lib:$LIBDIR/jsoncpp/lib
+# Point the sources list to the archive vault - needed to run apt-get update correctly
+RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list \
+    && sed -i 's/security.debian.org/archive.debian.org/g' /etc/apt/sources.list \
+    && sed -i '/stretch-updates/d' /etc/apt/sources.list
+
+# Install jq and libsqlite3 necessary to run MOLET
+RUN apt-get update && apt-get install -y libsqlite3-dev jq \
+	&& 	rm -r /var/lib/apt/lists/*
+
+ENV CPATH=$CPATH:$LIBDIR/fftw/include:$LIBDIR/cfitsio/include:$LIBDIR/CCfits/include:$LIBDIR/libpng/include:$LIBDIR/gmp/include:$LIBDIR/mpfr/include:$LIBDIR/boost/include:$LIBDIR/CGAL/include:$LIBDIR/jsoncpp/include
+ENV LIBRARY_PATH=$LIBRARY_PATH:$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib:$LIBDIR/libpng/lib:$LIBDIR/gmp/lib:$LIBDIR/mpfr/lib:$LIBDIR/boost/lib:$LIBDIR/CGAL/lib:$LIBDIR/jsoncpp/lib
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LIBDIR/fftw/lib:$LIBDIR/cfitsio/lib:$LIBDIR/CCfits/lib:$LIBDIR/libpng/lib:$LIBDIR/gmp/lib:$LIBDIR/mpfr/lib:$LIBDIR/boost/lib:$LIBDIR/CGAL/lib:$LIBDIR/jsoncpp/lib
 #########################################################################################################
 
 
@@ -143,9 +147,9 @@ RUN git clone https://github.com/gvernard/gerlumphpp.git \
     &&  make \
     &&	make install
 
-ENV CPATH $CPATH:$LIBDIR/vkl_lib/include:$LIBDIR/gerlumphpp/include
-ENV LIBRARY_PATH $LIBRARY_PATH:$LIBDIR/vkl_lib/lib:$LIBDIR/gerlumphpp/lib
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$LIBDIR/vkl_lib/lib:$LIBDIR/gerlumphpp/lib
+ENV CPATH=$CPATH:$LIBDIR/vkl_lib/include:$LIBDIR/gerlumphpp/include
+ENV LIBRARY_PATH=$LIBRARY_PATH:$LIBDIR/vkl_lib/lib:$LIBDIR/gerlumphpp/lib
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LIBDIR/vkl_lib/lib:$LIBDIR/gerlumphpp/lib
 #########################################################################################################
 
 

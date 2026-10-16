@@ -1,4 +1,4 @@
-.env
+.env*
 molet_driver
 /tests/tests
 /tests/*/*/MOLET_RUN/
