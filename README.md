@@ -12,9 +12,9 @@ In a nutshell, `MOLET` can:
 # TLDR
 
 - Get an account at [https://gerlumph.amnh.org](https://gerlumph.amnh.org)
-- Add your credentials to a copy of the `.env' file.
+- Add your credentials to a copy of the [.env_example](.env_example) file.
 - Create a directory to hold magnification maps and another one to hold your `MOLET` simulations.
-- Run the [docker command](#docker-command) specifying the location of the `.env` file and these two directories.
+- Run the [docker command](#docker-command) specifying the location of your `.env` file and these two directories.
 - You are ready to run `MOLET` within the docker container, e.g.:
 
     *./molet_driver tests/quasar/test_A/molet_input.json*
