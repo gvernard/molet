@@ -9,7 +9,7 @@ In a nutshell, `MOLET` can:
 - include microlensing self-consistently,
 - provide 'observed' light curves in any band, with given observing strategy.
 
-# TLDR
+## TLDR
 
 - Get an account at [https://gerlumph.amnh.org](https://gerlumph.amnh.org)
 - Add your credentials to a copy of the [.env_example](.env_example) file.
@@ -19,6 +19,22 @@ In a nutshell, `MOLET` can:
 
     *./molet_driver tests/quasar/test_A/molet_input.json*
 
+## Table of Contents
+* [Microlensing and magnification maps](#microlensing-and-magnification-maps)
+    - [The GERLUMPH API](#the-gerlumph-api)
+    - [Using custom maps](#using-custom-maps)
+
+* [Installation](#installation)
+    - [Performance](#performance)
+    - [Docker container](#docker-container)
+    - [Local installation](#local-installation)
+    - [Testing](#running-the-tests)
+
+* [Running](#running)
+    - [Input](#input)
+    - [Output](#output)
+
+* [Advanced usage](#advanced-usage)
 
 
 ## Microlensing and magnification maps
@@ -67,7 +83,7 @@ The user needs to make sure that the map data are stored in the same format as G
 
 
 
-## Installing
+## Installation
 
 There are two different ways to setup a working installation of `MOLET`: through a **docker container** or a **local installation**.
 The quickest is using the provided docker containers, however, such virtualization makes the computations significantly slower.
@@ -189,7 +205,7 @@ The './configure' command needs to be executed only once during installation to 
 Only if the location of a library changes the user will need to modify the corresponding option to the *./configure* script accordingly and follow the same steps from there.
 
 
-### Running the tests
+### Testing
 
 In the root directory of the `MOLET` installation there is a directory named 'tests', where a few standard use cases are given as examples.
 Inside this directory there is a [README](tests/README.txt) file describing the various tests.
