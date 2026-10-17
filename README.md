@@ -99,16 +99,10 @@ The following timing results illustrate the speed of a local installation compar
 The two tests used ('Test 2' and 'Test 5') can be found in the 'tests' directory.
 On a DELL Precision laptop with an NVIDIA GPU:
 
-Test 2 (including microlensing):
-
-- docker CPU: 120s
-- local CPU: 80s (x1.5 faster)
-- local GPU: 22s (x5.5 faster)
-
-Test 5 (no time variability, producing just a cutout):
-
-- docker CPU: 8.8s
-- local CPU: 1.8s (x5 faster)
+|  | docker CPU | local CPU | local GPU |
+| :--- | ---: | ---: | ---: |
+| Test 2 (including microlensing): | 120s | 80s (x1.5 faster) | 22s (x5.5 faster) |
+| Test 5 (no time variability): | 8.8s | 1.8s (x5 faster) |  |
 
 
 ### Docker container
