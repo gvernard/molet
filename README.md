@@ -2,7 +2,7 @@
 
 
 <img src="data/configuration.png" width="400" align="left">
-<img src="data/lcurves_configuration.png" width="350" align="left" style="margin-top:50px">
+<img src="data/lcurves_configuration.png" width="350" align="left" style="vertical-align:middle;">
 
 <br clear="left" />
 
