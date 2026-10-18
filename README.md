@@ -3,8 +3,8 @@
 
 <table>
   <tr>
-    <td><img src="data/configuration.png" width="25%"></td>
-    <td><img src="data/lcurves_configuration.png" width="25%"></td>
+    <td><img src="data/configuration.png" width="100%"></td>
+    <td><img src="data/lcurves_configuration.png" width="75%"></td>
   </tr>
   <tr>
     <td>Caption 1</td>
