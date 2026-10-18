@@ -5,6 +5,11 @@ ARG LIBDIR=/home/libraries
 
 COPY --from=dev /home/libraries /home/libraries
 
+# Point the sources list to the archive vault - needed to run apt-get update correctly
+RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list \
+    && sed -i 's/security.debian.org/archive.debian.org/g' /etc/apt/sources.list \
+    && sed -i '/stretch-updates/d' /etc/apt/sources.list
+
 # Install jq and libsqlite3 necessary to run MOLET
 RUN apt-get update && apt-get install -y libsqlite3-dev jq\
     && rm -r /var/lib/apt/lists/*
