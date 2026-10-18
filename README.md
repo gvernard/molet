@@ -5,7 +5,7 @@
 <img src="data/lcurves_configuration.png" width="350" align="left" style="vertical-align:middle;">
 
 <br clear="left" />
-
+<br>
 
 
 This is a collection of software creating simulated galaxy-galaxy lenses as a function of time.
