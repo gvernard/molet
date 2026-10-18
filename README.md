@@ -9,7 +9,7 @@ In a nutshell, MOLET can:
 - include microlensing self-consistently,
 - provide 'observed' light curves in any band, with given observing strategy.
 
-Here is a `"TLDR"` to ==get you started==:
+Here is a "TLDR" to get you started:
 
 
 - Get an account at [https://gerlumph.amnh.org](https://gerlumph.amnh.org)
@@ -49,7 +49,7 @@ To gain access to the GERLUMPH API the user needs to:
 
 - Register for an account at: [https://gerlumph.amnh.org](https://gerlumph.amnh.org)
 - Create a *.env* file containing the API URLs and the user credentials.
-- Make this file accessible at the root directory of the MOLET installation (see section on `"Installing"` below).
+- Make this file accessible at the root directory of the MOLET installation (see section on "Installing" below).
 
 MOLET will automatically determine which GERLUMPH maps are needed, download them at the specified */path/to/gerlumph/maps/*, and use them in microlensing simulations, without any other intervention by the user.
 
@@ -64,18 +64,19 @@ The following procedure should be used:
 
 Re-running MOLET will now use a local table, stored in *data/gerlumph.db*, to match the &kappa;, &gamma;, and s of the lensed point-source images to magnification maps, where the local/custom maps would appear.
 
-The actual maps will need to be stored in a sub-directory of */path/to/gerlumph/maps/* named with the map ID.
-The user needs to make sure that the map data are stored in the same format as GERLUMPH and with these specific file names:
+> [!WARNING]
+> The actual maps will need to be stored in a sub-directory of */path/to/gerlumph/maps/* named with the map ID.
+> The user needs to make sure that the map data are stored in the same format as GERLUMPH and with these specific file names:
 
-- *map.bin*: a binary file holding ray-counts per pixel stored as 4-byte integers
-- *mapmeta.dat*: a text file with the specific structure (signle-spaced):
+> - *map.bin*: a binary file holding ray-counts per pixel stored as 4-byte integers
+> - *mapmeta.dat*: a text file with the specific structure (signle-spaced):
 
-```
-    <average magnification> <average number of rays per pixel>
-    <resolution>
-    <width>
-    <kappa> <gamma> <s>
-```
+> ```
+>    <average magnification> <average number of rays per pixel>
+>    <resolution>
+>    <width>
+>    <kappa> <gamma> <s>
+>```
 
 
 
@@ -140,9 +141,9 @@ If additional third-party libraries are required then it is strongly advised to 
 The following software is required in order to proceed with the installation of `MOLET`:
 
 - [x] **CMake**
-- [x] **Autotools** (for the `"autoreconf"` command)
+- [x] **Autotools** (for the "autoreconf" command)
 - [x] A **C/C++ compiler** compatible with the c++17 standard (e.g. GCC version 8 and above)
-- [x] A **CUDA** compiler (i.e. `"nvcc"`) for GPU support.
+- [x] A **CUDA** compiler (i.e. "nvcc") for GPU support.
 
 These programs are standard packages that can be easily installed via package managers.
 
@@ -152,7 +153,7 @@ For convenience, a list of commands that download and install all these librarie
 
 To use the install_all.sh script, the user needs to provide three command line arguments:
 
- - -g: either `"yes"` or `"no"`, enables GPU support
+ - -g: either "yes" or "no", enables GPU support
  - -m: the absolute path to a directory with the GERLUMPH maps (see *</absolute/path/to/gerlumph/maps/>*)
  - -s: the absolute path to a directory anywhere in the user's system where all the third party libraries will eventually be installed.
 
@@ -160,7 +161,7 @@ The first two arguments are relevant only for the microlensing part of the code,
 These two arguments can be changed at any time, requiring only the re-compillation of the gerlumph++ library (see its [README](https://github.com/gvernard/gerlumphpp) on how to achieve this).
 
 MOLET will eventually be linked to the libraries installed by this script.
-Using different libraries, even if some already exist in the user's system, is a somewhat advanced task, which the users are advised not to undertake unless they are familiar with installing software through autotools (the `./configure; make; make install` way).
+Using different libraries, even if some already exist in the user's system, is a somewhat advanced task, which the users are advised not to undertake unless they are familiar with installing software through autotools (through `./configure; make; make install`).
 
 > [!NOTE]
 > If the installation produces errors, then you can edit the script, e.g. comment out the part that downloads the source files for the libraries, and re-run it to debug.
