@@ -21,6 +21,8 @@ configure_command.txt
 !/data/gerlumph.db
 !/data/initialize_instruments.sh
 !/data/instrument_data
+!/data/configuration.png
+!/data/lcurves_configuration.png
 /plotting/*.png
 /plotting/extrinsic_lc.json
 
