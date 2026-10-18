@@ -1,8 +1,9 @@
 # Mock Lenses in Time
 
 
-<img src="data/configuration.png" width="200" align="left">
-<img src="data/lcurves_configuration.png" width="150" align="left">
+<img src="data/configuration.png" width="400" align="left">
+<img src="data/lcurves_configuration.png" width="350" align="left" style="margin-top:50px">
+
 <br clear="left" />
 
 
