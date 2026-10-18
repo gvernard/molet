@@ -1,16 +1,11 @@
 # Mock Lenses in Time
 
 
-<table>
-  <tr>
-    <td><img src="data/configuration.png" width="100%"></td>
-    <td><img src="data/lcurves_configuration.png" width="75%"></td>
-  </tr>
-  <tr>
-    <td>Caption 1</td>
-    <td>Caption 2</td>
-  </tr>
-</table>
+<img src="data/configuration.png" width="200" align="left">
+<img src="data/lcurves_configuration.png" width="150" align="left">
+<br clear="left" />
+
+
 
 This is a collection of software creating simulated galaxy-galaxy lenses as a function of time.
 This includes both **images** and **light curves**.
