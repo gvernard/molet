@@ -43,7 +43,7 @@ The user needs to store such maps somewhere in their system and provide the full
 
 ### The GERLUMPH API
 
-The GERLUMPH project (see [Vernardos & Fluke (2014)](https://ui.adsabs.harvard.edu/abs/2014A%26C.....6....1V/abstract), [Vernardos et al. (2014)](https://ui.adsabs.harvard.edu/abs/2014ApJS..211...16V/abstract), and [Vernardos et al. (2015)](https://ui.adsabs.harvard.edu/abs/2015ApJS..217...23V/abstract)) has produced more than 70,000 microlensing magnification maps that are readily available through a publicly accessible database and API.
+The GERLUMPH project (see [Vernardos & Fluke 2014](https://ui.adsabs.harvard.edu/abs/2014A%26C.....6....1V/abstract), [Vernardos et al. 2014](https://ui.adsabs.harvard.edu/abs/2014ApJS..211...16V/abstract), and [Vernardos et al. 2015](https://ui.adsabs.harvard.edu/abs/2015ApJS..217...23V/abstract)) has produced more than 70,000 microlensing magnification maps that are readily available through a publicly accessible database and API.
 MOLET calculates the required map parameters and fetches the corresponding maps automatically.
 To gain access to the GERLUMPH API the user needs to:
 
@@ -67,10 +67,9 @@ Re-running MOLET will now use a local table, stored in *data/gerlumph.db*, to ma
 > [!WARNING]
 > The actual maps will need to be stored in a sub-directory of */path/to/gerlumph/maps/* named with the map ID.
 > The user needs to make sure that the map data are stored in the same format as GERLUMPH and with these specific file names:
-
 > - *map.bin*: a binary file holding ray-counts per pixel stored as 4-byte integers
 > - *mapmeta.dat*: a text file with the specific structure (signle-spaced):
-
+> 
 > ```
 >    <average magnification> <average number of rays per pixel>
 >    <resolution>
@@ -88,19 +87,19 @@ The quickest is using the provided docker containers, however, such virtualizati
 This approach is recommended for familiarizing oneself with the code, test runs, and even some development.
 Setting up a local installation is a bit more time consuming, but the code can run considerably faster in this way.
 This is the recommended approach for using MOLET in production mode, e.g. when one needs to simulate more than a handful of systems.
-Finally, enabling GPU support can dramatically increase the speed of microlensing related computations.
 
 
 ### Performance
 
-The following timing results illustrate the speed of a local installation compared to a docker container and the enhanced performance on GPUs.
-The two tests used ('Test 2' and 'Test 5') can be found in the 'tests' directory.
+The following timing results illustrate the speed of a local installation compared to a docker container.
+Enabling GPU support can dramatically increase the speed of microlensing related computations.
+The two timing tests - "Test 2" that includes microlensing calculated on-the-fly and "Test 5" that generates just a simulated image of a lens) can be found in the *tests/* directory.
 On a DELL Precision laptop with an NVIDIA GPU:
 
 |  | docker CPU | local CPU | local GPU |
 | :--- | ---: | ---: | ---: |
-| Test 2 (including microlensing): | 120s | 80s (x1.5 faster) | 22s (x5.5 faster) |
-| Test 5 (no time variability): | 8.8s | 1.8s (x5 faster) |  |
+| Test 2: | 120s | 80s (x1.5 faster) | 22s (x5.5 faster) |
+| Test 5: | 8.8s | 1.8s (x5 faster) | no use of GPUs |
 
 
 ### Docker container
@@ -138,7 +137,7 @@ If additional third-party libraries are required then it is strongly advised to 
 ### Local installation
 
 #### Prerequisites
-The following software is required in order to proceed with the installation of `MOLET`:
+The following software is required in order to proceed with the installation of MOLET:
 
 - [x] **CMake**
 - [x] **Autotools** (for the "autoreconf" command)
@@ -287,7 +286,7 @@ An example is given in [test_6](tests/test_6/molet_input.json).
 
 ### Adding new instruments
 
-A few basic examples of instruments (i.e. a psf, some resolution, bandwidth, etc) are provided with `MOLET`, but the user can easily add their own.
+A few basic examples of instruments (i.e. a psf, some resolution, bandwidth, etc) are provided with MOLET, but the user can easily add their own.
 From the root installation directory, the user needs to run:
 ```
 ./bin/aux_create_instrument /path/to/instrument/specs.json /path/to/instrument/psf.fits
