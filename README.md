@@ -1,5 +1,17 @@
 # Mock Lenses in Time
 
+
+<table>
+  <tr>
+    <td><img src="data/configuration.png" width="25%"></td>
+    <td><img src="data/lcurves_configuration.png" width="25%"></td>
+  </tr>
+  <tr>
+    <td>Caption 1</td>
+    <td>Caption 2</td>
+  </tr>
+</table>
+
 This is a collection of software creating simulated galaxy-galaxy lenses as a function of time.
 This includes both **images** and **light curves**.
 In a nutshell, MOLET can:
@@ -19,6 +31,18 @@ Here is a "TLDR" to get you started:
 - You are ready to run MOLET within the docker container, e.g.: `./molet_driver tests/quasar/test_A/molet_input.json`
 
 A detailed demonstration and application of MOLET's capabilities can be found in [Vernardos (2022)](https://ui.adsabs.harvard.edu/abs/2022MNRAS.511.4417V/abstract).
+
+Here is a list of papers using MOLET:
+
+- *"LTDE: The Lens Time Delay Experiment I. From pixels to light curves"* - [Neira, et al. 2026](https://ui.adsabs.harvard.edu/abs/2025arXiv250416249N/abstract)
+- *"Exploiting the diversity of modeling methods to probe systematic biases in strong lensing analyses"* - [Galan et al. 2024](https://ui.adsabs.harvard.edu/abs/2024A%26A...692A..87G/abstract)
+- *"Measuring the substructure mass power spectrum of 23 SLACS strong galaxy-galaxy lenses with convolutional neural networks"* - [Fagin et al. 2024](https://ui.adsabs.harvard.edu/abs/2024MNRAS.532.2248F/abstract)
+- *"Modeling lens potentials with continuous neural fields in galaxy-scale strong lenses"* - [Biggio et al. 2023](https://ui.adsabs.harvard.edu/abs/2023A%26A...675A.125B/abstract)
+- *"COOLEST: COde-independent Organized LEns STandard"* - [Galan et al. 2023](https://ui.adsabs.harvard.edu/abs/2023JOSS....8.5567G/abstract)
+- *" Using wavelets to capture deviations from smoothness in galaxy-scale strong lenses"* - [Galan et al. 2022](https://ui.adsabs.harvard.edu/abs/2022A%26A...668A.155G/abstract)
+- *"The Very Knotty Lenser: Exploring the role of regularization in source and potential reconstructions using Gaussian process regression"* - [Vernardos & Koopmans 2022](https://ui.adsabs.harvard.edu/abs/2022MNRAS.516.1347V/abstract)
+- *"Time-delay estimation in unresolved lensed quasars"* - [Biggio et al. 2022](https://ui.adsabs.harvard.edu/abs/2022MNRAS.515.5665B/abstract)
+
 
 ## Table of Contents
 * [Microlensing and magnification maps](#microlensing-and-magnification-maps)

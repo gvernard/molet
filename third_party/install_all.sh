@@ -37,14 +37,13 @@ cd $SRCDIR
 # Download, extract, and rename all the external libraries
 #########################################################################################################
 wget ftp://ftp.fftw.org/pub/fftw/fftw-3.3.8.tar.gz && tar -xvf fftw-3.3.8.tar.gz && mv fftw-3.3.8 fftw3
-wget http://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio-3.47.tar.gz && tar -xvf cfitsio-3.47.tar.gz && mv cfitsio-3.47 cfitsio 
+wget https://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio-3.47.tar.gz && tar -xvf cfitsio-3.47.tar.gz && mv cfitsio-3.47 cfitsio 
 wget https://heasarc.gsfc.nasa.gov/fitsio/CCfits-2.5/CCfits-2.5.tar.gz && tar -xvf CCfits-2.5.tar.gz
-wget --no-check-certificate https://sourceforge.net/projects/libpng/files/libpng16/1.6.37/libpng-1.6.37.tar.gz && tar -xvf libpng-1.6.37.tar.gz && mv libpng-1.6.37 libpng
-wget https://gmplib.org/download/gmp/gmp-6.1.2.tar.xz && tar -xvf gmp-6.1.2.tar.xz && mv gmp-6.1.2 gmp
+wget https://sourceforge.net/projects/libpng/files/libpng16/1.6.59/libpng-1.6.59.tar.gz/download && mv download libpng-1.6.59.tar.gz && tar -xvf libpng-1.6.59.tar.gz && mv libpng-1.6.59 libpng
+wget https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.gz && tar -xvf gmp-6.3.0.tar.gz && mv gmp-6.3.0 gmp
 wget http://www.mpfr.org/mpfr-4.0.2/mpfr-4.0.2.tar.gz && tar -xvf mpfr-4.0.2.tar.gz && mv mpfr-4.0.2 mpfr
-wget https://boostorg.jfrog.io/artifactory/main/release/1.66.0/source/boost_1_66_0.tar.gz && tar -xvf boost_1_66_0.tar.gz && mv boost_1_66_0 boost
+wget https://archives.boost.io/release/1.66.0/source/boost_1_66_0.tar.gz && tar -xvf boost_1_66_0.tar.gz && mv boost_1_66_0 boost
 wget https://github.com/CGAL/cgal/archive/releases/CGAL-4.11.2.tar.gz && tar -xvf CGAL-4.11.2.tar.gz && mv cgal-releases-CGAL-4.11.2 cgal
-#wget https://github.com/stedolan/jq/releases/download/jq-1.5/jq-1.5.tar.gz && tar -xvf jq-1.5.tar.gz && mv jq-1.5 jq
 wget https://www.sqlite.org/2022/sqlite-autoconf-3380500.tar.gz && tar -xvf sqlite-autoconf-3380500.tar.gz && mv sqlite-autoconf-3380500 sqlite3
 git clone https://github.com/open-source-parsers/jsoncpp.git
 git clone https://github.com/gvernard/vkl_lib.git
